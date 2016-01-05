@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>structrock_ui</class>
+ <widget class="QMainWindow" name="structrock_main_window">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1424</width>
+    <height>770</height>
+   </rect>
+  </property>
+  <property name="minimumSize">
+      <size>
+          <width>0</width>
+          <height>0</height>
+      </size>
+  </property>
+  <property name="maximumSize">
+      <size>
+          <width>5000</width>
+          <height>5000</height>
+      </size>
+  </property>
+  <property name="windowTitle">
+   <string>structrock</string>
+  </property>
+  <widget class="QVTKWidget" name="qvtkWidget">
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
+  </widget>
+  <widget class="QMenuBar" name="menuBar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>1424</width>
+     <height>23</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QStatusBar" name="statusBar">
+    <widget class="QLabel" name="label">
+    <property name="geometry">
+     <rect>
+      <x>0</x>
+      <y>0</y>
+	  <width>700</width>
+	  <height>22</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Ready</string>
+    </property>
+   </widget>
+  </widget>
+ </widget>
+ <layoutdefault spacing="6" margin="11"/>
+ <customwidgets>
+  <customwidget>
+   <class>QVTKWidget</class>
+   <extends>QWidget</extends>
+   <header>QVTKWidget.h</header>
+  </customwidget>
+ </customwidgets>
+ <resources>
+  <include location="structrock.qrc"/>
+ </resources>
+ <connections/>
+</ui>

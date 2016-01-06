@@ -1,63 +1,65 @@
-## openpcd
+## Processing actions
+
+### openpcd
 
 
 
-## openbin
+### openbin
 
 
 
-## openxyz
+### openxyz
 
 
 
-## savepcdascii
+### savepcdascii
 
 
 
-## savepcdbinary
+### savepcdbinary
 
 
 
-## savenormals
+### savenormals
 
 
 
-## saveclusters
+### saveclusters
 
 
 
-## downsample
+### downsample
 
 
 
-## resample
+### resample
 
 
 
-## knnormal
+### knnormal
 
 
 
-## ranormal
+### ranormal
 
 
 
-## rostatic
+### rostatic
 
 
 
-## rgsegmentation
+### rgsegmentation
 
 
 
-## quitsession
+### quitsession
 
 
 
-## showstereonet
+### showstereonet
 
 
 
-## showprocess
+### showprocess
 
 

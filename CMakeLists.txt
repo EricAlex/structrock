@@ -41,11 +41,6 @@ set(myApp_ICON ${CMAKE_CURRENT_SOURCE_DIR}/icon.icns)
 if(WIN32)
 set(GUI_TYPE WIN32)
 endif(WIN32)
-if(APPLE)
-set(GUI_TYPE MACOSX_BUNDLE)
-set(MACOSX_BUNDLE_ICON_FILE icon.icns)
-set_source_file_properties(${myApp_ICON} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
-endif(APPLE)
 
 ADD_EXECUTABLE(structrock ${GUI_TYPE} ${myApp_ICON} ${project_SOURCES} ${project_FORMS_HEADERS} ${project_HEADERS_MOC})
 

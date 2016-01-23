@@ -70,6 +70,7 @@
 #include "SavePcdBinaryWorker.h"
 #include "SaveNormalsWorker.h"
 #include "ShowProcessWorker.h"
+#include "TestWorker.h"
 #include "TimingShutdown.h"
 
 class structrock : public QMainWindow
@@ -193,6 +194,7 @@ private:
 	SavePcdBinaryWorker savepcdBinaryworker;
 	SaveNormalsWorker savenormalsworker;
 	ShowProcessWorker showprocessworker;
+    TestWorker testworker;
 
 public:
 	void MoveForwardPatch();

@@ -81,6 +81,7 @@
 #include "SaveClustersWorker.h"
 #include "ReadXYZWorker.h"
 #include "ShowProcessWorker.h"
+#include "TestWorker.h"
 #include "globaldef.h"
 #include "dataLibrary.h"
 #include "structrock.h"
@@ -858,6 +859,22 @@ void structrock::command_parser()
 				dataLibrary::current_workline_index+=1;
 				need_move_on = false;
 				Stereonet();
+			}
+		}
+        else if(command_string == "test")
+		{
+			if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>0)
+			{
+				testworker.setWorkFlowMode(true);
+				connect(&testworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
+				connect(&testworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
+				connect(&testworker, SIGNAL(GoWorkFlow()), this, SLOT(command_parser()));
+                
+				testworker.testing(QString::fromUtf8(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[0].c_str()));
+			}
+			else
+			{
+				Show_Errors(QString("Test: Path not provided."));
 			}
 		}
 		else
@@ -2047,77 +2064,15 @@ void structrock::Stereonet(QString filename)
 
 void structrock::Testing()
 {
-	/*if(dataLibrary::Lines.size() == 0)
+    QString filename = QFileDialog::getOpenFileName(NULL,tr("Open Data File"),QDir::currentPath(),tr("Data (*.txt);;All files (*.*)"));
+	if(!filename.isNull())
 	{
-		Show_Errors(QString("You Haven't Saved Any Segmentation Yet!"));
+		testworker.setWorkFlowMode(false);
+        connect(&testworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
+        connect(&testworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
+        
+        testworker.testing(filename);
 	}
-	else
-	{
-        QString filename = QFileDialog::getSaveFileName(this,tr("Export Clusters"),QDir::currentPath(),tr("(*.txt)"));
-
-        if(!filename.isNull())
-        {
-			QByteArray ba = filename.toLocal8Bit();
-			string* strfilename = new string(ba.data());
-    
-    string patchhullfilename = strfilename->substr(0, strfilename->size()-4) += "_patchhulls.txt";
-    ofstream patchhullfout(patchhullfilename.c_str());
-    
-    int num_of_clusters = dataLibrary::selectedPatches.size();
-	patchhullfout<<num_of_clusters<<"\n";
-    for(int cluster_index = 0; cluster_index < dataLibrary::selectedPatches.size(); cluster_index++)
-    {
-        pcl::PointCloud<pcl::PointXYZ>::Ptr plane_cloud (new pcl::PointCloud<pcl::PointXYZ>);
-        for(int j = 0; j < dataLibrary::clusters[dataLibrary::selectedPatches[cluster_index]].indices.size(); j++)
-        {
-            plane_cloud->push_back(dataLibrary::cloudxyz->at(dataLibrary::clusters[dataLibrary::selectedPatches[cluster_index]].indices[j]));
-        }
-        
-        //prepare for projecting data onto plane
-        float nx, ny, nz;
-        float curvature;
-        Eigen::Matrix3f convariance_matrix;
-        Eigen::Vector4f xyz_centroid, plane_parameters;
-        pcl::compute3DCentroid(*plane_cloud, xyz_centroid);
-        pcl::computeCovarianceMatrix(*plane_cloud, xyz_centroid, convariance_matrix);
-        pcl::solvePlaneParameters(convariance_matrix, nx, ny, nz, curvature);
-        Eigen::Vector3f centroid;
-        centroid(0)=xyz_centroid(0);
-        centroid(1)=xyz_centroid(1);
-        centroid(2)=xyz_centroid(2);
-        
-        //project data onto plane
-        //set plane parameter
-        pcl::ModelCoefficients::Ptr coefficients (new pcl::ModelCoefficients());
-        coefficients->values.resize(4);
-        coefficients->values[0] = nx;
-        coefficients->values[1] = ny;
-        coefficients->values[2] = nz;
-        coefficients->values[3] = - (nx*xyz_centroid[0] + ny*xyz_centroid[1] + nz*xyz_centroid[2]);
-        //projecting
-        pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_projected (new pcl::PointCloud<pcl::PointXYZ>);
-        pcl::ProjectInliers<pcl::PointXYZ> proj;
-        proj.setModelType(pcl::SACMODEL_PLANE);
-        proj.setInputCloud(plane_cloud);
-        proj.setModelCoefficients(coefficients);
-        proj.filter(*cloud_projected);
-        
-        //generate a concave or convex
-        pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_hull (new pcl::PointCloud<pcl::PointXYZ>);
-        pcl::ConvexHull<pcl::PointXYZ> chull;
-        chull.setInputCloud(cloud_projected);
-        chull.reconstruct(*cloud_hull);
-
-		patchhullfout<<cloud_hull->size()<<"\n";
-		for(int i=0; i<cloud_hull->size(); i++)
-		{
-			patchhullfout<<cloud_hull->at(i).x<<"\t"<<cloud_hull->at(i).y<<"\t"<<cloud_hull->at(i).z<<"\n";
-		}
-	}
-
-	delete strfilename;
-		}
-	}*/
 }
 
 void structrock::TestResult(int i)
@@ -2263,6 +2218,14 @@ void structrock::ShowStatus(int i)
 	case STATUS_SHOWPROCESS:
 		{
 			head="Busy	preparing to show process";
+			head+=tail;
+			ui.label->setText(QString::fromStdString(head));
+			ui.label->setPalette(pa);
+			break;
+		}
+    case STATUS_TESTING:
+		{
+			head="Busy	testing";
 			head+=tail;
 			ui.label->setText(QString::fromStdString(head));
 			ui.label->setPalette(pa);

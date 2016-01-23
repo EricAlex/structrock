@@ -61,6 +61,7 @@
 #define STATUS_SAVEBINARY	111
 #define STATUS_SAVENORMALS	112
 #define STATUS_SHOWPROCESS	113
+#define STATUS_TESTING  114
 
 struct RGSpara{
     double curvature;

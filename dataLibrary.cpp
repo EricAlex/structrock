@@ -45,7 +45,7 @@ using namespace std;
 pcl::PointCloud<pcl::PointXYZ>::Ptr dataLibrary::cloudxyz(new pcl::PointCloud<pcl::PointXYZ>);
 pcl::PointCloud<pcl::PointXYZRGB>::Ptr dataLibrary::cloudxyzrgb(new pcl::PointCloud<pcl::PointXYZRGB>);
 pcl::PointCloud<pcl::PointXYZRGB>::Ptr dataLibrary::cloudxyzrgb_clusters(new pcl::PointCloud<pcl::PointXYZRGB>);
-sensor_msgs::PointCloud2::Ptr dataLibrary::cloud_blob(new sensor_msgs::PointCloud2);
+pcl::PCLPointCloud2::Ptr dataLibrary::cloud_blob(new pcl::PCLPointCloud2);
 pcl::PointCloud<pcl::Normal>::Ptr dataLibrary::normal (new pcl::PointCloud<pcl::Normal>);
 pcl::PointCloud<pcl::PointNormal>::Ptr dataLibrary::pointnormals(new pcl::PointCloud<pcl::PointNormal>);
 pcl::PointCloud<pcl::PointXYZ>::Ptr dataLibrary::mls_points(new pcl::PointCloud<pcl::PointXYZ>);

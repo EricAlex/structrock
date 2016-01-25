@@ -67,16 +67,20 @@ void ReadFileWorker::doWork(const QString &filename)
 		if(pcl::getFieldIndex (*cloud_blob, "rgb")<0)
 		{
 			dataLibrary::cloudID = *strfilename;
-
-			emit ReadFileReady(CLOUDXYZ);
+            if(!this->getMuteMode())
+            {
+                emit ReadFileReady(CLOUDXYZ);
+            }
 			is_success = true;
 		}
 		else
 		{
 			pcl::fromPCLPointCloud2 (*cloud_blob, *dataLibrary::cloudxyzrgb);
 			dataLibrary::cloudID = *strfilename;
-        
-			emit ReadFileReady(CLOUDXYZRGB);
+            if(!this->getMuteMode())
+            {
+                emit ReadFileReady(CLOUDXYZRGB);
+            }
 			is_success = true;
 		}
 		delete strfilename;

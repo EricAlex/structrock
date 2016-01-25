@@ -95,7 +95,10 @@ void ReadXYZWorker::doWork(const QString &filename)
 
 	if(loadCloud (*strfilename, *dataLibrary::cloudxyz))
 	{
-		emit ReadXYZReady(CLOUDXYZ);
+        if(!this->getMuteMode())
+        {
+            emit ReadXYZReady(CLOUDXYZ);
+        }
 		is_success = true;
 	}
 	else

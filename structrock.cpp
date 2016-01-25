@@ -235,6 +235,7 @@ void structrock::open()
     if(!filename.isNull())
     {
 		readfileworker.setWorkFlowMode(false);
+        readfileworker.setUnmute();
 		QObject::connect(&readfileworker, SIGNAL(ReadFileReady(int)), this, SLOT(ShowPCD(int)));
 		connect(&readfileworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
 		QObject::connect(&readfileworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
@@ -250,6 +251,7 @@ void structrock::OpenXYZ()
     if(!filename.isNull())
     {
 		readxyzworker.setWorkFlowMode(false);
+        readxyzworker.setUnmute();
         connect(&readxyzworker, SIGNAL(ReadXYZReady(int)), this, SLOT(ShowPCD(int)));
 		connect(&readxyzworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
         connect(&readxyzworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
@@ -438,6 +440,14 @@ void structrock::command_parser()
 				if(!dataLibrary::have_called_read_file)
 				{
 					readfileworker.setWorkFlowMode(true);
+                    readfileworker.setUnmute();
+                    if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>1)
+                    {
+                        if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1] == "mute")
+                        {
+                            readfileworker.setMute();
+                        }
+                    }
 					QObject::connect(&readfileworker, SIGNAL(ReadFileReady(int)), this, SLOT(ShowPCD(int)));
 					QObject::connect(&readfileworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
 					QObject::connect(&readfileworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
@@ -492,7 +502,7 @@ void structrock::command_parser()
 		}
 		else if(command_string == "openbin")
 		{
-
+            
 		}
 		else if(command_string == "openxyz")
 		{
@@ -501,6 +511,14 @@ void structrock::command_parser()
 				if(!dataLibrary::have_called_read_file)
 				{
 					readxyzworker.setWorkFlowMode(true);
+                    readxyzworker.setUnmute();
+                    if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>1)
+                    {
+                        if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1] == "mute")
+                        {
+                            readxyzworker.setMute();
+                        }
+                    }
 					connect(&readxyzworker, SIGNAL(ReadXYZReady(int)), this, SLOT(ShowPCD(int)));
 					connect(&readxyzworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
 					connect(&readxyzworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
@@ -607,6 +625,14 @@ void structrock::command_parser()
 			if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>0)
 			{
 				saveclustersworker.setWorkFlowMode(true);
+                saveclustersworker.setUnmute();
+                if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>1)
+                {
+                    if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1] == "mute")
+                    {
+                        saveclustersworker.setMute();
+                    }
+                }
 				connect(&saveclustersworker, SIGNAL(SaveClustersReady(QString)), this, SLOT(ShowSavedClusters(QString)));
 				connect(&saveclustersworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
 				connect(&saveclustersworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
@@ -628,6 +654,14 @@ void structrock::command_parser()
 				ss >> leaf;
 
 				downsampleworker.setWorkFlowMode(true);
+                downsampleworker.setUnmute();
+                if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>1)
+                {
+                    if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1] == "mute")
+                    {
+                        downsampleworker.setMute();
+                    }
+                }
 				connect(&downsampleworker, SIGNAL(show()), this, SLOT(ShowDownsample()));
 				connect(&downsampleworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
 				connect(&downsampleworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
@@ -649,6 +683,14 @@ void structrock::command_parser()
 				ss >> radius;
 
 				resampleworker.setWorkFlowMode(true);
+                resampleworker.setUnmute();
+                if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>1)
+                {
+                    if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1] == "mute")
+                    {
+                        resampleworker.setMute();
+                    }
+                }
 				connect(&resampleworker, SIGNAL(show()), this, SLOT(ShowResample()));
 				connect(&resampleworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
 				connect(&resampleworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
@@ -670,6 +712,14 @@ void structrock::command_parser()
 				ss >> k;
 
 				knnormalworker.setWorkFlowMode(true);
+                knnormalworker.setUnmute();
+                if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>1)
+                {
+                    if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1] == "mute")
+                    {
+                        knnormalworker.setMute();
+                    }
+                }
 				connect(&knnormalworker, SIGNAL(show()), this, SLOT(ShowknNormal()));
 				connect(&knnormalworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
 				connect(&knnormalworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
@@ -691,6 +741,14 @@ void structrock::command_parser()
 				ss >> radius;
 
 				ranormalworker.setWorkFlowMode(true);
+                ranormalworker.setUnmute();
+                if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>1)
+                {
+                    if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1] == "mute")
+                    {
+                        ranormalworker.setMute();
+                    }
+                }
 				connect(&ranormalworker, SIGNAL(show()), this, SLOT(ShowraNormal()));
 				connect(&ranormalworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
 				connect(&ranormalworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
@@ -712,6 +770,14 @@ void structrock::command_parser()
 				ss >> stdDev;
 
 				staticroworker.setWorkFlowMode(true);
+                staticroworker.setUnmute();
+                if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>1)
+                {
+                    if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1] == "mute")
+                    {
+                        staticroworker.setMute();
+                    }
+                }
 				connect(&staticroworker, SIGNAL(show()), this, SLOT(ShowSRO()));
 				connect(&staticroworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
 				connect(&staticroworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
@@ -761,6 +827,14 @@ void structrock::command_parser()
 						dataLibrary::RGSparameter.IsSmoothMode=false;
 					}
 					rgsworker.setWorkFlowMode(true);
+                    rgsworker.setUnmute();
+                    if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>6)
+                    {
+                        if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[6] == "mute")
+                        {
+                            rgsworker.setMute();
+                        }
+                    }
 					connect(&rgsworker, SIGNAL(show()), this, SLOT(ShowRGS()));
 					connect(&rgsworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
 					connect(&rgsworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
@@ -977,6 +1051,7 @@ void structrock::resampling()
         if(ok)
         {
 			resampleworker.setWorkFlowMode(false);
+            resampleworker.setUnmute();
             connect(&resampleworker, SIGNAL(show()), this, SLOT(ShowResample()));
 			connect(&resampleworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
             connect(&resampleworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
@@ -1015,6 +1090,7 @@ void structrock::downsampling()
         if(ok)
         {
 			downsampleworker.setWorkFlowMode(false);
+            downsampleworker.setUnmute();
             connect(&downsampleworker, SIGNAL(show()), this, SLOT(ShowDownsample()));
 			connect(&downsampleworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
             connect(&downsampleworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
@@ -1053,6 +1129,7 @@ void structrock::k_neighbor()
         if(ok)
         {
             knnormalworker.setWorkFlowMode(false);
+            knnormalworker.setUnmute();
 			connect(&knnormalworker, SIGNAL(show()), this, SLOT(ShowknNormal()));
 			connect(&knnormalworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
 			connect(&knnormalworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
@@ -1090,6 +1167,7 @@ void structrock::radius()
         if(ok)
         {
             ranormalworker.setWorkFlowMode(false);
+            ranormalworker.setUnmute();
 			connect(&ranormalworker, SIGNAL(show()), this, SLOT(ShowraNormal()));
 			connect(&ranormalworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
 			connect(&ranormalworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
@@ -1140,6 +1218,7 @@ void structrock::StaticRemoveOutlier()
         if(ok)
         {
             staticroworker.setWorkFlowMode(false);
+            staticroworker.setUnmute();
 			connect(&staticroworker, SIGNAL(show()), this, SLOT(ShowSRO()));
 			connect(&staticroworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
 			connect(&staticroworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
@@ -1222,6 +1301,7 @@ void structrock::RegionGrowingSegmentation()
                 dataLibrary::RGSparameter.IsSmoothMode = multi_input.IsSmoothMode();
                 
                 rgsworker.setWorkFlowMode(false);
+                rgsworker.setUnmute();
 				connect(&rgsworker, SIGNAL(show()), this, SLOT(ShowRGS()));
 				connect(&rgsworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
 				connect(&rgsworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
@@ -1296,6 +1376,7 @@ void structrock::SaveClusters()
         if(!filename.isNull())
         {   
 			saveclustersworker.setWorkFlowMode(false);
+            saveclustersworker.setUnmute();
             connect(&saveclustersworker, SIGNAL(SaveClustersReady(QString)), this, SLOT(ShowSavedClusters(QString)));
 			connect(&saveclustersworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
             connect(&saveclustersworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));

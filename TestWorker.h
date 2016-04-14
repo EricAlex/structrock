@@ -44,11 +44,28 @@ class TestWorker : public Worker
     Q_OBJECT
 
 public:
+    TestWorker() : Worker()
+    {
+        _is_split = false;
+    }
+    
 	void testing(const QString &filename)
 	{
 		QMetaObject::invokeMethod(this, "doWork", Q_ARG(const QString &, filename));
 	}
+    
+    void setSplitMode(bool mode)
+    {
+        _is_split = mode;
+    }
+    bool getSplitMode()
+    {
+        return _is_split;
+    }
 
 private slots:
     void doWork(const QString &filename);
+    
+private:
+    bool _is_split;
 };

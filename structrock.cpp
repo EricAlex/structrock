@@ -40,8 +40,10 @@
 #include <vector>
 #include <fstream>
 #include <string>
+#include <sstream>
 #include <algorithm>
 #include <math.h>
+#include <libpq-fe.h>
 #include <pcl/search/search.h>
 #include <pcl/search/kdtree.h>
 #include <pcl/visualization/cloud_viewer.h>
@@ -940,6 +942,14 @@ void structrock::command_parser()
 			if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>0)
 			{
 				testworker.setWorkFlowMode(true);
+                testworker.setSplitMode(false);
+                if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>1)
+                {
+                    if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1] == "split")
+                    {
+                        testworker.setSplitMode(true);
+                    }
+                }
 				connect(&testworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
 				connect(&testworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
 				connect(&testworker, SIGNAL(GoWorkFlow()), this, SLOT(command_parser()));
@@ -2145,7 +2155,8 @@ void structrock::Stereonet(QString filename)
 
 void structrock::Testing()
 {
-    QString filename = QFileDialog::getOpenFileName(NULL,tr("Open Data File"),QDir::currentPath(),tr("Data (*.txt);;All files (*.*)"));
+    // Function: transform downloaded original ASCII text point cloud file to XYZ file.
+    /*QString filename = QFileDialog::getOpenFileName(NULL,tr("Open Data File"),QDir::currentPath(),tr("Data (*.txt);;All files (*.*)"));
 	if(!filename.isNull())
 	{
 		testworker.setWorkFlowMode(false);
@@ -2153,7 +2164,62 @@ void structrock::Testing()
         connect(&testworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
         
         testworker.testing(filename);
-	}
+	}*/
+    
+    //Function: connect to postgreSQL database.
+    bool isOK;
+    QString conn_string = QInputDialog::getText(NULL, "Input Dialog", "Connection Strings:", QLineEdit::Normal, "keyword = value", &isOK);
+    if(isOK)
+    {
+        const char *conninfo;
+        PGconn     *conn;
+        PGresult   *res;
+        int         nFields;
+        int         i, j;
+        
+        conninfo = conn_string.toStdString().c_str();
+
+        /* Make a connection to the database */
+        conn = PQconnectdb(conninfo);
+
+        /* Check to see that the backend connection was successfully made */
+        if (PQstatus(conn) != CONNECTION_OK)
+        {
+            std::string Error_message("Connection to database failed: ");
+            std::ostringstream oss;
+            oss << PQerrorMessage(conn);
+            Error_message += oss.str();
+            Show_Errors(QString::fromUtf8(Error_message.c_str()));
+        }
+        else
+        {
+            /*
+            * Our test case here involves using a cursor, for which we must be inside
+            * a transaction block.  We could do the whole thing with a single
+            * PQexec() of "select * from pg_database", but that's too trivial to make
+            * a good example.
+            */
+
+            /* Start a transaction block */
+            res = PQexec(conn, "BEGIN");
+            if (PQresultStatus(res) != PGRES_COMMAND_OK)
+            {
+                std::string Error_message("BEGIN command failed: ");
+                std::ostringstream oss;
+                oss << PQerrorMessage(conn);
+                Error_message += oss.str();
+                Show_Errors(QString::fromUtf8(Error_message.c_str()));
+                PQclear(res);
+            }
+
+            /* end the transaction */
+            res = PQexec(conn, "END");
+            PQclear(res);
+
+            /* close the connection to the database and cleanup */
+            PQfinish(conn);
+        }
+    }
 }
 
 void structrock::TestResult(int i)

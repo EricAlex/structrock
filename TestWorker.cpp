@@ -94,6 +94,11 @@ bool transData (const string &filename, const string &savefilename)
     return (true);
 }
 
+bool splitData (const string &filename, const string &lsavefilename, const string &rsavefilename)
+{
+    /*to be filled*/
+}
+
 void TestWorker::doWork(const QString &filename)
 {
 	bool is_success(false);

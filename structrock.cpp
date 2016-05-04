@@ -44,11 +44,14 @@
 #include <algorithm>
 #include <math.h>
 #include <libpq-fe.h>
+#include "pcl/common/common_headers.h"
 #include <pcl/search/search.h>
 #include <pcl/search/kdtree.h>
 #include <pcl/visualization/cloud_viewer.h>
+#include <pcl/visualization/boost.h>
 #include <pcl/io/io.h>
 #include <pcl/io/pcd_io.h>
+#include <pcl/io/openni2_grabber.h>
 #include <pcl/point_types.h>
 #include <pcl/kdtree/kdtree_flann.h>
 #include <pcl/surface/mls.h>
@@ -63,6 +66,7 @@
 #include <pcl/filters/project_inliers.h>
 #include <pcl/filters/extract_indices.h>
 #include <vtkRenderWindow.h>
+#include <vtkImageViewer2.h>
 #include <boost/thread/thread.hpp>
 #include <Eigen/src/Core/Matrix.h>
 #include <boost/algorithm/string/predicate.hpp>
@@ -90,12 +94,14 @@
 #include "geo_region_growing.h"
 #include "plotwindow.h"
 #include "TimingShutdown.h"
+#include "KinectV2Viewer.h"
 
 using namespace std;
 
 structrock::structrock(QWidget *parent, Qt::WFlags flags)
 	: QMainWindow(parent, flags),
 	viewer(new pcl::visualization::PCLVisualizer("3D Viewer")),
+    imageViewer(vtkImageViewer2::New()),
 	v1(1),
 	v2(2)
 {
@@ -205,6 +211,14 @@ structrock::structrock(QWidget *parent, Qt::WFlags flags)
 
 	QMenu *segmentation = edit->addMenu(tr("&Segmentation"));
 	segmentation->addAction(region_growing_segmentation);
+    
+    QMenu *kinect = menuBar()->addMenu(tr("&Kinect"));
+    connect_Kinect = new QAction(tr("&Connect"), this);
+    connect(connect_Kinect, SIGNAL(triggered()), this, SLOT(Connect_Kinect()));
+    disconnect_Kinect = new QAction(tr("&Disconnect"), this);
+    connect(disconnect_Kinect, SIGNAL(triggered()), this, SLOT(Disconnect_Kinect()));
+    kinect->addAction(connect_Kinect);
+    kinect->addAction(disconnect_Kinect);
 
 	testing = new QAction(tr("&Test"), this);
 	connect(testing, SIGNAL(triggered()), this, SLOT(Testing()));
@@ -218,7 +232,6 @@ structrock::structrock(QWidget *parent, Qt::WFlags flags)
 	help->addAction(stereonet);
 	help->addAction(testing);
     
-    
     checkstatusThread *csThread(new checkstatusThread);
     connect(csThread, SIGNAL(show(int)), this, SLOT(ShowStatus(int)));
     connect(csThread, SIGNAL(finished()), csThread, SLOT(deleteLater()));
@@ -227,7 +240,30 @@ structrock::structrock(QWidget *parent, Qt::WFlags flags)
 
 structrock::~structrock()
 {
-	
+    
+}
+
+void structrock::Connect_Kinect()
+{
+    //ui.qvtkWidget->SetRenderWindow(imageViewer->GetRenderWindow());
+    //imageViewer->SetupInteractor(ui.qvtkWidget->GetRenderWindow()->GetInteractor());
+    
+    boost::shared_ptr<pcl::io::openni2::OpenNI2DeviceManager> deviceManager = pcl::io::openni2::OpenNI2DeviceManager::getInstance ();
+    if (deviceManager->getNumOfConnectedDevices () > 0)
+    {
+        grabber = new pcl::io::OpenNI2Grabber("", pcl::io::OpenNI2Grabber::OpenNI_Default_Mode, pcl::io::OpenNI2Grabber::OpenNI_Default_Mode);
+        KinectV2Viewer<pcl::PointXYZRGBA> openni_viewer (grabber, viewer);
+        openni_viewer.run();
+    }
+    else
+    {
+        Show_Errors(QString("No Kinect Senser Devices Connected!"));
+    }
+}
+
+void structrock::Disconnect_Kinect()
+{
+    if (grabber && grabber->isRunning ()) grabber->stop ();
 }
 
 void structrock::open()
@@ -993,27 +1029,22 @@ void structrock::ShowPCD(int i)
 		viewer->addPointCloud(dataLibrary::cloudxyz, dataLibrary::cloudID, v1);
         viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 0.0, 0.7, 0.0, dataLibrary::cloudID, v1);
         
-        pcl::PointXYZ minPt, maxPt;
-        pcl::getMinMax3D (*dataLibrary::cloudxyz, minPt, maxPt);
-        float c_x, c_y, c_z;
-        c_x = (minPt.x+maxPt.x)/2;
-        c_y = (minPt.y+maxPt.y)/2;
-        c_z = (minPt.z+maxPt.z)/2;
-        viewer->setCameraPosition(c_x, c_y, c_z, 0, 0, 0);
+        viewer->resetCameraViewpoint (dataLibrary::cloudID);
+        viewer->setCameraPosition (0,0,0,		// Position
+                                   0,0,-1,		// Viewpoint
+                                   0,1,0);	    // Down
         viewer->resetCamera();
+        
 		ui.qvtkWidget->update();
 	}
 	else if(i==CLOUDXYZRGB)
 	{
 		viewer->addPointCloud(dataLibrary::cloudxyzrgb, dataLibrary::cloudID, v1);
         
-        pcl::PointXYZ minPt, maxPt;
-        pcl::getMinMax3D (*dataLibrary::cloudxyz, minPt, maxPt);
-        float c_x, c_y, c_z;
-        c_x = (minPt.x+maxPt.x)/2;
-        c_y = (minPt.y+maxPt.y)/2;
-        c_z = (minPt.z+maxPt.z)/2;
-        viewer->setCameraPosition(c_x, c_y, c_z, 0, 0, 0);
+        viewer->resetCameraViewpoint (dataLibrary::cloudID);
+        viewer->setCameraPosition (0,0,0,		// Position
+                                   0,0,-1,		// Viewpoint
+                                   0,1,0);	    // Down
         viewer->resetCamera();
         
 		ui.qvtkWidget->update();
@@ -1048,6 +1079,8 @@ void structrock::saveasbinary()
 
 void structrock::exit()
 {
+    if (grabber && grabber->isRunning ()) grabber->stop ();
+    
 	QApplication::closeAllWindows();
 	qApp->exit();
 }

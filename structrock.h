@@ -50,6 +50,9 @@
 #include <pcl/visualization/cloud_viewer.h>
 #include <pcl/io/io.h>
 #include <pcl/io/pcd_io.h>
+#include <pcl/io/openni2_grabber.h>
+#include <vtkRenderWindow.h>
+#include <vtkImageViewer2.h>
 #include "ReadFileWorker.h"
 #include "checkstatusThread.h"
 #include "resampleWorker.h"
@@ -72,6 +75,7 @@
 #include "ShowProcessWorker.h"
 #include "TestWorker.h"
 #include "TimingShutdown.h"
+#include "KinectV2Viewer.h"
 
 class structrock : public QMainWindow
 {
@@ -120,6 +124,8 @@ private slots:
 	void command_parser();
 	void Show_Errors(const QString &errors);
 	void Show_Process();
+    void Connect_Kinect();
+    void Disconnect_Kinect();
 	void slotReboot()
 	{
 		QProcess *myProcess = new QProcess;
@@ -169,9 +175,13 @@ private:
 	QAction *stereonet;
 	QAction *Reboot;
 	QAction *newWindow;
+    QAction *connect_Kinect;
+    QAction *disconnect_Kinect;
 
 public:
-	boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer;
+	pcl::visualization::PCLVisualizer *viewer;
+    pcl::visualization::ImageViewer *image_viewer;
+    vtkImageViewer2 *imageViewer;
 	int v1;
 	int v2;
 
@@ -195,6 +205,7 @@ private:
 	SaveNormalsWorker savenormalsworker;
 	ShowProcessWorker showprocessworker;
     TestWorker testworker;
+    pcl::Grabber *grabber;
 
 public:
 	void MoveForwardPatch();

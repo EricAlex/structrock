@@ -996,7 +996,7 @@ void structrock::ShowPCD(int i)
         
         viewer->resetCameraViewpoint (dataLibrary::cloudID);
         // Position, Viewpoint, Down
-        viewer->setCameraPosition (0,0,0,0,0,-1,0,1,0);
+        viewer->setCameraPose (0,0,0,0,0,-1,0,1,0);
         viewer->resetCamera();
 		ui.qvtkWidget->update();
 	}
@@ -1006,7 +1006,7 @@ void structrock::ShowPCD(int i)
         
         viewer->resetCameraViewpoint (dataLibrary::cloudID);
         // Position, Viewpoint, Down
-        viewer->setCameraPosition (0,0,0,0,0,-1,0,1,0);
+        viewer->setCameraPose (0,0,0,0,0,-1,0,1,0);
         viewer->resetCamera();
         
 		ui.qvtkWidget->update();

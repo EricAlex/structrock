@@ -175,12 +175,9 @@ if (PostgreSQL_INCLUDE_DIR)
   unset(pgsql_version_str)
 endif()
 
-# Did we find anything?
-include(${CMAKE_CURRENT_LIST_DIR}/FindPackageHandleStandardArgs.cmake)
-find_package_handle_standard_args(PostgreSQL
-                                  REQUIRED_VARS PostgreSQL_LIBRARY PostgreSQL_INCLUDE_DIR PostgreSQL_TYPE_INCLUDE_DIR
-                                  VERSION_VAR PostgreSQL_VERSION_STRING)
-set(PostgreSQL_FOUND  ${POSTGRESQL_FOUND})
+if (PostgreSQL_LIBRARY AND PostgreSQL_INCLUDE_DIR AND PostgreSQL_TYPE_INCLUDE_DIR)
+  set(PostgreSQL_FOUND  ${POSTGRESQL_FOUND})
+endif()
 
 # Now try to get the include and library path.
 if(PostgreSQL_FOUND)

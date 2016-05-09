@@ -176,7 +176,7 @@ if (PostgreSQL_INCLUDE_DIR)
 endif()
 
 if (PostgreSQL_LIBRARY AND PostgreSQL_INCLUDE_DIR AND PostgreSQL_TYPE_INCLUDE_DIR)
-  set(PostgreSQL_FOUND  ${POSTGRESQL_FOUND})
+  set(PostgreSQL_FOUND  TRUE)
 endif()
 
 # Now try to get the include and library path.

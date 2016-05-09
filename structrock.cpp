@@ -995,9 +995,8 @@ void structrock::ShowPCD(int i)
         viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 0.0, 0.7, 0.0, dataLibrary::cloudID, v1);
         
         viewer->resetCameraViewpoint (dataLibrary::cloudID);
-        viewer->setCameraPosition (0,0,0,		// Position
-                                   0,0,-1,		// Viewpoint
-                                   0,1,0);	    // Down
+        // Position, Viewpoint, Down
+        viewer->setCameraPosition (0,0,0,0,0,-1,0,1,0);
         viewer->resetCamera();
 		ui.qvtkWidget->update();
 	}
@@ -1006,9 +1005,8 @@ void structrock::ShowPCD(int i)
 		viewer->addPointCloud(dataLibrary::cloudxyzrgb, dataLibrary::cloudID, v1);
         
         viewer->resetCameraViewpoint (dataLibrary::cloudID);
-        viewer->setCameraPosition (0,0,0,		// Position
-                                   0,0,-1,		// Viewpoint
-                                   0,1,0);	    // Down
+        // Position, Viewpoint, Down
+        viewer->setCameraPosition (0,0,0,0,0,-1,0,1,0);
         viewer->resetCamera();
         
 		ui.qvtkWidget->update();

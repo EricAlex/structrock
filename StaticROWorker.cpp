@@ -62,8 +62,11 @@ void StaticROWorker::doWork(const double &stdDev)
 
     sor.setNegative(false);
     sor.filter(*dataLibrary::outlier_removed_inlier);
-
-    emit show();
+    
+    if(!this->getMuteMode())
+    {
+        emit show();
+    }
 	is_success = true;
     dataLibrary::Status = STATUS_READY;
     emit showReadyStatus();

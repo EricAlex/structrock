@@ -8,6 +8,11 @@ project(structrock)
 find_package(Qt4 REQUIRED)
 find_package(PCL 1.6.0 REQUIRED)
 
+find_package(PostgreSQL REQUIRED)
+
+include_directories (${PostgreSQL_INCLUDE_DIRS})
+link_directories(${PostgreSQL_LIBRARY_DIRS})
+
 if(${VTK_VERSION} VERSION_GREATER "6")
 find_package(VTK COMPONENTS
 vtkGUISupportQt
@@ -49,6 +54,6 @@ endif(APPLE)
 
 ADD_EXECUTABLE(structrock ${GUI_TYPE} ${myApp_ICON} ${project_SOURCES} ${project_FORMS_HEADERS} ${project_HEADERS_MOC})
 
-TARGET_LINK_LIBRARIES(structrock ${QT_LIBRARIES} ${PCL_LIBRARIES} ${VTK_LIBRARIES})
+TARGET_LINK_LIBRARIES(structrock ${QT_LIBRARIES} ${PCL_LIBRARIES} ${VTK_LIBRARIES} ${PostgreSQL_LIBRARIES})
 
 #INSTALL(SCRIPT bundle.cmake)

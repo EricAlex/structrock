@@ -410,7 +410,10 @@ void SaveClustersWorker::doWork(const QString &filename)
     hull_traces_out<<flush;
     hull_traces_out.close();
     
-    emit SaveClustersReady(filename);
+    if(!this->getMuteMode())
+    {
+        emit SaveClustersReady(filename);
+    }
 	is_success = true;
     dataLibrary::Status = STATUS_READY;
     emit showReadyStatus();

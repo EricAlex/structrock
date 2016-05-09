@@ -245,9 +245,6 @@ structrock::~structrock()
 
 void structrock::Connect_Kinect()
 {
-    //ui.qvtkWidget->SetRenderWindow(imageViewer->GetRenderWindow());
-    //imageViewer->SetupInteractor(ui.qvtkWidget->GetRenderWindow()->GetInteractor());
-    
     boost::shared_ptr<pcl::io::openni2::OpenNI2DeviceManager> deviceManager = pcl::io::openni2::OpenNI2DeviceManager::getInstance ();
     if (deviceManager->getNumOfConnectedDevices () > 0)
     {
@@ -733,7 +730,7 @@ void structrock::command_parser()
 				connect(&resampleworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
 				connect(&resampleworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
 				connect(&resampleworker, SIGNAL(GoWorkFlow()), this, SLOT(command_parser()));
-            
+
 				resampleworker.resample(radius);
 			}
 			else

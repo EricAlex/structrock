@@ -66,7 +66,10 @@ void ReadFileWorker::doWork(const QString &filename)
 		{
 			dataLibrary::cloudID = *strfilename;
 
-			emit ReadFileReady(CLOUDXYZ);
+			if(!this->getMuteMode())
+            {
+                emit ReadFileReady(CLOUDXYZ);
+            }
 			is_success = true;
 		}
 		else
@@ -74,7 +77,10 @@ void ReadFileWorker::doWork(const QString &filename)
 			pcl::fromROSMsg (*cloud_blob, *dataLibrary::cloudxyzrgb);
 			dataLibrary::cloudID = *strfilename;
         
-			emit ReadFileReady(CLOUDXYZRGB);
+			if(!this->getMuteMode())
+            {
+                emit ReadFileReady(CLOUDXYZRGB);
+            }
 			is_success = true;
 		}
 		delete strfilename;

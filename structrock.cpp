@@ -40,8 +40,11 @@
 #include <vector>
 #include <fstream>
 #include <string>
+#include <sstream>
 #include <algorithm>
 #include <math.h>
+#include <libpq-fe.h>
+#include "pcl/common/common_headers.h"
 #include <pcl/search/search.h>
 #include <pcl/search/kdtree.h>
 #include <pcl/visualization/cloud_viewer.h>
@@ -81,6 +84,7 @@
 #include "SaveClustersWorker.h"
 #include "ReadXYZWorker.h"
 #include "ShowProcessWorker.h"
+#include "TestWorker.h"
 #include "globaldef.h"
 #include "dataLibrary.h"
 #include "structrock.h"
@@ -234,6 +238,7 @@ void structrock::open()
     if(!filename.isNull())
     {
 		readfileworker.setWorkFlowMode(false);
+		readfileworker.setUnmute();
 		QObject::connect(&readfileworker, SIGNAL(ReadFileReady(int)), this, SLOT(ShowPCD(int)));
 		connect(&readfileworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
 		QObject::connect(&readfileworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
@@ -249,6 +254,7 @@ void structrock::OpenXYZ()
     if(!filename.isNull())
     {
 		readxyzworker.setWorkFlowMode(false);
+		readxyzworker.setUnmute();
         connect(&readxyzworker, SIGNAL(ReadXYZReady(int)), this, SLOT(ShowPCD(int)));
 		connect(&readxyzworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
         connect(&readxyzworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
@@ -437,6 +443,14 @@ void structrock::command_parser()
 				if(!dataLibrary::have_called_read_file)
 				{
 					readfileworker.setWorkFlowMode(true);
+					readfileworker.setUnmute();
+                    if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>1)
+                    {
+                        if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1] == "mute")
+                        {
+                            readfileworker.setMute();
+                        }
+                    }
 					QObject::connect(&readfileworker, SIGNAL(ReadFileReady(int)), this, SLOT(ShowPCD(int)));
 					QObject::connect(&readfileworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
 					QObject::connect(&readfileworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
@@ -500,6 +514,14 @@ void structrock::command_parser()
 				if(!dataLibrary::have_called_read_file)
 				{
 					readxyzworker.setWorkFlowMode(true);
+					readxyzworker.setUnmute();
+                    if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>1)
+                    {
+                        if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1] == "mute")
+                        {
+                            readxyzworker.setMute();
+                        }
+                    }
 					connect(&readxyzworker, SIGNAL(ReadXYZReady(int)), this, SLOT(ShowPCD(int)));
 					connect(&readxyzworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
 					connect(&readxyzworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
@@ -606,6 +628,14 @@ void structrock::command_parser()
 			if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>0)
 			{
 				saveclustersworker.setWorkFlowMode(true);
+				saveclustersworker.setUnmute();
+                if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>1)
+                {
+                    if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1] == "mute")
+                    {
+                        saveclustersworker.setMute();
+                    }
+                }
 				connect(&saveclustersworker, SIGNAL(SaveClustersReady(QString)), this, SLOT(ShowSavedClusters(QString)));
 				connect(&saveclustersworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
 				connect(&saveclustersworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
@@ -627,6 +657,14 @@ void structrock::command_parser()
 				ss >> leaf;
 
 				downsampleworker.setWorkFlowMode(true);
+				downsampleworker.setUnmute();
+                if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>1)
+                {
+                    if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1] == "mute")
+                    {
+                        downsampleworker.setMute();
+                    }
+                }
 				connect(&downsampleworker, SIGNAL(show()), this, SLOT(ShowDownsample()));
 				connect(&downsampleworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
 				connect(&downsampleworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
@@ -648,6 +686,14 @@ void structrock::command_parser()
 				ss >> radius;
 
 				resampleworker.setWorkFlowMode(true);
+				resampleworker.setUnmute();
+                if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>1)
+                {
+                    if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1] == "mute")
+                    {
+                        resampleworker.setMute();
+                    }
+                }
 				connect(&resampleworker, SIGNAL(show()), this, SLOT(ShowResample()));
 				connect(&resampleworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
 				connect(&resampleworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
@@ -669,6 +715,14 @@ void structrock::command_parser()
 				ss >> k;
 
 				knnormalworker.setWorkFlowMode(true);
+				knnormalworker.setUnmute();
+                if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>1)
+                {
+                    if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1] == "mute")
+                    {
+                        knnormalworker.setMute();
+                    }
+                }
 				connect(&knnormalworker, SIGNAL(show()), this, SLOT(ShowknNormal()));
 				connect(&knnormalworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
 				connect(&knnormalworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
@@ -690,6 +744,14 @@ void structrock::command_parser()
 				ss >> radius;
 
 				ranormalworker.setWorkFlowMode(true);
+				ranormalworker.setUnmute();
+                if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>1)
+                {
+                    if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1] == "mute")
+                    {
+                        ranormalworker.setMute();
+                    }
+                }
 				connect(&ranormalworker, SIGNAL(show()), this, SLOT(ShowraNormal()));
 				connect(&ranormalworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
 				connect(&ranormalworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
@@ -711,6 +773,14 @@ void structrock::command_parser()
 				ss >> stdDev;
 
 				staticroworker.setWorkFlowMode(true);
+				staticroworker.setUnmute();
+                if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>1)
+                {
+                    if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1] == "mute")
+                    {
+                        staticroworker.setMute();
+                    }
+                }
 				connect(&staticroworker, SIGNAL(show()), this, SLOT(ShowSRO()));
 				connect(&staticroworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
 				connect(&staticroworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
@@ -760,6 +830,14 @@ void structrock::command_parser()
 						dataLibrary::RGSparameter.IsSmoothMode=false;
 					}
 					rgsworker.setWorkFlowMode(true);
+					rgsworker.setUnmute();
+                    if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>6)
+                    {
+                        if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[6] == "mute")
+                        {
+                            rgsworker.setMute();
+                        }
+                    }
 					connect(&rgsworker, SIGNAL(show()), this, SLOT(ShowRGS()));
 					connect(&rgsworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
 					connect(&rgsworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
@@ -860,6 +938,30 @@ void structrock::command_parser()
 				Stereonet();
 			}
 		}
+		else if(command_string == "test")
+		{
+			if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>0)
+			{
+				testworker.setWorkFlowMode(true);
+                testworker.setSplitMode(false);
+                if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>1)
+                {
+                    if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1] == "split")
+                    {
+                        testworker.setSplitMode(true);
+                    }
+                }
+				connect(&testworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
+				connect(&testworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
+				connect(&testworker, SIGNAL(GoWorkFlow()), this, SLOT(command_parser()));
+                
+				testworker.testing(QString::fromUtf8(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[0].c_str()));
+			}
+			else
+			{
+				Show_Errors(QString("Test: Path not provided."));
+			}
+		}
 		else
 		{
 			std::stringstream ss;
@@ -892,13 +994,10 @@ void structrock::ShowPCD(int i)
 		viewer->addPointCloud(dataLibrary::cloudxyz, dataLibrary::cloudID, v1);
         viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 0.0, 0.7, 0.0, dataLibrary::cloudID, v1);
         
-        pcl::PointXYZ minPt, maxPt;
-        pcl::getMinMax3D (*dataLibrary::cloudxyz, minPt, maxPt);
-        float c_x, c_y, c_z;
-        c_x = (minPt.x+maxPt.x)/2;
-        c_y = (minPt.y+maxPt.y)/2;
-        c_z = (minPt.z+maxPt.z)/2;
-        viewer->setCameraPosition(c_x, c_y, c_z, 0, 0, 0);
+        viewer->resetCameraViewpoint (dataLibrary::cloudID);
+        viewer->setCameraPosition (0,0,0,		// Position
+                                   0,0,-1,		// Viewpoint
+                                   0,1,0);	    // Down
         viewer->resetCamera();
 		ui.qvtkWidget->update();
 	}
@@ -906,13 +1005,10 @@ void structrock::ShowPCD(int i)
 	{
 		viewer->addPointCloud(dataLibrary::cloudxyzrgb, dataLibrary::cloudID, v1);
         
-        pcl::PointXYZ minPt, maxPt;
-        pcl::getMinMax3D (*dataLibrary::cloudxyz, minPt, maxPt);
-        float c_x, c_y, c_z;
-        c_x = (minPt.x+maxPt.x)/2;
-        c_y = (minPt.y+maxPt.y)/2;
-        c_z = (minPt.z+maxPt.z)/2;
-        viewer->setCameraPosition(c_x, c_y, c_z, 0, 0, 0);
+        viewer->resetCameraViewpoint (dataLibrary::cloudID);
+        viewer->setCameraPosition (0,0,0,		// Position
+                                   0,0,-1,		// Viewpoint
+                                   0,1,0);	    // Down
         viewer->resetCamera();
         
 		ui.qvtkWidget->update();
@@ -960,6 +1056,7 @@ void structrock::resampling()
         if(ok)
         {
 			resampleworker.setWorkFlowMode(false);
+			resampleworker.setUnmute();
             connect(&resampleworker, SIGNAL(show()), this, SLOT(ShowResample()));
 			connect(&resampleworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
             connect(&resampleworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
@@ -998,6 +1095,7 @@ void structrock::downsampling()
         if(ok)
         {
 			downsampleworker.setWorkFlowMode(false);
+			downsampleworker.setUnmute();
             connect(&downsampleworker, SIGNAL(show()), this, SLOT(ShowDownsample()));
 			connect(&downsampleworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
             connect(&downsampleworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
@@ -1036,6 +1134,7 @@ void structrock::k_neighbor()
         if(ok)
         {
             knnormalworker.setWorkFlowMode(false);
+			knnormalworker.setUnmute();
 			connect(&knnormalworker, SIGNAL(show()), this, SLOT(ShowknNormal()));
 			connect(&knnormalworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
 			connect(&knnormalworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
@@ -1073,6 +1172,7 @@ void structrock::radius()
         if(ok)
         {
             ranormalworker.setWorkFlowMode(false);
+			ranormalworker.setUnmute();
 			connect(&ranormalworker, SIGNAL(show()), this, SLOT(ShowraNormal()));
 			connect(&ranormalworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
 			connect(&ranormalworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
@@ -1123,6 +1223,7 @@ void structrock::StaticRemoveOutlier()
         if(ok)
         {
             staticroworker.setWorkFlowMode(false);
+			staticroworker.setUnmute();
 			connect(&staticroworker, SIGNAL(show()), this, SLOT(ShowSRO()));
 			connect(&staticroworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
 			connect(&staticroworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
@@ -1205,6 +1306,7 @@ void structrock::RegionGrowingSegmentation()
                 dataLibrary::RGSparameter.IsSmoothMode = multi_input.IsSmoothMode();
                 
                 rgsworker.setWorkFlowMode(false);
+				rgsworker.setUnmute();
 				connect(&rgsworker, SIGNAL(show()), this, SLOT(ShowRGS()));
 				connect(&rgsworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
 				connect(&rgsworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
@@ -1279,6 +1381,7 @@ void structrock::SaveClusters()
         if(!filename.isNull())
         {   
 			saveclustersworker.setWorkFlowMode(false);
+			saveclustersworker.setUnmute();
             connect(&saveclustersworker, SIGNAL(SaveClustersReady(QString)), this, SLOT(ShowSavedClusters(QString)));
 			connect(&saveclustersworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
             connect(&saveclustersworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
@@ -2047,77 +2150,71 @@ void structrock::Stereonet(QString filename)
 
 void structrock::Testing()
 {
-	/*if(dataLibrary::Lines.size() == 0)
+	// Function: transform downloaded original ASCII text point cloud file to XYZ file.
+    /*QString filename = QFileDialog::getOpenFileName(NULL,tr("Open Data File"),QDir::currentPath(),tr("Data (*.txt);;All files (*.*)"));
+	if(!filename.isNull())
 	{
-		Show_Errors(QString("You Haven't Saved Any Segmentation Yet!"));
-	}
-	else
-	{
-        QString filename = QFileDialog::getSaveFileName(this,tr("Export Clusters"),QDir::currentPath(),tr("(*.txt)"));
-
-        if(!filename.isNull())
-        {
-			QByteArray ba = filename.toLocal8Bit();
-			string* strfilename = new string(ba.data());
-    
-    string patchhullfilename = strfilename->substr(0, strfilename->size()-4) += "_patchhulls.txt";
-    ofstream patchhullfout(patchhullfilename.c_str());
-    
-    int num_of_clusters = dataLibrary::selectedPatches.size();
-	patchhullfout<<num_of_clusters<<"\n";
-    for(int cluster_index = 0; cluster_index < dataLibrary::selectedPatches.size(); cluster_index++)
-    {
-        pcl::PointCloud<pcl::PointXYZ>::Ptr plane_cloud (new pcl::PointCloud<pcl::PointXYZ>);
-        for(int j = 0; j < dataLibrary::clusters[dataLibrary::selectedPatches[cluster_index]].indices.size(); j++)
-        {
-            plane_cloud->push_back(dataLibrary::cloudxyz->at(dataLibrary::clusters[dataLibrary::selectedPatches[cluster_index]].indices[j]));
-        }
+        testworker.setWorkFlowMode(false);
+        connect(&testworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
+        connect(&testworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
         
-        //prepare for projecting data onto plane
-        float nx, ny, nz;
-        float curvature;
-        Eigen::Matrix3f convariance_matrix;
-        Eigen::Vector4f xyz_centroid, plane_parameters;
-        pcl::compute3DCentroid(*plane_cloud, xyz_centroid);
-        pcl::computeCovarianceMatrix(*plane_cloud, xyz_centroid, convariance_matrix);
-        pcl::solvePlaneParameters(convariance_matrix, nx, ny, nz, curvature);
-        Eigen::Vector3f centroid;
-        centroid(0)=xyz_centroid(0);
-        centroid(1)=xyz_centroid(1);
-        centroid(2)=xyz_centroid(2);
-        
-        //project data onto plane
-        //set plane parameter
-        pcl::ModelCoefficients::Ptr coefficients (new pcl::ModelCoefficients());
-        coefficients->values.resize(4);
-        coefficients->values[0] = nx;
-        coefficients->values[1] = ny;
-        coefficients->values[2] = nz;
-        coefficients->values[3] = - (nx*xyz_centroid[0] + ny*xyz_centroid[1] + nz*xyz_centroid[2]);
-        //projecting
-        pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_projected (new pcl::PointCloud<pcl::PointXYZ>);
-        pcl::ProjectInliers<pcl::PointXYZ> proj;
-        proj.setModelType(pcl::SACMODEL_PLANE);
-        proj.setInputCloud(plane_cloud);
-        proj.setModelCoefficients(coefficients);
-        proj.filter(*cloud_projected);
-        
-        //generate a concave or convex
-        pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_hull (new pcl::PointCloud<pcl::PointXYZ>);
-        pcl::ConvexHull<pcl::PointXYZ> chull;
-        chull.setInputCloud(cloud_projected);
-        chull.reconstruct(*cloud_hull);
-
-		patchhullfout<<cloud_hull->size()<<"\n";
-		for(int i=0; i<cloud_hull->size(); i++)
-		{
-			patchhullfout<<cloud_hull->at(i).x<<"\t"<<cloud_hull->at(i).y<<"\t"<<cloud_hull->at(i).z<<"\n";
-		}
-	}
-
-	delete strfilename;
-		}
+        testworker.testing(filename);
 	}*/
+    
+    //Function: connect to postgreSQL database.
+    bool isOK;
+    QString conn_string = QInputDialog::getText(NULL, "Input Dialog", "Connection Strings:", QLineEdit::Normal, "keyword = value", &isOK);
+    if(isOK)
+    {
+        const char *conninfo;
+        PGconn     *conn;
+        PGresult   *res;
+        int         nFields;
+        int         i, j;
+        
+        conninfo = conn_string.toStdString().c_str();
+
+        /* Make a connection to the database */
+        conn = PQconnectdb(conninfo);
+
+        /* Check to see that the backend connection was successfully made */
+        if (PQstatus(conn) != CONNECTION_OK)
+        {
+            std::string Error_message("Connection to database failed: ");
+            std::ostringstream oss;
+            oss << PQerrorMessage(conn);
+            Error_message += oss.str();
+            Show_Errors(QString::fromUtf8(Error_message.c_str()));
+        }
+        else
+        {
+            /*
+            * Our test case here involves using a cursor, for which we must be inside
+            * a transaction block.  We could do the whole thing with a single
+            * PQexec() of "select * from pg_database", but that's too trivial to make
+            * a good example.
+            */
+
+            /* Start a transaction block */
+            res = PQexec(conn, "BEGIN");
+            if (PQresultStatus(res) != PGRES_COMMAND_OK)
+            {
+                std::string Error_message("BEGIN command failed: ");
+                std::ostringstream oss;
+                oss << PQerrorMessage(conn);
+                Error_message += oss.str();
+                Show_Errors(QString::fromUtf8(Error_message.c_str()));
+                PQclear(res);
+            }
+
+		/* end the transaction */
+            res = PQexec(conn, "END");
+            PQclear(res);
+
+	/* close the connection to the database and cleanup */
+            PQfinish(conn);
+        }
+    }
 }
 
 void structrock::TestResult(int i)
@@ -2263,6 +2360,14 @@ void structrock::ShowStatus(int i)
 	case STATUS_SHOWPROCESS:
 		{
 			head="Busy	preparing to show process";
+			head+=tail;
+			ui.label->setText(QString::fromStdString(head));
+			ui.label->setPalette(pa);
+			break;
+		}
+	case STATUS_TESTING:
+		{
+			head="Busy	testing";
 			head+=tail;
 			ui.label->setText(QString::fromStdString(head));
 			ui.label->setPalette(pa);

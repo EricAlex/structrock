@@ -57,7 +57,10 @@ void downsampleWorker::doWork(const double &leaf)
     sor.setLeafSize (leaf, leaf, leaf);
     sor.filter (*dataLibrary::downsampledxyz);
 
-    emit show();
+    if(!this->getMuteMode())
+    {
+        emit show();
+    }
 	is_success = true;
     dataLibrary::Status = STATUS_READY;
     emit showReadyStatus();

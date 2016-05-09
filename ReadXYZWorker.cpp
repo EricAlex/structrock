@@ -69,7 +69,7 @@ bool loadCloud (const string &filename, pcl::PointCloud<pcl::PointXYZ> &cloud)
         
         // Tokenize the line
         boost::trim (line);
-        boost::split (st, line, boost::is_any_of ("\t\r "), boost::token_compress_on);
+        boost::split (st, line, boost::is_any_of (",\t\r "), boost::token_compress_on);
         
         if (st.size () < 3)
             continue;
@@ -95,7 +95,10 @@ void ReadXYZWorker::doWork(const QString &filename)
 
 	if(loadCloud (*strfilename, *dataLibrary::cloudxyz))
 	{
-		emit ReadXYZReady(CLOUDXYZ);
+		if(!this->getMuteMode())
+        {
+            emit ReadXYZReady(CLOUDXYZ);
+        }
 		is_success = true;
 	}
 	else

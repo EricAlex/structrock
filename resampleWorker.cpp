@@ -68,7 +68,10 @@ void resampleWorker::doWork(const double &radius)
     // Reconstruct
     mls.process (*dataLibrary::mls_points);
 
-    emit show();
+    if(!this->getMuteMode())
+    {
+        emit show();
+    }
 	if(this->getWorkFlowMode())
 	{
 		emit GoWorkFlow();

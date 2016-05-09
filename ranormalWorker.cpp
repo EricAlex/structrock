@@ -60,7 +60,10 @@ void ranormalWorker::doWork(const double &radius)
     ne.setRadiusSearch(radius);
     ne.compute(*dataLibrary::normal);
 
-    emit show();
+    if(!this->getMuteMode())
+    {
+        emit show();
+    }
 	is_success = true;
     dataLibrary::Status = STATUS_READY;
     emit showReadyStatus();

@@ -83,7 +83,11 @@ void RGSWorker::doWork()
 
     dataLibrary::cloudxyzrgb_clusters = reg.getColoredCloud();
 
-    emit show();
+    if(!this->getMuteMode())
+    {
+        emit show();
+    }
+    
 	is_success = true;
     dataLibrary::Status = STATUS_READY;
     emit showReadyStatus();

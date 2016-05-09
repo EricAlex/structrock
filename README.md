@@ -22,6 +22,12 @@ Qt is a cross-platform C++ application development framework. Official website: 
 
 Version required: >= 4.8.
 
+### PostgreSQL
+
+PostgreSQL often simply Postgres, 
+is an object-relational database management system (ORDBMS) with an emphasis on extensibility and standards-compliance.
+It is used to support an experimental function of structrock: accessing very large LiDAR datasets stored in PostgreSQL databases.
+
 ## Functions
 
 Structrock provide a platform on which workflows of processing outcrop point clouds can be designed.

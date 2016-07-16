@@ -38,6 +38,7 @@
  */
 
 #pragma once
+#include <time.h>
 #include <pcl/visualization/pcl_visualizer.h>
 #include <pcl/visualization/cloud_viewer.h>
 #include <pcl/io/io.h>
@@ -85,6 +86,7 @@ public:
 	static std::vector<WorkLine> Workflow;
 	static int current_workline_index;
 	static bool have_called_read_file;
+	static clock_t start, finish;
 
 public:
 	static void checkupflow();

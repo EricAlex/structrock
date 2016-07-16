@@ -42,6 +42,7 @@
 #include <string>
 #include <sstream>
 #include <algorithm>
+#include <time.h>
 #include <math.h>
 #include <libpq-fe.h>
 #include "pcl/common/common_headers.h"
@@ -960,6 +961,30 @@ void structrock::command_parser()
 			else
 			{
 				Show_Errors(QString("Test: Path not provided."));
+			}
+		}
+		else if(command_string == "tmstart")
+		{
+			dataLibrary::start = clock();
+		}
+		else if(command_string == "tmstop")
+		{
+			if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>0)
+			{
+				std::ofstream outfile;
+				outfile.open(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[0], std::ios_base::app);
+				std::string tmrecord_name = "unknown";
+				if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>1)
+                {
+                	tmrecord_name = dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1];
+                }
+                dataLibrary::finish = clock();
+				outfile << tmrecord_name << ": " << (double)(dataLibrary::finish-dataLibrary::start)/CLOCKS_PER_SEC << endl;
+				outfile.close();
+			}
+			else
+			{
+				Show_Errors(QString("Tmstop: Path not provided."));
 			}
 		}
 		else

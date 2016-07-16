@@ -77,6 +77,8 @@ std::vector<Line> dataLibrary::Lines_min;
 std::vector<WorkLine> dataLibrary::Workflow;
 int dataLibrary::current_workline_index = 0;
 bool dataLibrary::have_called_read_file = false;
+clock_t dataLibrary::start;
+clock_t dataLibrary::finish;
 
 void dataLibrary::checkupflow()
 {

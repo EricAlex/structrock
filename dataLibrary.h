@@ -39,6 +39,7 @@
 
 #pragma once
 #include <time.h>
+#include <fstream>
 #include <pcl/visualization/pcl_visualizer.h>
 #include <pcl/visualization/cloud_viewer.h>
 #include <pcl/io/io.h>
@@ -86,7 +87,8 @@ public:
 	static std::vector<WorkLine> Workflow;
 	static int current_workline_index;
 	static bool have_called_read_file;
-	static clock_t start, finish;
+	static clock_t start;
+	static clock_t finish;
 
 public:
 	static void checkupflow();
@@ -106,4 +108,5 @@ public:
 	static bool isSegmentCrossPolygon(const Eigen::Vector2f &point_a, const Eigen::Vector2f &point_b, const std::vector<Eigen::Vector2f> &convex_hull);
 	static bool CheckClusters(const Eigen::Vector3f &V, const Eigen::Vector3f &xyz_centroid, pcl::PointCloud<pcl::PointXYZ>::Ptr convex_hull, const Eigen::Vector3f &V_i, const Eigen::Vector3f &xyz_centroid_i, pcl::PointCloud<pcl::PointXYZ>::Ptr projected_i, int patchNum, float &length, bool needExLine);
 	static bool checkContents(std::vector<std::string> contents, std::string query);
+	static void write_text_to_log_file( const std::string &text );
 };

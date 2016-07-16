@@ -37,6 +37,9 @@
  *
  */
 
+#include <time.h>
+#include <string>
+#include <sstream>
 #include <pcl/features/normal_3d.h>
 #include <pcl/features/normal_3d_omp.h>
 #include <qinputdialog.h>
@@ -53,6 +56,8 @@ void knnormalWorker::doWork(const int &k)
 
     dataLibrary::Status = STATUS_KNNORMAL;
 
+    dataLibrary::start = clock();
+
     pcl::NormalEstimationOMP<pcl::PointXYZ, pcl::Normal> ne;
     ne.setInputCloud(dataLibrary::cloudxyz);
     pcl::search::KdTree<pcl::PointXYZ>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZ>());
@@ -60,6 +65,17 @@ void knnormalWorker::doWork(const int &k)
     ne.setKSearch(k);
 
     ne.compute(*dataLibrary::normal);
+
+    dataLibrary::finish = clock();
+
+    if(this->getWriteLogMpde())
+    {
+        std::string log_text = "Computing K Nearest Neighbor Normal costs: ";
+        std::ostringstream strs;
+        strs << (double)(dataLibrary::finish-dataLibrary::start)/CLOCKS_PER_SEC;
+        log_text += (strs.str() +" seconds.");
+        dataLibrary::write_text_to_log_file(log_text);
+    }
 
     if(!this->getMuteMode())
     {

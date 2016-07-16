@@ -37,6 +37,9 @@
  *
  */
 
+#include <time.h>
+#include <string>
+#include <sstream>
 #include <pcl/filters/voxel_grid.h>
 #include <qinputdialog.h>
 #include <qmessagebox.h>
@@ -51,11 +54,25 @@ void downsampleWorker::doWork(const double &leaf)
     dataLibrary::checkupflow();
 
     dataLibrary::Status = STATUS_DOWNSAMPLE;
+
+    dataLibrary::start = clock();
+
     // Create the filtering object
     pcl::VoxelGrid<pcl::PointXYZ> sor;
     sor.setInputCloud (dataLibrary::cloudxyz);
     sor.setLeafSize (leaf, leaf, leaf);
     sor.filter (*dataLibrary::downsampledxyz);
+
+    dataLibrary::finish = clock();
+
+    if(this->getWriteLogMpde())
+    {
+        std::string log_text = "Downsampling costs: ";
+        std::ostringstream strs;
+        strs << (double)(dataLibrary::finish-dataLibrary::start)/CLOCKS_PER_SEC;
+        log_text += (strs.str() +" seconds.");
+        dataLibrary::write_text_to_log_file(log_text);
+    }
 
     if(!this->getMuteMode())
     {

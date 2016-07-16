@@ -39,6 +39,8 @@
 
 #include <fstream>
 #include <string>
+#include <time.h>
+#include <sstream>
 #include <pcl/point_types.h>
 #include "ReadXYZWorker.h"
 #include "globaldef.h"
@@ -93,6 +95,8 @@ void ReadXYZWorker::doWork(const QString &filename)
     
     dataLibrary::Status = STATUS_OPENXYZ;
 
+    dataLibrary::start = clock();
+
 	if(loadCloud (*strfilename, *dataLibrary::cloudxyz))
 	{
 		if(!this->getMuteMode())
@@ -107,6 +111,17 @@ void ReadXYZWorker::doWork(const QString &filename)
 	}
 
 	dataLibrary::cloudID = *strfilename;
+
+    dataLibrary::finish = clock();
+
+    if(this->getWriteLogMpde())
+    {
+        std::string log_text = "Reading XYZ file costs: ";
+        std::ostringstream strs;
+        strs << (double)(dataLibrary::finish-dataLibrary::start)/CLOCKS_PER_SEC;
+        log_text += (strs.str() +" seconds.");
+        dataLibrary::write_text_to_log_file(log_text);
+    }
 
 	dataLibrary::Status = STATUS_READY;
     emit showReadyStatus();

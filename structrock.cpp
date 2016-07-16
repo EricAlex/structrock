@@ -445,12 +445,28 @@ void structrock::command_parser()
 				{
 					readfileworker.setWorkFlowMode(true);
 					readfileworker.setUnmute();
+					readfileworker.setWriteLog();
                     if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>1)
                     {
                         if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1] == "mute")
                         {
                             readfileworker.setMute();
                         }
+                        else if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1] == "nolog")
+	                    {
+	                        readfileworker.setUnWriteLog();
+	                    }
+	                    if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>2)
+	                    {
+	                    	if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[2] == "mute")
+	                        {
+	                            readfileworker.setMute();
+	                        }
+	                        else if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[2] == "nolog")
+		                    {
+		                        readfileworker.setUnWriteLog();
+		                    }
+	                    }
                     }
 					QObject::connect(&readfileworker, SIGNAL(ReadFileReady(int)), this, SLOT(ShowPCD(int)));
 					QObject::connect(&readfileworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
@@ -516,12 +532,28 @@ void structrock::command_parser()
 				{
 					readxyzworker.setWorkFlowMode(true);
 					readxyzworker.setUnmute();
+					readxyzworker.setWriteLog();
                     if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>1)
                     {
                         if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1] == "mute")
                         {
                             readxyzworker.setMute();
                         }
+                        else if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1] == "nolog")
+	                    {
+	                        readxyzworker.setUnWriteLog();
+	                    }
+	                    if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>2)
+	                    {
+	                    	if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[2] == "mute")
+	                        {
+	                            readxyzworker.setMute();
+	                        }
+	                        else if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[2] == "nolog")
+		                    {
+		                        readxyzworker.setUnWriteLog();
+		                    }
+	                    }
                     }
 					connect(&readxyzworker, SIGNAL(ReadXYZReady(int)), this, SLOT(ShowPCD(int)));
 					connect(&readxyzworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
@@ -630,11 +662,27 @@ void structrock::command_parser()
 			{
 				saveclustersworker.setWorkFlowMode(true);
 				saveclustersworker.setUnmute();
+				saveclustersworker.setWriteLog();
                 if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>1)
                 {
                     if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1] == "mute")
                     {
                         saveclustersworker.setMute();
+                    }
+                    else if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1] == "nolog")
+                    {
+                        saveclustersworker.setUnWriteLog();
+                    }
+                    if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>2)
+                    {
+                    	if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[2] == "mute")
+                        {
+                            saveclustersworker.setMute();
+                        }
+                        else if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[2] == "nolog")
+	                    {
+	                        saveclustersworker.setUnWriteLog();
+	                    }
                     }
                 }
 				connect(&saveclustersworker, SIGNAL(SaveClustersReady(QString)), this, SLOT(ShowSavedClusters(QString)));
@@ -659,11 +707,27 @@ void structrock::command_parser()
 
 				downsampleworker.setWorkFlowMode(true);
 				downsampleworker.setUnmute();
+				downsampleworker.setWriteLog();
                 if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>1)
                 {
                     if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1] == "mute")
                     {
                         downsampleworker.setMute();
+                    }
+                    else if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1] == "nolog")
+                    {
+                        downsampleworker.setUnWriteLog();
+                    }
+                    if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>2)
+                    {
+                    	if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[2] == "mute")
+                        {
+                            downsampleworker.setMute();
+                        }
+                        else if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[2] == "nolog")
+	                    {
+	                        downsampleworker.setUnWriteLog();
+	                    }
                     }
                 }
 				connect(&downsampleworker, SIGNAL(show()), this, SLOT(ShowDownsample()));
@@ -688,11 +752,27 @@ void structrock::command_parser()
 
 				resampleworker.setWorkFlowMode(true);
 				resampleworker.setUnmute();
+				resampleworker.setWriteLog();
                 if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>1)
                 {
                     if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1] == "mute")
                     {
                         resampleworker.setMute();
+                    }
+                    else if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1] == "nolog")
+                    {
+                        resampleworker.setUnWriteLog();
+                    }
+                    if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>2)
+                    {
+                    	if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[2] == "mute")
+                        {
+                            resampleworker.setMute();
+                        }
+                        else if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[2] == "nolog")
+	                    {
+	                        resampleworker.setUnWriteLog();
+	                    }
                     }
                 }
 				connect(&resampleworker, SIGNAL(show()), this, SLOT(ShowResample()));
@@ -717,11 +797,27 @@ void structrock::command_parser()
 
 				knnormalworker.setWorkFlowMode(true);
 				knnormalworker.setUnmute();
+				knnormalworker.setWriteLog();
                 if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>1)
                 {
                     if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1] == "mute")
                     {
                         knnormalworker.setMute();
+                    }
+                    else if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1] == "nolog")
+                    {
+                        knnormalworker.setUnWriteLog();
+                    }
+                    if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>2)
+                    {
+                    	if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[2] == "mute")
+                        {
+                            knnormalworker.setMute();
+                        }
+                        else if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[2] == "nolog")
+	                    {
+	                        knnormalworker.setUnWriteLog();
+	                    }
                     }
                 }
 				connect(&knnormalworker, SIGNAL(show()), this, SLOT(ShowknNormal()));
@@ -746,11 +842,27 @@ void structrock::command_parser()
 
 				ranormalworker.setWorkFlowMode(true);
 				ranormalworker.setUnmute();
+				ranormalworker.setWriteLog();
                 if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>1)
                 {
                     if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1] == "mute")
                     {
                         ranormalworker.setMute();
+                    }
+                    else if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1] == "nolog")
+                    {
+                        ranormalworker.setUnWriteLog();
+                    }
+                    if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>2)
+                    {
+                    	if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[2] == "mute")
+                        {
+                            ranormalworker.setMute();
+                        }
+                        else if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[2] == "nolog")
+	                    {
+	                        ranormalworker.setUnWriteLog();
+	                    }
                     }
                 }
 				connect(&ranormalworker, SIGNAL(show()), this, SLOT(ShowraNormal()));
@@ -775,11 +887,27 @@ void structrock::command_parser()
 
 				staticroworker.setWorkFlowMode(true);
 				staticroworker.setUnmute();
+				staticroworker.setWriteLog();
                 if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>1)
                 {
                     if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1] == "mute")
                     {
                         staticroworker.setMute();
+                    }
+                    else if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1] == "nolog")
+                    {
+                        staticroworker.setUnWriteLog();
+                    }
+                    if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>2)
+                    {
+                    	if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[2] == "mute")
+                        {
+                            staticroworker.setMute();
+                        }
+                        else if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[2] == "nolog")
+	                    {
+	                        staticroworker.setUnWriteLog();
+	                    }
                     }
                 }
 				connect(&staticroworker, SIGNAL(show()), this, SLOT(ShowSRO()));
@@ -832,12 +960,28 @@ void structrock::command_parser()
 					}
 					rgsworker.setWorkFlowMode(true);
 					rgsworker.setUnmute();
+					rgsworker.setWriteLog();
                     if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>6)
                     {
                         if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[6] == "mute")
                         {
                             rgsworker.setMute();
                         }
+                        else if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[6] == "nolog")
+	                    {
+	                        rgsworker.setUnWriteLog();
+	                    }
+	                    if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>7)
+	                    {
+	                    	if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[7] == "mute")
+	                        {
+	                            rgsworker.setMute();
+	                        }
+	                        else if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[7] == "nolog")
+		                    {
+		                        rgsworker.setUnWriteLog();
+		                    }
+	                    }
                     }
 					connect(&rgsworker, SIGNAL(show()), this, SLOT(ShowRGS()));
 					connect(&rgsworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
@@ -961,30 +1105,6 @@ void structrock::command_parser()
 			else
 			{
 				Show_Errors(QString("Test: Path not provided."));
-			}
-		}
-		else if(command_string == "tmstart")
-		{
-			dataLibrary::start = clock();
-		}
-		else if(command_string == "tmstop")
-		{
-			if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>0)
-			{
-				std::ofstream outfile;
-				outfile.open(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[0], std::ios_base::app);
-				std::string tmrecord_name = "unknown";
-				if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>1)
-                {
-                	tmrecord_name = dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1];
-                }
-                dataLibrary::finish = clock();
-				outfile << tmrecord_name << ": " << (double)(dataLibrary::finish-dataLibrary::start)/CLOCKS_PER_SEC << endl;
-				outfile.close();
-			}
-			else
-			{
-				Show_Errors(QString("Tmstop: Path not provided."));
 			}
 		}
 		else

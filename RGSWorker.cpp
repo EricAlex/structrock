@@ -37,6 +37,9 @@
  *
  */
 
+#include <time.h>
+#include <string>
+#include <sstream>
 #include <qinputdialog.h>
 #include <qmessagebox.h>
 #include "RGSWorker.h"
@@ -52,6 +55,8 @@ void RGSWorker::doWork()
     dataLibrary::checkupflow();
 
     dataLibrary::Status = STATUS_RGS;
+
+    dataLibrary::start = clock();
 
     double curvature = dataLibrary::RGSparameter.curvature;
     double smoothness = dataLibrary::RGSparameter.smoothness;
@@ -82,6 +87,17 @@ void RGSWorker::doWork()
     reg.extract(dataLibrary::clusters);
 
     dataLibrary::cloudxyzrgb_clusters = reg.getColoredCloud();
+
+    dataLibrary::finish = clock();
+
+    if(this->getWriteLogMpde())
+    {
+        std::string log_text = "Region Growing Segmentation costs: ";
+        std::ostringstream strs;
+        strs << (double)(dataLibrary::finish-dataLibrary::start)/CLOCKS_PER_SEC;
+        log_text += (strs.str() +" seconds.");
+        dataLibrary::write_text_to_log_file(log_text);
+    }
 
     if(!this->getMuteMode())
     {

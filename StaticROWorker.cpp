@@ -37,6 +37,9 @@
  *
  */
 
+#include <time.h>
+#include <string>
+#include <sstream>
 #include <pcl/filters/statistical_outlier_removal.h>
 #include <qinputdialog.h>
 #include <qmessagebox.h>
@@ -52,6 +55,8 @@ void StaticROWorker::doWork(const double &stdDev)
 
     dataLibrary::Status = STATUS_STATICRO;
 
+    dataLibrary::start = clock();
+
     pcl::StatisticalOutlierRemoval<pcl::PointXYZ> sor;
     sor.setInputCloud(dataLibrary::cloudxyz);
     sor.setMeanK(50);
@@ -62,6 +67,17 @@ void StaticROWorker::doWork(const double &stdDev)
 
     sor.setNegative(false);
     sor.filter(*dataLibrary::outlier_removed_inlier);
+
+    dataLibrary::finish = clock();
+
+    if(this->getWriteLogMpde())
+    {
+        std::string log_text = "Statistical Outlier Removing costs: ";
+        std::ostringstream strs;
+        strs << (double)(dataLibrary::finish-dataLibrary::start)/CLOCKS_PER_SEC;
+        log_text += (strs.str() +" seconds.");
+        dataLibrary::write_text_to_log_file(log_text);
+    }
 
     if(!this->getMuteMode())
     {

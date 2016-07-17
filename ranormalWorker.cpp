@@ -69,7 +69,7 @@ void ranormalWorker::doWork(const double &radius)
 
     if(this->getWriteLogMpde())
     {
-        std::string log_text = "Computing Radius Normal costs: ";
+        std::string log_text = "\tComputing Radius Normal costs: ";
         std::ostringstream strs;
         strs << (double)(dataLibrary::finish-dataLibrary::start)/CLOCKS_PER_SEC;
         log_text += (strs.str() +" seconds.");

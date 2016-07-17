@@ -79,7 +79,7 @@ void resampleWorker::doWork(const double &radius)
 
     if(this->getWriteLogMpde())
     {
-        std::string log_text = "Resampling costs: ";
+        std::string log_text = "\tResampling costs: ";
         std::ostringstream strs;
         strs << (double)(dataLibrary::finish-dataLibrary::start)/CLOCKS_PER_SEC;
         log_text += (strs.str() +" seconds.");

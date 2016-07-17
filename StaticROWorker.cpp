@@ -72,7 +72,7 @@ void StaticROWorker::doWork(const double &stdDev)
 
     if(this->getWriteLogMpde())
     {
-        std::string log_text = "Statistical Outlier Removing costs: ";
+        std::string log_text = "\tStatistical Outlier Removing costs: ";
         std::ostringstream strs;
         strs << (double)(dataLibrary::finish-dataLibrary::start)/CLOCKS_PER_SEC;
         log_text += (strs.str() +" seconds.");

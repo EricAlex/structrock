@@ -418,7 +418,7 @@ void SaveClustersWorker::doWork(const QString &filename)
 
     if(this->getWriteLogMpde())
     {
-        std::string log_text = "Saving Clusters costs: ";
+        std::string log_text = "\tSaving Clusters costs: ";
         std::ostringstream strs;
         strs << (double)(dataLibrary::finish-dataLibrary::start)/CLOCKS_PER_SEC;
         log_text += (strs.str() +" seconds.");

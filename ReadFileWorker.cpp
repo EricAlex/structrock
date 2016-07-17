@@ -104,7 +104,8 @@ void ReadFileWorker::doWork(const QString &filename)
 
     if(this->getWriteLogMpde())
     {
-        std::string log_text = "Reading PCD file costs: ";
+		std::string string_filename = filename.toUtf8().constData();
+        std::string log_text = string_filename + "\n\tReading PCD file costs: ";
         std::ostringstream strs;
         strs << (double)(dataLibrary::finish-dataLibrary::start)/CLOCKS_PER_SEC;
         log_text += (strs.str() +" seconds.");

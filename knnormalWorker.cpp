@@ -70,7 +70,7 @@ void knnormalWorker::doWork(const int &k)
 
     if(this->getWriteLogMpde())
     {
-        std::string log_text = "Computing K Nearest Neighbor Normal costs: ";
+        std::string log_text = "\tComputing K Nearest Neighbor Normal costs: ";
         std::ostringstream strs;
         strs << (double)(dataLibrary::finish-dataLibrary::start)/CLOCKS_PER_SEC;
         log_text += (strs.str() +" seconds.");

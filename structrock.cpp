@@ -1096,6 +1096,7 @@ void structrock::command_parser()
                         testworker.setSplitMode(true);
                     }
                 }
+				connect(&testworker, SIGNAL(ReadFileReady(int)), this, SLOT(ShowPCD(int)));
 				connect(&testworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
 				connect(&testworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
 				connect(&testworker, SIGNAL(GoWorkFlow()), this, SLOT(command_parser()));
@@ -1149,6 +1150,18 @@ void structrock::ShowPCD(int i)
 	{
 		viewer->addPointCloud(dataLibrary::cloudxyzrgb, dataLibrary::cloudID, v1);
         
+        viewer->resetCameraViewpoint (dataLibrary::cloudID);
+        // Position, Viewpoint, Down
+        viewer->setCameraPose (0,0,0,0,0,-1,0,1,0);
+        viewer->resetCamera();
+        
+		ui.qvtkWidget->update();
+	}
+	else if(i==CLOUDXYZI)
+	{
+		pcl::visualization::PointCloudColorHandlerGenericField<pcl::PointXYZI> intensity_distribution(dataLibrary::cloudxyzi, "intensity"); 
+		viewer->addPointCloud<pcl::PointXYZI> (dataLibrary::cloudxyzi, intensity_distribution, dataLibrary::cloudID, v1);
+
         viewer->resetCameraViewpoint (dataLibrary::cloudID);
         // Position, Viewpoint, Down
         viewer->setCameraPose (0,0,0,0,0,-1,0,1,0);
@@ -1223,10 +1236,6 @@ void structrock::ShowResample()
 	viewer->addPointCloud(dataLibrary::mls_points, "resampled", v2);
 	viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 0.0, 0.7, 0.0, "resampled", v2);
 	ui.qvtkWidget->update();
-
-	dataLibrary::temp_cloud->clear();
-	*dataLibrary::temp_cloud = *dataLibrary::mls_points;
-	dataLibrary::mls_points->clear();
 }
 
 void structrock::downsampling()
@@ -1262,10 +1271,6 @@ void structrock::ShowDownsample()
 	viewer->addPointCloud(dataLibrary::downsampledxyz, "downsampled", v2);
 	viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 0.0, 0.7, 0.0, "downsampled", v2);
 	ui.qvtkWidget->update();
-
-	dataLibrary::temp_cloud->clear();
-	*dataLibrary::temp_cloud = *dataLibrary::downsampledxyz;
-	dataLibrary::downsampledxyz->clear();
 }
 
 void structrock::k_neighbor()
@@ -1302,8 +1307,6 @@ void structrock::ShowknNormal()
 	viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 0.0, 0.0, 1.0, "normals", v2);
 	viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_LINE_WIDTH, 2, "normals", v2);
 	ui.qvtkWidget->update();
-
-	pcl::concatenateFields(*dataLibrary::cloudxyz, *dataLibrary::normal, *dataLibrary::pointnormals);
 }
 
 void structrock::radius()
@@ -1340,8 +1343,6 @@ void structrock::ShowraNormal()
 	viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 0.0, 0.0, 1.0, "normals", v2);
 	viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_LINE_WIDTH, 2, "normals", v2);
 	ui.qvtkWidget->update();
-
-	pcl::concatenateFields(*dataLibrary::cloudxyz, *dataLibrary::normal, *dataLibrary::pointnormals);
 }
 
 void structrock::saveScreen()
@@ -1397,11 +1398,6 @@ void structrock::ShowSRO()
 	viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 0.0, 0.7, 0.0, "inlier", v2);
 
 	ui.qvtkWidget->update();
-
-	dataLibrary::temp_cloud->clear();
-	*dataLibrary::temp_cloud = *dataLibrary::outlier_removed_inlier;
-	dataLibrary::outlier_removed_inlier->clear();
-	dataLibrary::outlier_removed_outlier->clear();
 }
 
 void structrock::ConditionalRemoveOutlier()

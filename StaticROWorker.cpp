@@ -57,20 +57,35 @@ void StaticROWorker::doWork(const double &stdDev)
 
     dataLibrary::start = clock();
 
+	//begin of processing
     pcl::StatisticalOutlierRemoval<pcl::PointXYZ> sor;
     sor.setInputCloud(dataLibrary::cloudxyz);
     sor.setMeanK(50);
     sor.setStddevMulThresh(stdDev);
 
+	if(!dataLibrary::outlier_removed_outlier->empty())
+	{
+		dataLibrary::outlier_removed_outlier->clear();
+	}
     sor.setNegative(true);
     sor.filter(*dataLibrary::outlier_removed_outlier);
 
+	if(!dataLibrary::outlier_removed_inlier->empty())
+	{
+		dataLibrary::outlier_removed_inlier->clear();
+	}
     sor.setNegative(false);
     sor.filter(*dataLibrary::outlier_removed_inlier);
 
+	dataLibrary::temp_cloud->clear();
+	*dataLibrary::temp_cloud = *dataLibrary::outlier_removed_inlier;
+
+	is_success = true;
+	//end of processing
+
     dataLibrary::finish = clock();
 
-    if(this->getWriteLogMpde())
+    if(this->getWriteLogMpde()&&is_success)
     {
         std::string log_text = "\tStatistical Outlier Removing costs: ";
         std::ostringstream strs;
@@ -79,11 +94,11 @@ void StaticROWorker::doWork(const double &stdDev)
         dataLibrary::write_text_to_log_file(log_text);
     }
 
-    if(!this->getMuteMode())
+    if(!this->getMuteMode()&&is_success)
     {
         emit show();
     }
-	is_success = true;
+
     dataLibrary::Status = STATUS_READY;
     emit showReadyStatus();
 	if(this->getWorkFlowMode()&&is_success)

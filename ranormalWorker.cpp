@@ -58,16 +58,30 @@ void ranormalWorker::doWork(const double &radius)
 
     dataLibrary::start = clock();
 
+	//begin of processing
     pcl::NormalEstimationOMP<pcl::PointXYZ, pcl::Normal> ne;
     ne.setInputCloud(dataLibrary::cloudxyz);
     pcl::search::KdTree<pcl::PointXYZ>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZ>());
     ne.setSearchMethod(tree);
     ne.setRadiusSearch(radius);
+	if(!dataLibrary::normal->empty())
+	{
+		dataLibrary::normal->clear();
+	}
     ne.compute(*dataLibrary::normal);
+
+	if(!dataLibrary::pointnormals->empty())
+	{
+		dataLibrary::pointnormals->clear();
+	}
+	pcl::concatenateFields(*dataLibrary::cloudxyz, *dataLibrary::normal, *dataLibrary::pointnormals);
+
+	is_success = true;
+	//end of processing
 
     dataLibrary::finish = clock();
 
-    if(this->getWriteLogMpde())
+    if(this->getWriteLogMpde()&&is_success)
     {
         std::string log_text = "\tComputing Radius Normal costs: ";
         std::ostringstream strs;
@@ -76,11 +90,10 @@ void ranormalWorker::doWork(const double &radius)
         dataLibrary::write_text_to_log_file(log_text);
     }
 
-    if(!this->getMuteMode())
+    if(!this->getMuteMode()&&is_success)
     {
         emit show();
     }
-	is_success = true;
     dataLibrary::Status = STATUS_READY;
     emit showReadyStatus();
 	if(this->getWorkFlowMode()&&is_success)

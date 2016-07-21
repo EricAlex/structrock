@@ -47,52 +47,48 @@ void SavePcdASCIIWorker::doWork(const QString &filename)
 {
 	bool is_success(false);
 
-	if(!filename.isNull())
+	dataLibrary::checkupflow();
+
+	QByteArray ba = filename.toLocal8Bit();
+	std::string* strfilename = new std::string(ba.data());
+
+	dataLibrary::Status = STATUS_SAVEASCII;
+
+	//begin of processing
+	if(dataLibrary::cloudxyz->empty()&&dataLibrary::cloudxyzrgb->empty())
 	{
-		dataLibrary::Status = STATUS_SAVEASCII;
-
-		QByteArray ba = filename.toLocal8Bit();
-		std::string* strfilename = new std::string(ba.data());
-
-		if(dataLibrary::cloudxyz->empty()&&dataLibrary::cloudxyzrgb->empty())
+		emit showErrors(QString("You Haven't Opened Any Dataset Yet!"));
+	}
+	else if(!dataLibrary::cloudxyz->empty())
+	{
+		if(!pcl::io::savePCDFileASCII(*strfilename, *dataLibrary::cloudxyz))
 		{
-			emit showErrors(QString("You Haven't Opened Any Dataset Yet!"));
+			is_success = true;
 		}
-		else if(!dataLibrary::cloudxyz->empty())
+		else
 		{
-			dataLibrary::checkupflow();
-
-			if(!pcl::io::savePCDFileASCII(*strfilename, *dataLibrary::cloudxyz))
-			{
-				is_success = true;
-			}
-			else
-			{
-				emit showErrors("Saving pcd as ASCII failed.");
-			}
-		}
-		else if(!dataLibrary::cloudxyzrgb->empty())
-		{
-			if(!pcl::io::savePCDFileASCII(*strfilename, *dataLibrary::cloudxyzrgb))
-			{
-				is_success = true;
-			}
-			else
-			{
-				emit showErrors("Saving pcd as ASCII failed.");
-			}
-		}
-		delete strfilename;
-		dataLibrary::Status = STATUS_READY;
-		emit showReadyStatus();
-		if(this->getWorkFlowMode()&&is_success)
-		{
-			this->Sleep(1000);
-			emit GoWorkFlow();
+			emit showErrors("Saving pcd as ASCII failed.");
 		}
 	}
-	else
+	else if(!dataLibrary::cloudxyzrgb->empty())
 	{
-		emit showErrors("Empty file name.");
+		if(!pcl::io::savePCDFileASCII(*strfilename, *dataLibrary::cloudxyzrgb))
+		{
+			is_success = true;
+		}
+		else
+		{
+			emit showErrors("Saving pcd as ASCII failed.");
+		}
+	}
+	//end of processing
+
+	dataLibrary::Status = STATUS_READY;
+	emit showReadyStatus();
+	delete strfilename;
+	if(this->getWorkFlowMode()&&is_success)
+	{
+		this->Sleep(1000);
+		emit GoWorkFlow();
 	}
 }

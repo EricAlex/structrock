@@ -58,6 +58,7 @@ void RGSWorker::doWork()
 
     dataLibrary::start = clock();
 
+	//begin of processing
     double curvature = dataLibrary::RGSparameter.curvature;
     double smoothness = dataLibrary::RGSparameter.smoothness;
     double residual = dataLibrary::RGSparameter.residual;
@@ -88,9 +89,12 @@ void RGSWorker::doWork()
 
     dataLibrary::cloudxyzrgb_clusters = reg.getColoredCloud();
 
+	is_success = true;
+	//end of processing
+
     dataLibrary::finish = clock();
 
-    if(this->getWriteLogMpde())
+    if(this->getWriteLogMpde()&&is_success)
     {
         std::string log_text = "\tRegion Growing Segmentation costs: ";
         std::ostringstream strs;
@@ -99,12 +103,11 @@ void RGSWorker::doWork()
         dataLibrary::write_text_to_log_file(log_text);
     }
 
-    if(!this->getMuteMode())
+    if(!this->getMuteMode()&&is_success)
     {
         emit show();
     }
-    
-	is_success = true;
+
     dataLibrary::Status = STATUS_READY;
     emit showReadyStatus();
 	if(this->getWorkFlowMode()&&is_success)

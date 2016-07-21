@@ -65,6 +65,9 @@ public:
 
 private slots:
     void doWork(const QString &filename);
+
+signals:
+	void ReadFileReady(int i);
     
 private:
     bool _is_split;

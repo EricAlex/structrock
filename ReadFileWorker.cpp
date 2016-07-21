@@ -61,6 +61,7 @@ void ReadFileWorker::doWork(const QString &filename)
 
 	dataLibrary::start = clock();
 
+	//begin of processing
 	if(!pcl::io::loadPCDFile (*strfilename, *cloud_blob))
 	{
 		dataLibrary::clearall();
@@ -88,21 +89,16 @@ void ReadFileWorker::doWork(const QString &filename)
             }
 			is_success = true;
 		}
-		delete strfilename;
-		if(this->getWorkFlowMode()&&is_success)
-		{
-			this->Sleep(1000);
-			emit GoWorkFlow();
-		}
 	}
 	else
 	{
 		emit showErrors("Error opening pcd file.");
 	}
+	//end of processing
 
 	dataLibrary::finish = clock();
 
-    if(this->getWriteLogMpde())
+    if(this->getWriteLogMpde()&&is_success)
     {
 		std::string string_filename = filename.toUtf8().constData();
         std::string log_text = string_filename + "\n\tReading PCD file costs: ";
@@ -114,4 +110,10 @@ void ReadFileWorker::doWork(const QString &filename)
 
 	dataLibrary::Status = STATUS_READY;
 	emit showReadyStatus();
+	delete strfilename;
+	if(this->getWorkFlowMode()&&is_success)
+	{
+		this->Sleep(1000);
+		emit GoWorkFlow();
+	}
 }

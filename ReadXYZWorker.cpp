@@ -97,6 +97,7 @@ void ReadXYZWorker::doWork(const QString &filename)
 
     dataLibrary::start = clock();
 
+	//begin of processing
 	if(loadCloud (*strfilename, *dataLibrary::cloudxyz))
 	{
 		if(!this->getMuteMode())
@@ -111,10 +112,11 @@ void ReadXYZWorker::doWork(const QString &filename)
 	}
 
 	dataLibrary::cloudID = *strfilename;
+	//end of processing
 
     dataLibrary::finish = clock();
 
-    if(this->getWriteLogMpde())
+    if(this->getWriteLogMpde()&&is_success)
     {
 		std::string string_filename = filename.toUtf8().constData();
         std::string log_text = string_filename + "\n\tReading XYZ file costs: ";

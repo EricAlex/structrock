@@ -54,6 +54,7 @@ class dataLibrary
 public:
 	static pcl::PointCloud<pcl::PointXYZ>::Ptr cloudxyz;
 	static pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloudxyzrgb;
+	static pcl::PointCloud<pcl::PointXYZI>::Ptr cloudxyzi;
 	static pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloudxyzrgb_clusters;
 	static sensor_msgs::PointCloud2::Ptr cloud_blob;
 	static pcl::PointCloud<pcl::Normal>::Ptr normal;

@@ -38,6 +38,7 @@
  */
 
 #include <vector>
+#include <iostream>
 #include <fstream>
 #include <string>
 #include <sstream>
@@ -1199,6 +1200,7 @@ void structrock::saveasbinary()
 
 void structrock::exit()
 {
+	cout << '\a';
 	QApplication::closeAllWindows();
 	qApp->exit();
 }

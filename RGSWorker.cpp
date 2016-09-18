@@ -37,6 +37,9 @@
  *
  */
 
+#include <time.h>
+#include <string>
+#include <sstream>
 #include <qinputdialog.h>
 #include <qmessagebox.h>
 #include "RGSWorker.h"
@@ -53,6 +56,9 @@ void RGSWorker::doWork()
 
     dataLibrary::Status = STATUS_RGS;
 
+    dataLibrary::start = clock();
+
+    //begin of processing
     double curvature = dataLibrary::RGSparameter.curvature;
     double smoothness = dataLibrary::RGSparameter.smoothness;
     double residual = dataLibrary::RGSparameter.residual;
@@ -82,12 +88,26 @@ void RGSWorker::doWork()
     reg.extract(dataLibrary::clusters);
 
     dataLibrary::cloudxyzrgb_clusters = reg.getColoredCloud();
+
+    is_success = true;
+    //end of processing
+
+    dataLibrary::finish = clock();
+
+    if(this->getWriteLogMode()&&is_success)
+    {
+        std::string log_text = "\tRegion Growing Segmentation costs: ";
+        std::ostringstream strs;
+        strs << (double)(dataLibrary::finish - dataLibrary::start)/CLOCKS_PER_SEC;
+        log_text += (strs.str() + " seconds.");
+        dataLibrary::write_text_to_log_file(log_text);
+    }
     
-    if(!this->getMuteMode())
+    if(!this->getMuteMode()&&is_success)
     {
         emit show();
     }
-	is_success = true;
+    
     dataLibrary::Status = STATUS_READY;
     emit showReadyStatus();
 	if(this->getWorkFlowMode()&&is_success)

@@ -47,38 +47,35 @@ void SaveNormalsWorker::doWork(const QString &filename)
 {
 	bool is_success(false);
 
-	if(!filename.isNull())
-	{
-		dataLibrary::Status = STATUS_SAVENORMALS;
+	QByteArray ba = filename.toLocal8Bit();
+	std::string* strfilename = new std::string(ba.data());
 
-		QByteArray ba = filename.toLocal8Bit();
-		std::string* strfilename = new std::string(ba.data());
-		if(dataLibrary::pointnormals->empty())
-		{
-			emit showErrors(QString("You Haven't Extracted Any Normals Yet!"));
-		}
-		else
-		{
-			if(!pcl::io::savePCDFileBinary(*strfilename, *dataLibrary::pointnormals))
-			{
-				is_success = true;
-			}
-			else
-			{
-				emit showErrors("Saving normals failed.");
-			}
-		}
-		delete strfilename;
-		dataLibrary::Status = STATUS_READY;
-		emit showReadyStatus();
-		if(this->getWorkFlowMode()&&is_success)
-		{
-			this->Sleep(1000);
-			emit GoWorkFlow();
-		}
+	dataLibrary::Status = STATUS_SAVENORMALS;
+
+	//begin of processing
+	if(dataLibrary::pointnormals->empty())
+	{
+		emit showErrors(QString("You Haven't Extracted Any Normals Yet!"));
 	}
 	else
 	{
-		emit showErrors("Empty file name.");
+		if(!pcl::io::savePCDFileBinary(*strfilename, *dataLibrary::pointnormals))
+		{
+			is_success = true;
+		}
+		else
+		{
+			emit showErrors("Saving normals failed.");
+		}
+	}
+	//end of processing
+
+	delete strfilename;
+	dataLibrary::Status = STATUS_READY;
+	emit showReadyStatus();
+	if(this->getWorkFlowMode()&&is_success)
+	{
+		this->Sleep(1000);
+		emit GoWorkFlow();
 	}
 }

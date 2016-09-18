@@ -67,14 +67,15 @@ void ShowProcessWorker::doWork()
 {
 	bool is_success(false);
 
+	dataLibrary::Status = STATUS_SHOWPROCESS;
+
+	//begin of processing
 	if(dataLibrary::clusters.size() == 0)
 	{
 		emit showErrors("ShowProcess: You Haven't Performed Any Segmentation Yet!");
 	}
 	else
 	{
-		dataLibrary::Status = STATUS_SHOWPROCESS;
-
 		//Clear data if needed
 		if(!dataLibrary::cloud_hull_all->empty())
 			dataLibrary::cloud_hull_all->clear();
@@ -228,12 +229,16 @@ void ShowProcessWorker::doWork()
 		}
 
 		is_success = true;
-		emit show();
+	}
+	//end of processing
 
-		dataLibrary::Status = STATUS_READY;
-		emit showReadyStatus();
+	if(!this->getMuteMode()&&is_success)
+	{
+		emit show();
 	}
 
+	dataLibrary::Status = STATUS_READY;
+	emit showReadyStatus();
 	if(this->getWorkFlowMode()&&is_success)
 	{
 		this->Sleep(1000);

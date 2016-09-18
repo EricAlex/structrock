@@ -51,6 +51,7 @@ public:
 	{
 		_workflow_mode = false;
         _is_mute = false;
+        _write_log = true;
 		moveToThread(&t);
 		t.start();
 	}
@@ -67,6 +68,7 @@ signals:
 private:
 	bool _workflow_mode;
     bool _is_mute;
+    bool _write_log;
 public:
 	void setWorkFlowMode(bool mode)
 	{
@@ -87,6 +89,18 @@ public:
 	bool getMuteMode()
 	{
 		return _is_mute;
+	}
+	void setWriteLog()
+	{
+		_write_log = true;
+	}
+	void setUnWriteLog()
+	{
+		_write_log = false;
+	}
+	bool getWriteLogMode()
+	{
+		return _write_log;
 	}
 	void Sleep(unsigned long ms)
 	{

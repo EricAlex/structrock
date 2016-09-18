@@ -37,6 +37,9 @@
  *
  */
 
+#include <time.h>
+#include <string>
+#include <sstream>
 #include <pcl/io/io.h>
 #include <pcl/io/pcd_io.h>
 #include <pcl/point_types.h>
@@ -58,6 +61,9 @@ void ReadFileWorker::doWork(const QString &filename)
 
 	dataLibrary::Status = STATUS_OPENPCD;
 
+	dataLibrary::start = clock();
+
+	//begin of processing
 	if(!pcl::io::loadPCDFile (*strfilename, *cloud_blob))
 	{
 		dataLibrary::clearall();
@@ -83,18 +89,31 @@ void ReadFileWorker::doWork(const QString &filename)
             }
 			is_success = true;
 		}
-		delete strfilename;
-		if(this->getWorkFlowMode()&&is_success)
-		{
-			this->Sleep(1000);
-			emit GoWorkFlow();
-		}
 	}
 	else
 	{
 		emit showErrors("Error opening pcd file.");
 	}
+	//end of processing
+
+	dataLibrary::finish = clock();
+
+    if(this->getWriteLogMode()&&is_success)
+    {
+        std::string string_filename = filename.toUtf8().constData();
+        std::string log_text = string_filename + "\n\tReading PCD file costs: ";
+        std::ostringstream strs;
+        strs << (double)(dataLibrary::finish - dataLibrary::start)/CLOCKS_PER_SEC;
+        log_text += (strs.str() + " seconds.");
+        dataLibrary::write_text_to_log_file(log_text);
+    }
 
 	dataLibrary::Status = STATUS_READY;
 	emit showReadyStatus();
+	delete strfilename;
+	if(this->getWorkFlowMode()&&is_success)
+	{
+		this->Sleep(1000);
+		emit GoWorkFlow();
+	}
 }

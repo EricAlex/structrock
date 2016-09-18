@@ -37,6 +37,8 @@
  *
  */
 
+#include <time.h>
+#include <sstream>
 #include <vector>
 #include <fstream>
 #include <string>
@@ -73,7 +75,10 @@ void SaveClustersWorker::doWork(const QString &filename)
     string* strfilename = new string(ba.data());
     
     dataLibrary::Status = STATUS_SAVECLUSTERS;
+
+    dataLibrary::start = clock();
     
+    //begin of processing
     //compute centor point and normal
     float nx_all, ny_all, nz_all;
     float curvature_all;
@@ -397,15 +402,28 @@ void SaveClustersWorker::doWork(const QString &filename)
     }
     hull_traces_out<<flush;
     hull_traces_out.close();
+
+    is_success = true;
+    //end of processing
+
+    dataLibrary::finish = clock();
+
+    if(this->getWriteLogMode()&&is_success)
+    {
+        std::string log_text = "\tSaving Clusters costs: ";
+        std::ostringstream strs;
+        strs << (double)(dataLibrary::finish - dataLibrary::start)/CLOCKS_PER_SEC;
+        log_text += (strs.str() + " seconds.");
+        dataLibrary::write_text_to_log_file(log_text);
+    }
     
-    if(!this->getMuteMode())
+    if(!this->getMuteMode()&&is_success)
     {
         emit SaveClustersReady(filename);
     }
-	is_success = true;
+
     dataLibrary::Status = STATUS_READY;
     emit showReadyStatus();
-
 	delete strfilename;
 	if(this->getWorkFlowMode()&&is_success)
 	{

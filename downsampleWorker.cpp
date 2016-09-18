@@ -37,6 +37,9 @@
  *
  */
 
+#include <time.h>
+#include <string>
+#include <sstream>
 #include <pcl/filters/voxel_grid.h>
 #include <qinputdialog.h>
 #include <qmessagebox.h>
@@ -51,17 +54,42 @@ void downsampleWorker::doWork(const double &leaf)
     dataLibrary::checkupflow();
 
     dataLibrary::Status = STATUS_DOWNSAMPLE;
+
+    dataLibrary::start = clock();
+
+    //begin of processing
     // Create the filtering object
     pcl::VoxelGrid<pcl::PointXYZ> sor;
     sor.setInputCloud (dataLibrary::cloudxyz);
     sor.setLeafSize (leaf, leaf, leaf);
+    if(!dataLibrary::downsampledxyz->empty())
+    {
+        dataLibrary::downsampledxyz->clear();
+    }
     sor.filter (*dataLibrary::downsampledxyz);
+
+    dataLibrary::temp_cloud->clear();
+    *dataLibrary::temp_cloud = *dataLibrary::downsampledxyz;
+
+    is_success = true;
+    //end of processing
+
+    dataLibrary::finish = clock();
+
+    if(this->getWriteLogMode()&&is_success)
+    {
+        std::string log_text = "\tDownsampling costs: ";
+        std::ostringstream strs;
+        strs << (double)(dataLibrary::finish - dataLibrary::start)/CLOCKS_PER_SEC;
+        log_text += (strs.str() + " seconds.");
+        dataLibrary::write_text_to_log_file(log_text);
+    }
     
-    if(!this->getMuteMode())
+    if(!this->getMuteMode()&&is_success)
     {
         emit show();
     }
-	is_success = true;
+    
     dataLibrary::Status = STATUS_READY;
     emit showReadyStatus();
 	if(this->getWorkFlowMode()&&is_success)

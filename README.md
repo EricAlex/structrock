@@ -14,7 +14,7 @@ Citation (more to be added soon):
 	author={Wang, Xin and Zou, Lejun and Shen, Xiaohua and Ren, Yupeng and Qin, Yi},
 	journal={Computers \& Geosciences},
 	year={2016},
-	doi={10.1016/j.cageo.2016.11.002},
+	doi={http://dx.doi.org/10.1016/j.cageo.2016.11.002},
 	publisher={Elsevier}
 }
 ```

@@ -161,10 +161,14 @@ void SaveClustersWorker::doWork(const QString &filename)
     string textfilename = strfilename->substr(0, strfilename->size()-4) += "_table.txt";
     string dip_dipdir_file = strfilename->substr(0, strfilename->size()-4) += "_dip_dipdir.txt";
     string dipdir_dip_file = strfilename->substr(0, strfilename->size()-4) += "_dipdir_dip.txt";
+	string area_file = strfilename->substr(0, strfilename->size()-4) += "_area.txt";
+	string roughness_file = strfilename->substr(0, strfilename->size()-4) += "_roughness.txt";
     string fracture_intensity = strfilename->substr(0, strfilename->size()-4) += "_fracture_intensity.txt";
     ofstream fout(textfilename.c_str());
     ofstream dip_dipdir_out(dip_dipdir_file.c_str());
     ofstream dipdir_dip_out(dipdir_dip_file.c_str());
+	ofstream area_out(area_file.c_str());
+	ofstream roughness_out(roughness_file.c_str());
     ofstream fracture_intensity_out(fracture_intensity.c_str());
     fout<<"Flag"<<"\t"<<"Number"<<"\t"<<"Points"<<"\t"<<"Direc"<<"\t"<<"Dip"<<"\t"<<"Area"<<"\t"<<"Length"<<"\t"<<"Roughness"<<"\n";
     
@@ -352,6 +356,8 @@ void SaveClustersWorker::doWork(const QString &filename)
             total_length += length;
             dip_dipdir_out<<dip<<"\t"<<dip_direction<<"\n";
             dipdir_dip_out<<dip_direction<<"\t"<<dip<<"\n";
+			area_out<<area<<"\n";
+			roughness_out<<fracture_roughness<<"\n";
 
 			dataLibrary::out_dips.push_back(dip);
 			dataLibrary::out_dip_directions.push_back(dip_direction);
@@ -378,6 +384,10 @@ void SaveClustersWorker::doWork(const QString &filename)
     dip_dipdir_out.close();
     dipdir_dip_out<<flush;
     dipdir_dip_out.close();
+	area_out<<flush;
+    area_out.close();
+	roughness_out<<flush;
+    roughness_out.close();
     fracture_intensity_out<<flush;
     fracture_intensity_out.close();
     fbinaryout.close();

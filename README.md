@@ -19,6 +19,12 @@ Citation (more to be added soon):
 }
 ```
 
+![Detailed results.](https://github.com/EricAlex/structrock/blob/master/wiki/img/detailed_results.jpg)
+*Detailed results obtained from a portion of the point cloud. (a) A portion of the outcrop and (b) its point cloud. (c) Segmentation results obtained using the proposed algorithm. Different fracture regions are shown in various colors, and the non-fracture regions are shown in red. (d) Estimated fracture planes obtained from the segmentation results.*
+
+![Outcrop results.](https://github.com/EricAlex/structrock/blob/master/wiki/img/outcrop_results.jpg)
+*(a) The outcrop used to test the proposed algorithm and (b) the segmentation results. Different fracture regions are shown by different colors, and the non-fracture regions are shown in red.*
+
 ## Dependencies
 
 ### Point Cloud Library (PCL)
@@ -78,6 +84,10 @@ add "/ENTRY:mainCRTStartup" to "structrock"'s "Linker->Command Line" properties,
 ### On Linux
 
 Open terminal window, go to "build" folder, run "cmake ../src", then run "make".
+
+### After a successful compilation, Structrock looks like this:
+
+![GUI.](https://github.com/EricAlex/structrock/blob/master/wiki/img/gui.jpg)
 
 ## Processing actions
 

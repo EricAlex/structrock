@@ -45,15 +45,32 @@ class ranormalWorker :
 Q_OBJECT
 
 public:
+	ranormalWorker() : Worker()
+    {
+        _show_curvature = false;
+    }
+
 	void ranormal(const double &radius)
 	{
 		QMetaObject::invokeMethod(this, "doWork", Q_ARG(const double &, radius));
 	}
+	
+	void setShowCurvature(bool mode)
+    {
+        _show_curvature = mode;
+    }
+	bool getShowCurvature()
+    {
+        return _show_curvature;
+    }
 
 private slots:
     void doWork(const double &radius);
 
 signals:
-	void show();
+	void show(bool _show_curvature);
+
+private:
+    bool _show_curvature;
 };
 

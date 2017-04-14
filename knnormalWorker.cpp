@@ -92,7 +92,7 @@ void knnormalWorker::doWork(const int &k)
 
     if(!this->getMuteMode()&&is_success)
     {
-        emit show();
+        emit show(_show_curvature);
     }
 
     dataLibrary::Status = STATUS_READY;

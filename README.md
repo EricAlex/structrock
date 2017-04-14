@@ -183,9 +183,11 @@ Parameters:
 
 1. "Number of neoghbor points" (required, int),
 
-2. mute (optional, follow required parameters, if declared, the result of this action will not be displayed on the screen),
+2. showcurvature (optional, follow required parameters, but before "mute" and "nolog", if declared, the curvature map on the point cloud will be displayed on the screen),
 
-3. nolog (optional, follow required parameters, if declared, this action and the time it takes to perform this action will not be logged)
+3. mute (optional, follow required parameters, if declared, the result of this action will not be displayed on the screen),
+
+4. nolog (optional, follow required parameters, if declared, this action and the time it takes to perform this action will not be logged)
 
 ### ranormal
 
@@ -195,9 +197,11 @@ Parameters:
 
 1. "Search radius" (required, double),
 
-2. mute (optional, follow required parameters, if declared, the result of this action will not be displayed on the screen),
+2. showcurvature (optional, follow required parameters, but before "mute" and "nolog", if declared, the curvature map on the point cloud will be displayed on the screen),
 
-3. nolog (optional, follow required parameters, if declared, this action and the time it takes to perform this action will not be logged)
+3. mute (optional, follow required parameters, if declared, the result of this action will not be displayed on the screen),
+
+4. nolog (optional, follow required parameters, if declared, this action and the time it takes to perform this action will not be logged)
 
 ### rostatic
 

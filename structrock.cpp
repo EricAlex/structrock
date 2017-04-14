@@ -797,31 +797,61 @@ void structrock::command_parser()
 				ss >> k;
 
 				knnormalworker.setWorkFlowMode(true);
+				knnormalworker.setShowCurvature(false);
 				knnormalworker.setUnmute();
 				knnormalworker.setWriteLog();
                 if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>1)
                 {
-                    if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1] == "mute")
-                    {
-                        knnormalworker.setMute();
-                    }
-                    else if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1] == "nolog")
-                    {
-                        knnormalworker.setUnWriteLog();
-                    }
-                    if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>2)
-                    {
-                    	if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[2] == "mute")
-                        {
-                            knnormalworker.setMute();
-                        }
-                        else if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[2] == "nolog")
-	                    {
-	                        knnormalworker.setUnWriteLog();
-	                    }
-                    }
+					if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1] == "showcurvature")
+					{
+						knnormalworker.setShowCurvature(true);
+						if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>2)
+						{
+							if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[2] == "mute")
+							{
+								knnormalworker.setMute();
+							}
+							else if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[2] == "nolog")
+							{
+								knnormalworker.setUnWriteLog();
+							}
+							if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>3)
+							{
+                    			if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[3] == "mute")
+								{
+									knnormalworker.setMute();
+								}
+								else if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[3] == "nolog")
+								{
+									knnormalworker.setUnWriteLog();
+								}
+							}
+						}
+					}
+					else
+					{
+						if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1] == "mute")
+						{
+							knnormalworker.setMute();
+						}
+						else if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1] == "nolog")
+						{
+							knnormalworker.setUnWriteLog();
+						}
+						if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>2)
+						{
+                    		if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[2] == "mute")
+							{
+								knnormalworker.setMute();
+							}
+							else if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[2] == "nolog")
+							{
+								knnormalworker.setUnWriteLog();
+							}
+						}
+					}
                 }
-				connect(&knnormalworker, SIGNAL(show()), this, SLOT(ShowknNormal()));
+				connect(&knnormalworker, SIGNAL(show(bool)), this, SLOT(ShowknNormal(bool)));
 				connect(&knnormalworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
 				connect(&knnormalworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
 				connect(&knnormalworker, SIGNAL(GoWorkFlow()), this, SLOT(command_parser()));
@@ -842,31 +872,61 @@ void structrock::command_parser()
 				ss >> radius;
 
 				ranormalworker.setWorkFlowMode(true);
+				ranormalworker.setShowCurvature(false);
 				ranormalworker.setUnmute();
 				ranormalworker.setWriteLog();
                 if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>1)
                 {
-                    if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1] == "mute")
-                    {
-                        ranormalworker.setMute();
-                    }
-                    else if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1] == "nolog")
-                    {
-                        ranormalworker.setUnWriteLog();
-                    }
-                    if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>2)
-                    {
-                    	if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[2] == "mute")
-                        {
-                            ranormalworker.setMute();
-                        }
-                        else if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[2] == "nolog")
-	                    {
-	                        ranormalworker.setUnWriteLog();
-	                    }
-                    }
+					if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1] == "showcurvature")
+					{
+						ranormalworker.setShowCurvature(true);
+						if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>2)
+						{
+							if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[2] == "mute")
+							{
+								ranormalworker.setMute();
+							}
+							else if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[2] == "nolog")
+							{
+								ranormalworker.setUnWriteLog();
+							}
+							if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>3)
+							{
+                    			if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[3] == "mute")
+								{
+									ranormalworker.setMute();
+								}
+								else if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[3] == "nolog")
+								{
+									ranormalworker.setUnWriteLog();
+								}
+							}
+						}
+					}
+					else
+					{
+						if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1] == "mute")
+						{
+							ranormalworker.setMute();
+						}
+						else if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1] == "nolog")
+						{
+							ranormalworker.setUnWriteLog();
+						}
+						if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>2)
+						{
+                    		if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[2] == "mute")
+							{
+								ranormalworker.setMute();
+							}
+							else if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[2] == "nolog")
+							{
+								ranormalworker.setUnWriteLog();
+							}
+						}
+					}
                 }
-				connect(&ranormalworker, SIGNAL(show()), this, SLOT(ShowraNormal()));
+				connect(&ranormalworker, SIGNAL(show(bool)), this, SLOT(ShowraNormal(bool)));
 				connect(&ranormalworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
 				connect(&ranormalworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
 				connect(&ranormalworker, SIGNAL(GoWorkFlow()), this, SLOT(command_parser()));
@@ -1298,11 +1358,20 @@ void structrock::k_neighbor()
     }
 }
 
-void structrock::ShowknNormal()
+void structrock::ShowknNormal(bool showCurvature)
 {
-	viewer->removeAllPointClouds(v1);
-	viewer->addPointCloud(dataLibrary::cloudxyz, dataLibrary::cloudID, v1);
-	viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 0.0, 0.7, 0.0, dataLibrary::cloudID, v1);
+	if(!showCurvature)
+	{
+		viewer->removeAllPointClouds(v1);
+		viewer->addPointCloud(dataLibrary::cloudxyz, dataLibrary::cloudID, v1);
+		viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 0.0, 0.7, 0.0, dataLibrary::cloudID, v1);
+	}
+	else
+	{
+		viewer->removeAllPointClouds(v1);
+		pcl::visualization::PointCloudColorHandlerGenericField<pcl::PointNormal> handler_k(dataLibrary::pointnormals, "curvature");
+		viewer->addPointCloud(dataLibrary::pointnormals, handler_k, "curvature", v1);
+	}
 
 	viewer->removeAllPointClouds(v2);
 	viewer->addPointCloudNormals<pcl::PointXYZ, pcl::Normal>(dataLibrary::cloudxyz, dataLibrary::normal, 50, 0.02, "normals", v2);
@@ -1334,11 +1403,20 @@ void structrock::radius()
     }
 }
 
-void structrock::ShowraNormal()
+void structrock::ShowraNormal(bool showCurvature)
 {
-	viewer->removeAllPointClouds(v1);
-	viewer->addPointCloud(dataLibrary::cloudxyz, dataLibrary::cloudID, v1);
-	viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 0.0, 0.7, 0.0, dataLibrary::cloudID, v1);
+	if(!showCurvature)
+	{
+		viewer->removeAllPointClouds(v1);
+		viewer->addPointCloud(dataLibrary::cloudxyz, dataLibrary::cloudID, v1);
+		viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 0.0, 0.7, 0.0, dataLibrary::cloudID, v1);
+	}
+	else
+	{
+		viewer->removeAllPointClouds(v1);
+		pcl::visualization::PointCloudColorHandlerGenericField<pcl::PointNormal> handler_k(dataLibrary::pointnormals, "curvature");
+		viewer->addPointCloud(dataLibrary::pointnormals, handler_k, "curvature", v1);
+	}
 
 	viewer->removeAllPointClouds(v2);
 	viewer->addPointCloudNormals<pcl::PointXYZ, pcl::Normal>(dataLibrary::cloudxyz, dataLibrary::normal, 50, 0.02, "normals", v2);

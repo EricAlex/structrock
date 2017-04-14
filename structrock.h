@@ -93,9 +93,9 @@ private slots:
 	void resampling();
 	void ShowResample();
 	void k_neighbor();
-	void ShowknNormal();
+	void ShowknNormal(bool showCurvature);
 	void radius();
-	void ShowraNormal();
+	void ShowraNormal(bool showCurvature);
 	void StaticRemoveOutlier();
 	void ShowSRO();
 	void ConditionalRemoveOutlier();

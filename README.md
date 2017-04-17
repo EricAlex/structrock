@@ -237,6 +237,16 @@ Parameters:
 
 8. nolog (optional, follow required parameters, if declared, this action and the time it takes to perform this action will not be logged)
 
+### showsfeature
+
+Description: Show different kinds of features on the fracture faces or on the outcrop. Features include the fracture faces' roughness, area, linear features, circular features, wave-like features, and etc.
+
+Parameters:
+
+1. "The name of the feature" (required, currently "roughness" and "area" are included.)
+
+2. "Percentage Out threshold" (Optional; Less than 0.5 and bigger than 0.0. If provided, drop the head and the tail in the distribution of the feature to show the variation of the majority of the feature data.)
+
 ### quitsession
 
 Description: quit Structrock.

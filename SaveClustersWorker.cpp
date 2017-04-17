@@ -296,6 +296,10 @@ void SaveClustersWorker::doWork(const QString &filename)
 		}
 		float fracture_roughness=fracture_total_distance/plane_cloud->size();
 
+		//saved for further analysis
+		dataLibrary::areas.push_back(area);
+		dataLibrary::roughnesses.push_back(fracture_roughness);
+
 		float length;
         bool flag = dataLibrary::CheckClusters(dataLibrary::plane_normal_all, centroid_all, dataLibrary::cloud_hull_all, normal, centroid, cloud_projected, cluster_index, length, false);
         fout<<flag<<"\t"<<cluster_index+1<<"\t"<<dataLibrary::clusters[cluster_index].indices.size()<<"\t"<<dip_direction<<"\t"<<dip<<"\t"<<area<<"\t"<<length<<"\t"<<fracture_roughness<<"\n";

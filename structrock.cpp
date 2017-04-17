@@ -86,6 +86,7 @@
 #include "SaveClustersWorker.h"
 #include "ReadXYZWorker.h"
 #include "ShowProcessWorker.h"
+#include "ShowSFeatureWorker.h"
 #include "TestWorker.h"
 #include "globaldef.h"
 #include "dataLibrary.h"
@@ -1063,24 +1064,88 @@ void structrock::command_parser()
 		}
 		else if(command_string == "showprocess")
 		{
-			if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>0)
+			if(dataLibrary::clusters.size() == 0)
 			{
-				for(int i=0; i<dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size(); i++)
-				{
-					dataLibrary::contents.push_back(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[i]);
-				}
-
-				showprocessworker.setWorkFlowMode(true);
-				connect(&showprocessworker, SIGNAL(show()), this, SLOT(Show_Process()));
-				connect(&showprocessworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
-				connect(&showprocessworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
-				connect(&showprocessworker, SIGNAL(GoWorkFlow()), this, SLOT(command_parser()));
-
-				showprocessworker.showProcess();
+				Show_Errors(QString("ShowProcess: You Haven't Performed Any Segmentation Yet!"));
 			}
 			else
 			{
-				Show_Errors(QString("Showprocess: No parameters given."));
+				if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>0)
+				{
+					for(int i=0; i<dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size(); i++)
+					{
+						dataLibrary::contents.push_back(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[i]);
+					}
+
+					showprocessworker.setWorkFlowMode(true);
+					showprocessworker.setUnmute();
+					showprocessworker.setWriteLog();
+					connect(&showprocessworker, SIGNAL(show()), this, SLOT(Show_Process()));
+					connect(&showprocessworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
+					connect(&showprocessworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
+					connect(&showprocessworker, SIGNAL(GoWorkFlow()), this, SLOT(command_parser()));
+
+					showprocessworker.showProcess();
+				}
+				else
+				{
+					Show_Errors(QString("Showprocess: No parameters given."));
+				}
+			}
+		}
+		else if(command_string == "showsfeature")
+		{
+			if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>0)
+			{
+				showsfeatureworker.setWorkFlowMode(true);
+				showsfeatureworker.setUnmute();
+				showsfeatureworker.setWriteLog();
+				connect(&showsfeatureworker, SIGNAL(show()), this, SLOT(Show_SFeature()));
+				connect(&showsfeatureworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
+				connect(&showsfeatureworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
+				connect(&showsfeatureworker, SIGNAL(GoWorkFlow()), this, SLOT(command_parser()));
+
+				std::string feature_str = dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[0];
+				if(feature_str == "roughness")
+				{
+					dataLibrary::FeatureParameter.feature_type = FEATURE_ROUGHNESS;
+					if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>1)
+					{
+						float percent_out;
+						std::stringstream ss(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1]);
+						ss >> percent_out;
+						dataLibrary::FeatureParameter.percent_out = percent_out;
+					}
+					else
+					{
+						dataLibrary::FeatureParameter.percent_out = 0.0f;
+					}
+					showsfeatureworker.showSFeature();
+				}
+				else if(feature_str == "area")
+				{
+					dataLibrary::FeatureParameter.feature_type = FEATURE_AREA;
+					if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>1)
+					{
+						float percent_out;
+						std::stringstream ss(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1]);
+						ss >> percent_out;
+						dataLibrary::FeatureParameter.percent_out = percent_out;
+					}
+					else
+					{
+						dataLibrary::FeatureParameter.percent_out = 0.0f;
+					}
+					showsfeatureworker.showSFeature();
+				}
+				else
+				{
+					Show_Errors(QString("ShowSFeatures: the name of the surface feature not correctly provided."));
+				}
+			}
+			else
+			{
+				Show_Errors(QString("ShowSFeature: No parameters given."));
 			}
 		}
 		else if(command_string == "quitsession")
@@ -1872,6 +1937,27 @@ void structrock::Show_Process()
 	ui.qvtkWidget->update();
 }
 
+void structrock::Show_SFeature()
+{
+	if(!dataLibrary::cloudxyzrgb->empty())
+	{
+		viewer->removeAllPointClouds(v1);
+		viewer->addPointCloud(dataLibrary::cloudxyzrgb, dataLibrary::cloudID, v1);
+	}
+	else
+	{
+		viewer->removeAllPointClouds(v1);
+		viewer->addPointCloud(dataLibrary::cloudxyz, dataLibrary::cloudID, v1);
+		viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 0.0, 0.7, 0.0, dataLibrary::cloudID, v1);
+	}
+
+	viewer->removeAllPointClouds(v2);
+	viewer->removeAllShapes(v2);
+	viewer->addPointCloud(dataLibrary::cloudxyzrgb_features, "feature", v2);
+
+	ui.qvtkWidget->update();
+}
+
 void structrock::OpenClusters()
 {
 	QString filename = QFileDialog::getOpenFileName(this,tr("Open Point Cloud Clusters Data"),QDir::currentPath(),tr("(*.bin)"));
@@ -2579,6 +2665,14 @@ void structrock::ShowStatus(int i)
 	case STATUS_SHOWPROCESS:
 		{
 			head="Busy	preparing to show process";
+			head+=tail;
+			ui.label->setText(QString::fromStdString(head));
+			ui.label->setPalette(pa);
+			break;
+		}
+	case STATUS_SHOWSFEATURE:
+		{
+			head="Busy	preparing to show surface features";
 			head+=tail;
 			ui.label->setText(QString::fromStdString(head));
 			ui.label->setPalette(pa);

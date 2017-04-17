@@ -69,168 +69,181 @@ void ShowProcessWorker::doWork()
 
 	dataLibrary::Status = STATUS_SHOWPROCESS;
 
+	dataLibrary::start = clock();
+
 	//begin of processing
-	if(dataLibrary::clusters.size() == 0)
+	//Clear data if needed
+	if(!dataLibrary::cloud_hull_all->empty())
+		dataLibrary::cloud_hull_all->clear();
+	if(dataLibrary::fracture_faces_hull.size()!=0)
+		std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr>().swap(dataLibrary::fracture_faces_hull);
+	if(dataLibrary::Lines.size()!=0)
+		std::vector<Line>().swap(dataLibrary::Lines);
+	if(dataLibrary::Lines_max.size()!=0)
+		std::vector<Line>().swap(dataLibrary::Lines_max);
+	if(dataLibrary::Lines_min.size()!=0)
+		std::vector<Line>().swap(dataLibrary::Lines_min);
+	if(!dataLibrary::segmentation_rem->empty())
+		dataLibrary::segmentation_rem->clear();
+
+	//compute centor point and normal
+	float nx_all, ny_all, nz_all;
+	float curvature_all;
+	Eigen::Matrix3f convariance_matrix_all;
+	Eigen::Vector4f xyz_centroid_all, plane_parameters_all;
+	pcl::compute3DCentroid(*dataLibrary::cloudxyz, xyz_centroid_all);
+	pcl::computeCovarianceMatrix(*dataLibrary::cloudxyz, xyz_centroid_all, convariance_matrix_all);
+	pcl::solvePlaneParameters(convariance_matrix_all, nx_all, ny_all, nz_all, curvature_all);
+	Eigen::Vector3f centroid_all;
+	dataLibrary::plane_normal_all(0)=nx_all;
+	dataLibrary::plane_normal_all(1)=ny_all;
+	dataLibrary::plane_normal_all(2)=nz_all;
+	centroid_all(0)=xyz_centroid_all(0);
+	centroid_all(1)=xyz_centroid_all(1);
+	centroid_all(2)=xyz_centroid_all(2);
+
+	if(dataLibrary::checkContents(dataLibrary::contents, "suppositional_plane"))
 	{
-		emit showErrors("ShowProcess: You Haven't Performed Any Segmentation Yet!");
+		//project all points
+		pcl::ModelCoefficients::Ptr coefficients_all (new pcl::ModelCoefficients());
+		coefficients_all->values.resize(4);
+		coefficients_all->values[0] = nx_all;
+		coefficients_all->values[1] = ny_all;
+		coefficients_all->values[2] = nz_all;
+		coefficients_all->values[3] = - (nx_all*xyz_centroid_all[0] + ny_all*xyz_centroid_all[1] + nz_all*xyz_centroid_all[2]);
+
+		pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_projected_all (new pcl::PointCloud<pcl::PointXYZ>);
+		pcl::ProjectInliers<pcl::PointXYZ> proj_all;
+		proj_all.setModelType(pcl::SACMODEL_PLANE);
+		proj_all.setInputCloud(dataLibrary::cloudxyz);
+		proj_all.setModelCoefficients(coefficients_all);
+		proj_all.filter(*cloud_projected_all);
+
+		//compute convex hull
+		pcl::ConvexHull<pcl::PointXYZ> chull_all;
+		chull_all.setInputCloud(cloud_projected_all);
+		chull_all.reconstruct(*dataLibrary::cloud_hull_all);
 	}
-	else
+
+	if(dataLibrary::checkContents(dataLibrary::contents, "fracture_faces"))
 	{
-		//Clear data if needed
-		if(!dataLibrary::cloud_hull_all->empty())
-			dataLibrary::cloud_hull_all->clear();
-		if(dataLibrary::fracture_faces_hull.size()!=0)
-			std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr>().swap(dataLibrary::fracture_faces_hull);
-		if(dataLibrary::Lines.size()!=0)
-			std::vector<Line>().swap(dataLibrary::Lines);
-		if(dataLibrary::Lines_max.size()!=0)
-			std::vector<Line>().swap(dataLibrary::Lines_max);
-		if(dataLibrary::Lines_min.size()!=0)
-			std::vector<Line>().swap(dataLibrary::Lines_min);
-		if(!dataLibrary::segmentation_rem->empty())
-			dataLibrary::segmentation_rem->clear();
-
-		//compute centor point and normal
-		float nx_all, ny_all, nz_all;
-		float curvature_all;
-		Eigen::Matrix3f convariance_matrix_all;
-		Eigen::Vector4f xyz_centroid_all, plane_parameters_all;
-		pcl::compute3DCentroid(*dataLibrary::cloudxyz, xyz_centroid_all);
-		pcl::computeCovarianceMatrix(*dataLibrary::cloudxyz, xyz_centroid_all, convariance_matrix_all);
-		pcl::solvePlaneParameters(convariance_matrix_all, nx_all, ny_all, nz_all, curvature_all);
-		Eigen::Vector3f centroid_all;
-		dataLibrary::plane_normal_all(0)=nx_all;
-		dataLibrary::plane_normal_all(1)=ny_all;
-		dataLibrary::plane_normal_all(2)=nz_all;
-		centroid_all(0)=xyz_centroid_all(0);
-		centroid_all(1)=xyz_centroid_all(1);
-		centroid_all(2)=xyz_centroid_all(2);
-
-		if(dataLibrary::checkContents(dataLibrary::contents, "suppositional_plane"))
+		bool show_rem = false;
+		pcl::PointIndices::Ptr indices_all(new pcl::PointIndices);
+		indices_all->header=dataLibrary::clusters[0].header;
+		if(dataLibrary::checkContents(dataLibrary::contents, "rgs_remanent"))
 		{
-			//project all points
-			pcl::ModelCoefficients::Ptr coefficients_all (new pcl::ModelCoefficients());
-			coefficients_all->values.resize(4);
-			coefficients_all->values[0] = nx_all;
-			coefficients_all->values[1] = ny_all;
-			coefficients_all->values[2] = nz_all;
-			coefficients_all->values[3] = - (nx_all*xyz_centroid_all[0] + ny_all*xyz_centroid_all[1] + nz_all*xyz_centroid_all[2]);
-
-			pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_projected_all (new pcl::PointCloud<pcl::PointXYZ>);
-			pcl::ProjectInliers<pcl::PointXYZ> proj_all;
-			proj_all.setModelType(pcl::SACMODEL_PLANE);
-			proj_all.setInputCloud(dataLibrary::cloudxyz);
-			proj_all.setModelCoefficients(coefficients_all);
-			proj_all.filter(*cloud_projected_all);
-
-			//compute convex hull
-			pcl::ConvexHull<pcl::PointXYZ> chull_all;
-			chull_all.setInputCloud(cloud_projected_all);
-			chull_all.reconstruct(*dataLibrary::cloud_hull_all);
+			show_rem = true;
+		}
+		bool show_fracture_traces = false;
+		bool show_extension_line = false;
+		if(dataLibrary::checkContents(dataLibrary::contents, "suppositional_plane")&&dataLibrary::checkContents(dataLibrary::contents, "fracture_traces"))
+		{
+			show_fracture_traces = true;
+		}
+		if(dataLibrary::checkContents(dataLibrary::contents, "suppositional_plane")&&dataLibrary::checkContents(dataLibrary::contents, "extension_line"))
+		{
+			show_extension_line = true;
 		}
 
-		if(dataLibrary::checkContents(dataLibrary::contents, "fracture_faces"))
+		for(int cluster_index = 0; cluster_index < dataLibrary::clusters.size(); cluster_index++)
 		{
-			bool show_rem = false;
-			pcl::PointIndices::Ptr indices_all(new pcl::PointIndices);
-			indices_all->header=dataLibrary::clusters[0].header;
-			if(dataLibrary::checkContents(dataLibrary::contents, "rgs_remanent"))
+			//Add colored patch polygons
+			pcl::PointCloud<pcl::PointXYZ>::Ptr plane_cloud (new pcl::PointCloud<pcl::PointXYZ>);
+			for(int j = 0; j < dataLibrary::clusters[cluster_index].indices.size(); j++)
 			{
-				show_rem = true;
-			}
-			bool show_fracture_traces = false;
-			bool show_extension_line = false;
-			if(dataLibrary::checkContents(dataLibrary::contents, "suppositional_plane")&&dataLibrary::checkContents(dataLibrary::contents, "fracture_traces"))
-			{
-				show_fracture_traces = true;
-			}
-			if(dataLibrary::checkContents(dataLibrary::contents, "suppositional_plane")&&dataLibrary::checkContents(dataLibrary::contents, "extension_line"))
-			{
-				show_extension_line = true;
+				plane_cloud->push_back(dataLibrary::cloudxyz->at(dataLibrary::clusters[cluster_index].indices[j]));
 			}
 
-			for(int cluster_index = 0; cluster_index < dataLibrary::clusters.size(); cluster_index++)
-			{
-				//Add colored patch polygons
-				pcl::PointCloud<pcl::PointXYZ>::Ptr plane_cloud (new pcl::PointCloud<pcl::PointXYZ>);
-				for(int j = 0; j < dataLibrary::clusters[cluster_index].indices.size(); j++)
-				{
-					plane_cloud->push_back(dataLibrary::cloudxyz->at(dataLibrary::clusters[cluster_index].indices[j]));
-				}
+			//prepare for projecting data onto plane
+			float nx, ny, nz;
+			float curvature;
+			Eigen::Matrix3f convariance_matrix;
+			Eigen::Vector4f xyz_centroid, plane_parameters;
+			pcl::compute3DCentroid(*plane_cloud, xyz_centroid);
+			pcl::computeCovarianceMatrix(*plane_cloud, xyz_centroid, convariance_matrix);
+			pcl::solvePlaneParameters(convariance_matrix, nx, ny, nz, curvature);
+			Eigen::Vector3f centroid;
+			centroid(0)=xyz_centroid(0);
+			centroid(1)=xyz_centroid(1);
+			centroid(2)=xyz_centroid(2);
 
-				//prepare for projecting data onto plane
-				float nx, ny, nz;
-				float curvature;
-				Eigen::Matrix3f convariance_matrix;
-				Eigen::Vector4f xyz_centroid, plane_parameters;
-				pcl::compute3DCentroid(*plane_cloud, xyz_centroid);
-				pcl::computeCovarianceMatrix(*plane_cloud, xyz_centroid, convariance_matrix);
-				pcl::solvePlaneParameters(convariance_matrix, nx, ny, nz, curvature);
-				Eigen::Vector3f centroid;
-				centroid(0)=xyz_centroid(0);
-				centroid(1)=xyz_centroid(1);
-				centroid(2)=xyz_centroid(2);
+			//project data onto plane
+			//set plane parameter
+			pcl::ModelCoefficients::Ptr coefficients (new pcl::ModelCoefficients());
+			coefficients->values.resize(4);
+			coefficients->values[0] = nx;
+			coefficients->values[1] = ny;
+			coefficients->values[2] = nz;
+			coefficients->values[3] = - (nx*xyz_centroid[0] + ny*xyz_centroid[1] + nz*xyz_centroid[2]);
+			//projecting
+			pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_projected (new pcl::PointCloud<pcl::PointXYZ>);
+			pcl::ProjectInliers<pcl::PointXYZ> proj;
+			proj.setModelType(pcl::SACMODEL_PLANE);
+			proj.setInputCloud(plane_cloud);
+			proj.setModelCoefficients(coefficients);
+			proj.filter(*cloud_projected);
 
-				//project data onto plane
-				//set plane parameter
-				pcl::ModelCoefficients::Ptr coefficients (new pcl::ModelCoefficients());
-				coefficients->values.resize(4);
-				coefficients->values[0] = nx;
-				coefficients->values[1] = ny;
-				coefficients->values[2] = nz;
-				coefficients->values[3] = - (nx*xyz_centroid[0] + ny*xyz_centroid[1] + nz*xyz_centroid[2]);
-				//projecting
-				pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_projected (new pcl::PointCloud<pcl::PointXYZ>);
-				pcl::ProjectInliers<pcl::PointXYZ> proj;
-				proj.setModelType(pcl::SACMODEL_PLANE);
-				proj.setInputCloud(plane_cloud);
-				proj.setModelCoefficients(coefficients);
-				proj.filter(*cloud_projected);
-
-				//generate a convex hull
-				pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_hull (new pcl::PointCloud<pcl::PointXYZ>);
-				pcl::ConvexHull<pcl::PointXYZ> chull;
-				chull.setInputCloud(cloud_projected);
-				chull.reconstruct(*cloud_hull);
-				dataLibrary::fracture_faces_hull.push_back(cloud_hull);
-
-				if(show_rem)
-				{
-					indices_all->indices.insert(indices_all->indices.end(), dataLibrary::clusters[cluster_index].indices.begin(), dataLibrary::clusters[cluster_index].indices.end());
-				}
-
-				Eigen::Vector3f normal;
-				normal(0) = nx;
-				normal(1) = ny;
-				normal(2) = nz;
-
-				if(show_fracture_traces)
-				{
-					float length;
-					if(show_extension_line)
-					{
-						bool flag = dataLibrary::CheckClusters(dataLibrary::plane_normal_all, centroid_all, dataLibrary::cloud_hull_all, normal, centroid, cloud_projected, cluster_index, length, true);
-					}
-					else
-					{
-						bool flag = dataLibrary::CheckClusters(dataLibrary::plane_normal_all, centroid_all, dataLibrary::cloud_hull_all, normal, centroid, cloud_projected, cluster_index, length, false);
-					}
-				}
-			}
+			//generate a convex hull
+			pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_hull (new pcl::PointCloud<pcl::PointXYZ>);
+			pcl::ConvexHull<pcl::PointXYZ> chull;
+			chull.setInputCloud(cloud_projected);
+			chull.reconstruct(*cloud_hull);
+			dataLibrary::fracture_faces_hull.push_back(cloud_hull);
 
 			if(show_rem)
 			{
-				pcl::ExtractIndices<pcl::PointXYZ> eifilter (true);
-				eifilter.setInputCloud(dataLibrary::cloudxyz);
-				eifilter.setIndices(indices_all);
-				eifilter.setNegative(true);
-				eifilter.filter(*dataLibrary::segmentation_rem);
+				indices_all->indices.insert(indices_all->indices.end(), dataLibrary::clusters[cluster_index].indices.begin(), dataLibrary::clusters[cluster_index].indices.end());
+			}
+
+			Eigen::Vector3f normal;
+			normal(0) = nx;
+			normal(1) = ny;
+			normal(2) = nz;
+
+			if(show_fracture_traces)
+			{
+				float length;
+				if(show_extension_line)
+				{
+					bool flag = dataLibrary::CheckClusters(dataLibrary::plane_normal_all, centroid_all, dataLibrary::cloud_hull_all, normal, centroid, cloud_projected, cluster_index, length, true);
+				}
+				else
+				{
+					bool flag = dataLibrary::CheckClusters(dataLibrary::plane_normal_all, centroid_all, dataLibrary::cloud_hull_all, normal, centroid, cloud_projected, cluster_index, length, false);
+				}
 			}
 		}
 
-		is_success = true;
+		if(show_rem)
+		{
+			pcl::ExtractIndices<pcl::PointXYZ> eifilter (true);
+			eifilter.setInputCloud(dataLibrary::cloudxyz);
+			eifilter.setIndices(indices_all);
+			eifilter.setNegative(true);
+			eifilter.filter(*dataLibrary::segmentation_rem);
+		}
 	}
+
+	is_success = true;
 	//end of processing
+
+	dataLibrary::finish = clock();
+
+	if(this->getWriteLogMpde()&&is_success)
+    {
+        std::string log_text_head = "\tShowProcess (";
+		std::string log_text_body = "";
+		for(int i=0; i<dataLibrary::contents.size(); i++)
+		{
+			log_text_body += (dataLibrary::contents[i]+" ");
+		}
+		std::string log_text_tail = ") Costs: ";
+		std::string log_text = log_text_head + log_text_body + log_text_tail;
+        std::ostringstream strs;
+        strs << (double)(dataLibrary::finish-dataLibrary::start)/CLOCKS_PER_SEC;
+        log_text += (strs.str() +" seconds.");
+        dataLibrary::write_text_to_log_file(log_text);
+    }
 
 	if(!this->getMuteMode()&&is_success)
     {

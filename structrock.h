@@ -70,6 +70,7 @@
 #include "SavePcdBinaryWorker.h"
 #include "SaveNormalsWorker.h"
 #include "ShowProcessWorker.h"
+#include "ShowSFeatureWorker.h"
 #include "TestWorker.h"
 #include "TimingShutdown.h"
 
@@ -120,6 +121,7 @@ private slots:
 	void command_parser();
 	void Show_Errors(const QString &errors);
 	void Show_Process();
+	void Show_SFeature();
 	void slotReboot()
 	{
 		QProcess *myProcess = new QProcess;
@@ -194,6 +196,7 @@ private:
 	SavePcdBinaryWorker savepcdBinaryworker;
 	SaveNormalsWorker savenormalsworker;
 	ShowProcessWorker showprocessworker;
+	ShowSFeatureWorker showsfeatureworker;
 	TestWorker testworker;
 
 public:

@@ -63,6 +63,10 @@
 #define STATUS_SAVENORMALS	112
 #define STATUS_SHOWPROCESS	113
 #define STATUS_TESTING  114
+#define STATUS_SHOWSFEATURE 115
+
+#define FEATURE_ROUGHNESS 1001
+#define FEATURE_AREA 1002
 
 struct RGSpara{
     double curvature;
@@ -71,6 +75,11 @@ struct RGSpara{
     int number_of_neighbors;
     int min_number_of_Points;
     bool IsSmoothMode;
+};
+
+struct FeaturePara{
+	int feature_type;
+	float percent_out;
 };
 
 struct Vector3f{

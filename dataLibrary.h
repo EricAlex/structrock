@@ -44,6 +44,7 @@
 #include <pcl/visualization/cloud_viewer.h>
 #include <pcl/io/io.h>
 #include <pcl/io/pcd_io.h>
+#include <pcl/PCLPointCloud2.h>
 #include <Eigen/src/Core/Matrix.h>
 #include "ReadFileWorker.h"
 #include "checkstatusThread.h"
@@ -57,7 +58,7 @@ public:
 	static pcl::PointCloud<pcl::PointXYZI>::Ptr cloudxyzi;
 	static pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloudxyzrgb_clusters; //for showing the segmentation result
 	static pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloudxyzrgb_features; //for showing the surface features
-	static sensor_msgs::PointCloud2::Ptr cloud_blob;
+	static pcl::PCLPointCloud2::Ptr cloud_blob;
 	static pcl::PointCloud<pcl::Normal>::Ptr normal;
 	static pcl::PointCloud<pcl::PointNormal>::Ptr pointnormals;
 	static pcl::PointCloud<pcl::PointXYZ>::Ptr mls_points;

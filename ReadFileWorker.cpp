@@ -43,6 +43,8 @@
 #include <pcl/io/io.h>
 #include <pcl/io/pcd_io.h>
 #include <pcl/point_types.h>
+#include <pcl/PCLPointCloud2.h>
+#include <pcl/conversions.h>
 #include "ReadFileWorker.h"
 #include "globaldef.h"
 #include "dataLibrary.h"
@@ -55,7 +57,7 @@ void ReadFileWorker::doWork(const QString &filename)
     QByteArray ba = filename.toLocal8Bit();
     std::string* strfilename = new std::string(ba.data());
 
-	sensor_msgs::PointCloud2::Ptr cloud_blob(new sensor_msgs::PointCloud2);
+	pcl::PCLPointCloud2::Ptr cloud_blob(new pcl::PCLPointCloud2);
 
 	dataLibrary::Status = STATUS_OPENPCD;
 
@@ -66,7 +68,7 @@ void ReadFileWorker::doWork(const QString &filename)
 	{
 		dataLibrary::clearall();
 
-		pcl::fromROSMsg (*cloud_blob, *dataLibrary::cloudxyz);
+		pcl::fromPCLPointCloud2 (*cloud_blob, *dataLibrary::cloudxyz);
 
 		if(pcl::getFieldIndex (*cloud_blob, "rgb")<0)
 		{
@@ -80,9 +82,8 @@ void ReadFileWorker::doWork(const QString &filename)
 		}
 		else
 		{
-			pcl::fromROSMsg (*cloud_blob, *dataLibrary::cloudxyzrgb);
+			pcl::fromPCLPointCloud2 (*cloud_blob, *dataLibrary::cloudxyzrgb);
 			dataLibrary::cloudID = *strfilename;
-        
 			if(!this->getMuteMode())
             {
                 emit ReadFileReady(CLOUDXYZRGB);

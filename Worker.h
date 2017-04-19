@@ -50,8 +50,8 @@ public:
 	Worker() : QObject()
 	{
 		_workflow_mode = false;
-        _is_mute = false;
-        _write_log = true;
+		_is_mute = false;
+		_write_log = true;
 		moveToThread(&t);
 		t.start();
 	}
@@ -67,8 +67,8 @@ signals:
 	void showReadyStatus();
 private:
 	bool _workflow_mode;
-    bool _is_mute;
-    bool _write_log;
+	bool _is_mute;
+	bool _write_log;
 public:
 	void setWorkFlowMode(bool mode)
 	{
@@ -78,7 +78,7 @@ public:
 	{
 		return _workflow_mode;
 	}
-    void setMute()
+	void setMute()
 	{
 		_is_mute = true;
 	}
@@ -98,7 +98,7 @@ public:
 	{
 		_write_log = false;
 	}
-	bool getWriteLogMode()
+	bool getWriteLogMpde()
 	{
 		return _write_log;
 	}

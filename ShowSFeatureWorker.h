@@ -38,37 +38,23 @@
  */
 
 #pragma once
+#include <string>
 #include "Worker.h"
-class TestWorker : public Worker
+#include "globaldef.h"
+
+class ShowSFeatureWorker : public Worker
 {
-    Q_OBJECT
+	Q_OBJECT
 
 public:
-    TestWorker() : Worker()
-    {
-        _is_split = false;
-    }
-    
-	void testing(const QString &filename)
+	void showSFeature()
 	{
-		QMetaObject::invokeMethod(this, "doWork", Q_ARG(const QString &, filename));
+		QMetaObject::invokeMethod(this, "doWork");
 	}
-    
-    void setSplitMode(bool mode)
-    {
-        _is_split = mode;
-    }
-    bool getSplitMode()
-    {
-        return _is_split;
-    }
 
-private slots:
-    void doWork(const QString &filename);
+public slots:
+	void doWork();
 
 signals:
-    void ReadFileReady(int i);
-    
-private:
-    bool _is_split;
+	void show();
 };

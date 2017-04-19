@@ -39,7 +39,10 @@
 
 #include <fstream>
 #include <string>
+#include <pcl/io/io.h>
+#include <pcl/io/pcd_io.h>
 #include <pcl/point_types.h>
+#include <pcl/point_types_conversion.h>
 #include "TestWorker.h"
 #include "globaldef.h"
 #include "dataLibrary.h"
@@ -97,10 +100,10 @@ bool transData (const string &filename, const string &savefilename)
 bool splitData (const string &filename, const string &lsavefilename, const string &rsavefilename)
 {
     /*to be filled*/
-    return true;
+	return true;
 }
 
-void TestWorker::doWork(const QString &filename)
+/*void TestWorker::doWork(const QString &filename)
 {
 	bool is_success(false);
 
@@ -111,6 +114,7 @@ void TestWorker::doWork(const QString &filename)
     
     dataLibrary::Status = STATUS_TESTING;
 
+	//begin of processing
 	if(transData (*strfilename, transedData))
 	{
 		is_success = true;
@@ -119,6 +123,44 @@ void TestWorker::doWork(const QString &filename)
 	{
 		emit showErrors("Error transform data.");
 	}
+	//end of processing
+
+	dataLibrary::Status = STATUS_READY;
+    emit showReadyStatus();
+	delete strfilename;
+	if(this->getWorkFlowMode()&&is_success)
+	{
+		this->Sleep(1000);
+		emit GoWorkFlow();
+	}
+}*/
+
+void TestWorker::doWork(const QString &filename)
+{
+	bool is_success(false);
+
+    QByteArray ba = filename.toLocal8Bit();
+	string* strfilename = new std::string(ba.data());
+    
+    dataLibrary::Status = STATUS_TESTING;
+	
+	//begin of processing
+	if(!pcl::io::loadPCDFile (*strfilename, *dataLibrary::cloudxyzrgb))
+	{
+		dataLibrary::cloudID = *strfilename;
+		pcl::PointCloudXYZRGBtoXYZI (*dataLibrary::cloudxyzrgb, *dataLibrary::cloudxyzi);
+
+		if(!this->getMuteMode())
+		{
+			emit ReadFileReady(CLOUDXYZI);
+		}
+		is_success = true;
+	}
+	else
+	{
+		emit showErrors("Error opening pcd file.");
+	}
+	//end of processing
 
 	dataLibrary::Status = STATUS_READY;
     emit showReadyStatus();

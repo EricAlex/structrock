@@ -161,12 +161,16 @@ void SaveClustersWorker::doWork(const QString &filename)
     string textfilename = strfilename->substr(0, strfilename->size()-4) += "_table.txt";
     string dip_dipdir_file = strfilename->substr(0, strfilename->size()-4) += "_dip_dipdir.txt";
     string dipdir_dip_file = strfilename->substr(0, strfilename->size()-4) += "_dipdir_dip.txt";
+    string area_file = strfilename->substr(0, strfilename->size()-4) += "_area.txt";
+    string roughness_file = strfilename->substr(0, strfilename->size()-4) += "_roughness.txt";
     string fracture_intensity = strfilename->substr(0, strfilename->size()-4) += "_fracture_intensity.txt";
     ofstream fout(textfilename.c_str());
     ofstream dip_dipdir_out(dip_dipdir_file.c_str());
     ofstream dipdir_dip_out(dipdir_dip_file.c_str());
+    ofstream area_out(area_file.c_str());
+    ofstream roughness_out(roughness_file.c_str());
     ofstream fracture_intensity_out(fracture_intensity.c_str());
-    fout<<"Flag"<<"\t"<<"Number"<<"\t"<<"Points"<<"\t"<<"Direc"<<"\t"<<"Dip"<<"\t"<<"Area"<<"\t"<<"Length"<<"\n";
+    fout<<"Flag"<<"\t"<<"Number"<<"\t"<<"Points"<<"\t"<<"Direc"<<"\t"<<"Dip"<<"\t"<<"Area"<<"\t"<<"Length"<<"\t"<<"Roughness"<<"\n";
     
     int num_of_clusters = dataLibrary::clusters.size();
     ofstream fbinaryout(strfilename->c_str(), std::ios::out|std::ios::binary|std::ios::app);
@@ -280,9 +284,25 @@ void SaveClustersWorker::doWork(const QString &filename)
             dip = 90.0 - atan(fabs(nz)/sqrt((nx*nx + ny*ny)))*180/M_PI;
         }
 
+        //calculate fracture surface roughness
+        float fracture_total_distance=0.0;
+        for(int j = 0; j < plane_cloud->size(); j++)
+        {
+            Eigen::Vector3f Q;
+            Q(0)=plane_cloud->at(j).x;
+            Q(1)=plane_cloud->at(j).y;
+            Q(2)=plane_cloud->at(j).z;
+            fracture_total_distance+=std::abs((Q-centroid).dot(normal)/std::sqrt((normal.dot(normal))));
+        }
+        float fracture_roughness=fracture_total_distance/plane_cloud->size();
+
+        //saved for further analysis
+        dataLibrary::areas.push_back(area);
+        dataLibrary::roughnesses.push_back(fracture_roughness);
+
 		float length;
         bool flag = dataLibrary::CheckClusters(dataLibrary::plane_normal_all, centroid_all, dataLibrary::cloud_hull_all, normal, centroid, cloud_projected, cluster_index, length, false);
-        fout<<flag<<"\t"<<cluster_index+1<<"\t"<<dataLibrary::clusters[cluster_index].indices.size()<<"\t"<<dip_direction<<"\t"<<dip<<"\t"<<area<<"\t"<<length<<"\n";
+        fout<<flag<<"\t"<<cluster_index+1<<"\t"<<dataLibrary::clusters[cluster_index].indices.size()<<"\t"<<dip_direction<<"\t"<<dip<<"\t"<<area<<"\t"<<length<<"\t"<<fracture_roughness<<"\n";
 
 		//calculate displacement
 		Eigen::Vector3f line_direction = normal.cross(dataLibrary::plane_normal_all.cross(normal));
@@ -340,6 +360,8 @@ void SaveClustersWorker::doWork(const QString &filename)
             total_length += length;
             dip_dipdir_out<<dip<<"\t"<<dip_direction<<"\n";
             dipdir_dip_out<<dip_direction<<"\t"<<dip<<"\n";
+            area_out<<area<<"\n";
+            roughness_out<<fracture_roughness<<"\n";
 
 			dataLibrary::out_dips.push_back(dip);
 			dataLibrary::out_dip_directions.push_back(dip_direction);
@@ -366,6 +388,10 @@ void SaveClustersWorker::doWork(const QString &filename)
     dip_dipdir_out.close();
     dipdir_dip_out<<flush;
     dipdir_dip_out.close();
+    area_out<<flush;
+    area_out.close();
+    roughness_out<<flush;
+    roughness_out.close();
     fracture_intensity_out<<flush;
     fracture_intensity_out.close();
     fbinaryout.close();

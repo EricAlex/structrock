@@ -61,8 +61,6 @@ void SavePcdASCIIWorker::doWork(const QString &filename)
 	}
 	else if(!dataLibrary::cloudxyz->empty())
 	{
-		dataLibrary::checkupflow();
-
 		if(!pcl::io::savePCDFileASCII(*strfilename, *dataLibrary::cloudxyz))
 		{
 			is_success = true;

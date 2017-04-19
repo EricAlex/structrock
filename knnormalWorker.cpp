@@ -58,44 +58,43 @@ void knnormalWorker::doWork(const int &k)
 
     dataLibrary::start = clock();
 
-    //begin of processing
+	//begin of processing
     pcl::NormalEstimationOMP<pcl::PointXYZ, pcl::Normal> ne;
     ne.setInputCloud(dataLibrary::cloudxyz);
     pcl::search::KdTree<pcl::PointXYZ>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZ>());
     ne.setSearchMethod(tree);
     ne.setKSearch(k);
-
-    if(!dataLibrary::normal->empty())
-    {
-        dataLibrary::normal->clear();
-    }
+	if(!dataLibrary::normal->empty())
+	{
+		dataLibrary::normal->clear();
+	}
     ne.compute(*dataLibrary::normal);
 
-    if(!dataLibrary::pointnormals->empty())
-    {
-        dataLibrary::pointnormals->clear();
-    }
-    pcl::concatenateFields(*dataLibrary::cloudxyz, *dataLibrary::normal, *dataLibrary::pointnormals);
+	if(!dataLibrary::pointnormals->empty())
+	{
+		dataLibrary::pointnormals->clear();
+	}
+	pcl::concatenateFields(*dataLibrary::cloudxyz, *dataLibrary::normal, *dataLibrary::pointnormals);
 
-    is_success = true;
-    //end of processing
+	is_success = true;
+	//end of processing
 
     dataLibrary::finish = clock();
 
-    if(this->getWriteLogMode()&&is_success)
+    if(this->getWriteLogMpde()&&is_success)
     {
         std::string log_text = "\tComputing K Nearest Neighbor Normal costs: ";
         std::ostringstream strs;
-        strs << (double)(dataLibrary::finish - dataLibrary::start)/CLOCKS_PER_SEC;
-        log_text += (strs.str() + " seconds.");
+        strs << (double)(dataLibrary::finish-dataLibrary::start)/CLOCKS_PER_SEC;
+        log_text += (strs.str() +" seconds.");
         dataLibrary::write_text_to_log_file(log_text);
     }
-    
+
     if(!this->getMuteMode()&&is_success)
     {
-        emit show();
+        emit show(_show_curvature);
     }
-    
+
     dataLibrary::Status = STATUS_READY;
     emit showReadyStatus();
 	if(this->getWorkFlowMode()&&is_success)

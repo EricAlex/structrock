@@ -57,48 +57,48 @@ void StaticROWorker::doWork(const double &stdDev)
 
     dataLibrary::start = clock();
 
-    //begin of processing
+	//begin of processing
     pcl::StatisticalOutlierRemoval<pcl::PointXYZ> sor;
     sor.setInputCloud(dataLibrary::cloudxyz);
     sor.setMeanK(50);
     sor.setStddevMulThresh(stdDev);
 
-    if(!dataLibrary::outlier_removed_outlier->empty())
-    {
-        dataLibrary::outlier_removed_outlier->clear();
-    }
+	if(!dataLibrary::outlier_removed_outlier->empty())
+	{
+		dataLibrary::outlier_removed_outlier->clear();
+	}
     sor.setNegative(true);
     sor.filter(*dataLibrary::outlier_removed_outlier);
 
-    if(!dataLibrary::outlier_removed_inlier->empty())
-    {
-        dataLibrary::outlier_removed_inlier->clear();
-    }
+	if(!dataLibrary::outlier_removed_inlier->empty())
+	{
+		dataLibrary::outlier_removed_inlier->clear();
+	}
     sor.setNegative(false);
     sor.filter(*dataLibrary::outlier_removed_inlier);
 
-    dataLibrary::temp_cloud->clear();
-    *dataLibrary::temp_cloud = *dataLibrary::outlier_removed_inlier;
+	dataLibrary::temp_cloud->clear();
+	*dataLibrary::temp_cloud = *dataLibrary::outlier_removed_inlier;
 
-    is_success = true;
-    //end of processing
+	is_success = true;
+	//end of processing
 
     dataLibrary::finish = clock();
 
-    if(this->getWriteLogMode()&&is_success)
+    if(this->getWriteLogMpde()&&is_success)
     {
         std::string log_text = "\tStatistical Outlier Removing costs: ";
         std::ostringstream strs;
-        strs << (double)(dataLibrary::finish - dataLibrary::start)/CLOCKS_PER_SEC;
-        log_text += (strs.str() + " seconds.");
+        strs << (double)(dataLibrary::finish-dataLibrary::start)/CLOCKS_PER_SEC;
+        log_text += (strs.str() +" seconds.");
         dataLibrary::write_text_to_log_file(log_text);
     }
-    
+
     if(!this->getMuteMode()&&is_success)
     {
         emit show();
     }
-    
+
     dataLibrary::Status = STATUS_READY;
     emit showReadyStatus();
 	if(this->getWorkFlowMode()&&is_success)

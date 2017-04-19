@@ -58,7 +58,7 @@ void resampleWorker::doWork(const double &radius)
 
     dataLibrary::start = clock();
     
-    //begin of processing
+	//begin of processing
     // Create a KD-Tree
     pcl::search::KdTree<pcl::PointXYZ>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZ>);
 
@@ -74,37 +74,37 @@ void resampleWorker::doWork(const double &radius)
     mls.setSearchRadius (radius);
 
     // Reconstruct
-    if(!dataLibrary::mls_points->empty())
-    {
-        dataLibrary::mls_points->clear();
-    }
+	if(!dataLibrary::mls_points->empty())
+	{
+		dataLibrary::mls_points->clear();
+	}
     mls.process (*dataLibrary::mls_points);
 
-    dataLibrary::temp_cloud->clear();
-    *dataLibrary::temp_cloud = *dataLibrary::mls_points;
+	dataLibrary::temp_cloud->clear();
+	*dataLibrary::temp_cloud = *dataLibrary::mls_points;
 
-    is_success = true;
-    //end of processing
+	is_success = true;
+	//end of processing
 
     dataLibrary::finish = clock();
 
-    if(this->getWriteLogMode()&&is_success)
+    if(this->getWriteLogMpde()&&is_success)
     {
         std::string log_text = "\tResampling costs: ";
         std::ostringstream strs;
-        strs << (double)(dataLibrary::finish - dataLibrary::start)/CLOCKS_PER_SEC;
-        log_text += (strs.str() + " seconds.");
+        strs << (double)(dataLibrary::finish-dataLibrary::start)/CLOCKS_PER_SEC;
+        log_text += (strs.str() +" seconds.");
         dataLibrary::write_text_to_log_file(log_text);
     }
-    
+
     if(!this->getMuteMode()&&is_success)
     {
         emit show();
     }
-    
+
     dataLibrary::Status = STATUS_READY;
     emit showReadyStatus();
-    if(this->getWorkFlowMode()&&is_success)
+	if(this->getWorkFlowMode()&&is_success)
     {
         this->Sleep(1000);
         emit GoWorkFlow();

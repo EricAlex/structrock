@@ -50,9 +50,12 @@
 #include <pcl/visualization/cloud_viewer.h>
 #include <pcl/io/io.h>
 #include <pcl/io/pcd_io.h>
+//begin kinect v2
 #include <pcl/io/openni2_grabber.h>
 #include <vtkRenderWindow.h>
 #include <vtkImageViewer2.h>
+#include "KinectV2Viewer.h"
+//end kinect v2
 #include "ReadFileWorker.h"
 #include "checkstatusThread.h"
 #include "resampleWorker.h"
@@ -73,9 +76,9 @@
 #include "SavePcdBinaryWorker.h"
 #include "SaveNormalsWorker.h"
 #include "ShowProcessWorker.h"
+#include "ShowSFeatureWorker.h"
 #include "TestWorker.h"
 #include "TimingShutdown.h"
-#include "KinectV2Viewer.h"
 
 class structrock : public QMainWindow
 {
@@ -97,9 +100,9 @@ private slots:
 	void resampling();
 	void ShowResample();
 	void k_neighbor();
-	void ShowknNormal();
+	void ShowknNormal(bool showCurvature);
 	void radius();
-	void ShowraNormal();
+	void ShowraNormal(bool showCurvature);
 	void StaticRemoveOutlier();
 	void ShowSRO();
 	void ConditionalRemoveOutlier();
@@ -124,8 +127,11 @@ private slots:
 	void command_parser();
 	void Show_Errors(const QString &errors);
 	void Show_Process();
+	void Show_SFeature();
+	//begin kinect v2
     void Connect_Kinect();
     void Disconnect_Kinect();
+    //end kinect v2
 	void slotReboot()
 	{
 		QProcess *myProcess = new QProcess;
@@ -175,13 +181,17 @@ private:
 	QAction *stereonet;
 	QAction *Reboot;
 	QAction *newWindow;
+	//begin kinect v2
     QAction *connect_Kinect;
     QAction *disconnect_Kinect;
+    //end kinect v2
 
 public:
 	pcl::visualization::PCLVisualizer *viewer;
+	//begin kinect v2
     pcl::visualization::ImageViewer *image_viewer;
     vtkImageViewer2 *imageViewer;
+    //end kinect v2
 	int v1;
 	int v2;
 
@@ -204,8 +214,11 @@ private:
 	SavePcdBinaryWorker savepcdBinaryworker;
 	SaveNormalsWorker savenormalsworker;
 	ShowProcessWorker showprocessworker;
+	ShowSFeatureWorker showsfeatureworker;
     TestWorker testworker;
+    //begin kinect v2
     pcl::Grabber *grabber;
+    //end kinect v2
 
 public:
 	void MoveForwardPatch();

@@ -61,7 +61,6 @@ void SavePcdBinaryWorker::doWork(const QString &filename)
 	}
 	else if(!dataLibrary::cloudxyz->empty())
 	{
-		dataLibrary::checkupflow();
 		if(!pcl::io::savePCDFileBinary(*strfilename, *dataLibrary::cloudxyz))
 		{
 			is_success = true;
@@ -83,7 +82,7 @@ void SavePcdBinaryWorker::doWork(const QString &filename)
 		}
 	}
 	//end of processing
-	
+
 	dataLibrary::Status = STATUS_READY;
 	emit showReadyStatus();
 	delete strfilename;

@@ -43,6 +43,7 @@
 #include <string>
 #include <sstream>
 #include <algorithm>
+#include <time.h>
 #include <math.h>
 #include <libpq-fe.h>
 #include "pcl/common/common_headers.h"
@@ -52,7 +53,9 @@
 #include <pcl/visualization/boost.h>
 #include <pcl/io/io.h>
 #include <pcl/io/pcd_io.h>
+//begin kinect v2
 #include <pcl/io/openni2_grabber.h>
+//end kinect v2
 #include <pcl/point_types.h>
 #include <pcl/kdtree/kdtree_flann.h>
 #include <pcl/surface/mls.h>
@@ -67,7 +70,9 @@
 #include <pcl/filters/project_inliers.h>
 #include <pcl/filters/extract_indices.h>
 #include <vtkRenderWindow.h>
+//begin kinect v2
 #include <vtkImageViewer2.h>
+//end kinect v2
 #include <boost/thread/thread.hpp>
 #include <Eigen/src/Core/Matrix.h>
 #include <boost/algorithm/string/predicate.hpp>
@@ -88,6 +93,7 @@
 #include "SaveClustersWorker.h"
 #include "ReadXYZWorker.h"
 #include "ShowProcessWorker.h"
+#include "ShowSFeatureWorker.h"
 #include "TestWorker.h"
 #include "globaldef.h"
 #include "dataLibrary.h"
@@ -95,14 +101,18 @@
 #include "geo_region_growing.h"
 #include "plotwindow.h"
 #include "TimingShutdown.h"
+//begin kinect v2
 #include "KinectV2Viewer.h"
+//end kinect v2
 
 using namespace std;
 
 structrock::structrock(QWidget *parent, Qt::WFlags flags)
 	: QMainWindow(parent, flags),
 	viewer(new pcl::visualization::PCLVisualizer("3D Viewer")),
+    //begin kinect v2
     imageViewer(vtkImageViewer2::New()),
+    //end kinect v2
 	v1(1),
 	v2(2)
 {
@@ -213,6 +223,7 @@ structrock::structrock(QWidget *parent, Qt::WFlags flags)
 	QMenu *segmentation = edit->addMenu(tr("&Segmentation"));
 	segmentation->addAction(region_growing_segmentation);
     
+    //begin kinect v2
     QMenu *kinect = menuBar()->addMenu(tr("&Kinect"));
     connect_Kinect = new QAction(tr("&Connect"), this);
     connect(connect_Kinect, SIGNAL(triggered()), this, SLOT(Connect_Kinect()));
@@ -220,6 +231,7 @@ structrock::structrock(QWidget *parent, Qt::WFlags flags)
     connect(disconnect_Kinect, SIGNAL(triggered()), this, SLOT(Disconnect_Kinect()));
     kinect->addAction(connect_Kinect);
     kinect->addAction(disconnect_Kinect);
+    //end kinect v2
 
 	testing = new QAction(tr("&Test"), this);
 	connect(testing, SIGNAL(triggered()), this, SLOT(Testing()));
@@ -244,6 +256,7 @@ structrock::~structrock()
     
 }
 
+//begin kinect v2
 void structrock::Connect_Kinect()
 {
     boost::shared_ptr<pcl::io::openni2::OpenNI2DeviceManager> deviceManager = pcl::io::openni2::OpenNI2DeviceManager::getInstance ();
@@ -263,6 +276,7 @@ void structrock::Disconnect_Kinect()
 {
     if (grabber && grabber->isRunning ()) grabber->stop ();
 }
+//end kinect v2
 
 void structrock::open()
 {
@@ -828,29 +842,59 @@ void structrock::command_parser()
 					ss >> k;
 
 					knnormalworker.setWorkFlowMode(true);
+					knnormalworker.setShowCurvature(false);
 	                knnormalworker.setUnmute();
 	                knnormalworker.setWriteLog();
 	                if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>1)
 	                {
-	                    if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1] == "mute")
-	                    {
-	                        knnormalworker.setMute();
-	                    }
-	                    else if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1] == "nolog")
-	                    {
-	                    	knnormalworker.setUnWriteLog();
-	                    }
-	                    if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>2)
-	                    {
-	                    	if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[2] == "mute")
-	                    	{
-	                    		knnormalworker.setMute();
-	                    	}
-	                    	else if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[2] == "nolog")
-	                    	{
-	                    		knnormalworker.setUnWriteLog();
-	                    	}
-	                    }
+						if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1] == "showcurvature")
+						{
+							knnormalworker.setShowCurvature(true);
+							if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>2)
+							{
+								if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[2] == "mute")
+								{
+									knnormalworker.setMute();
+								}
+								else if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[2] == "nolog")
+								{
+									knnormalworker.setUnWriteLog();
+								}
+								if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>3)
+								{
+	                    			if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[3] == "mute")
+									{
+										knnormalworker.setMute();
+									}
+									else if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[3] == "nolog")
+									{
+										knnormalworker.setUnWriteLog();
+									}
+								}
+							}
+						}
+						else
+						{
+							if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1] == "mute")
+							{
+								knnormalworker.setMute();
+							}
+							else if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1] == "nolog")
+							{
+								knnormalworker.setUnWriteLog();
+							}
+							if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>2)
+							{
+	                    		if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[2] == "mute")
+								{
+									knnormalworker.setMute();
+								}
+								else if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[2] == "nolog")
+								{
+									knnormalworker.setUnWriteLog();
+								}
+							}
+						}
 	                }
 					connect(&knnormalworker, SIGNAL(show()), this, SLOT(ShowknNormal()));
 					connect(&knnormalworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
@@ -873,31 +917,61 @@ void structrock::command_parser()
 					ss >> radius;
 
 					ranormalworker.setWorkFlowMode(true);
+					ranormalworker.setShowCurvature(false);
 	                ranormalworker.setUnmute();
 	                ranormalworker.setWriteLog();
 	                if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>1)
 	                {
-	                    if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1] == "mute")
-	                    {
-	                        ranormalworker.setMute();
-	                    }
-	                    else if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1] == "nolog")
-	                    {
-	                    	ranormalworker.setUnWriteLog();
-	                    }
-	                    if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>2)
-	                    {
-	                    	if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[2] == "mute")
-	                    	{
-	                    		ranormalworker.setMute();
-	                    	}
-	                    	else if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[2] == "nolog")
-	                    	{
-	                    		ranormalworker.setUnWriteLog();
-	                    	}
-	                    }
+						if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1] == "showcurvature")
+						{
+							ranormalworker.setShowCurvature(true);
+							if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>2)
+							{
+								if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[2] == "mute")
+								{
+									ranormalworker.setMute();
+								}
+								else if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[2] == "nolog")
+								{
+									ranormalworker.setUnWriteLog();
+								}
+								if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>3)
+								{
+	                    			if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[3] == "mute")
+									{
+										ranormalworker.setMute();
+									}
+									else if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[3] == "nolog")
+									{
+										ranormalworker.setUnWriteLog();
+									}
+								}
+							}
+						}
+						else
+						{
+							if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1] == "mute")
+							{
+								ranormalworker.setMute();
+							}
+							else if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1] == "nolog")
+							{
+								ranormalworker.setUnWriteLog();
+							}
+							if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>2)
+							{
+	                    		if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[2] == "mute")
+								{
+									ranormalworker.setMute();
+								}
+								else if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[2] == "nolog")
+								{
+									ranormalworker.setUnWriteLog();
+								}
+							}
+						}
 	                }
-					connect(&ranormalworker, SIGNAL(show()), this, SLOT(ShowraNormal()));
+                	connect(&ranormalworker, SIGNAL(show()), this, SLOT(ShowraNormal()));
 					connect(&ranormalworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
 					connect(&ranormalworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
 					connect(&ranormalworker, SIGNAL(GoWorkFlow()), this, SLOT(command_parser()));
@@ -1034,24 +1108,88 @@ void structrock::command_parser()
 			}
 			else if(command_string == "showprocess")
 			{
-				if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>0)
+				if(dataLibrary::clusters.size() == 0)
 				{
-					for(int i=0; i<dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size(); i++)
-					{
-						dataLibrary::contents.push_back(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[i]);
-					}
-
-					showprocessworker.setWorkFlowMode(true);
-					connect(&showprocessworker, SIGNAL(show()), this, SLOT(Show_Process()));
-					connect(&showprocessworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
-					connect(&showprocessworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
-					connect(&showprocessworker, SIGNAL(GoWorkFlow()), this, SLOT(command_parser()));
-
-					showprocessworker.showProcess();
+					Show_Errors(QString("ShowProcess: You Haven't Performed Any Segmentation Yet!"));
 				}
 				else
 				{
-					Show_Errors(QString("Showprocess: No parameters given."));
+					if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>0)
+					{
+						for(int i=0; i<dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size(); i++)
+						{
+							dataLibrary::contents.push_back(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[i]);
+						}
+
+						showprocessworker.setWorkFlowMode(true);
+						showprocessworker.setUnmute();
+						showprocessworker.setWriteLog();
+						connect(&showprocessworker, SIGNAL(show()), this, SLOT(Show_Process()));
+						connect(&showprocessworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
+						connect(&showprocessworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
+						connect(&showprocessworker, SIGNAL(GoWorkFlow()), this, SLOT(command_parser()));
+
+						showprocessworker.showProcess();
+					}
+					else
+					{
+						Show_Errors(QString("Showprocess: No parameters given."));
+					}
+				}
+			}
+			else if(command_string == "showsfeature")
+			{
+				if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>0)
+				{
+					showsfeatureworker.setWorkFlowMode(true);
+					showsfeatureworker.setUnmute();
+					showsfeatureworker.setWriteLog();
+					connect(&showsfeatureworker, SIGNAL(show()), this, SLOT(Show_SFeature()));
+					connect(&showsfeatureworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
+					connect(&showsfeatureworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
+					connect(&showsfeatureworker, SIGNAL(GoWorkFlow()), this, SLOT(command_parser()));
+
+					std::string feature_str = dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[0];
+					if(feature_str == "roughness")
+					{
+						dataLibrary::FeatureParameter.feature_type = FEATURE_ROUGHNESS;
+						if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>1)
+						{
+							float percent_out;
+							std::stringstream ss(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1]);
+							ss >> percent_out;
+							dataLibrary::FeatureParameter.percent_out = percent_out;
+						}
+						else
+						{
+							dataLibrary::FeatureParameter.percent_out = 0.0f;
+						}
+						showsfeatureworker.showSFeature();
+					}
+					else if(feature_str == "area")
+					{
+						dataLibrary::FeatureParameter.feature_type = FEATURE_AREA;
+						if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>1)
+						{
+							float percent_out;
+							std::stringstream ss(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1]);
+							ss >> percent_out;
+							dataLibrary::FeatureParameter.percent_out = percent_out;
+						}
+						else
+						{
+							dataLibrary::FeatureParameter.percent_out = 0.0f;
+						}
+						showsfeatureworker.showSFeature();
+					}
+					else
+					{
+						Show_Errors(QString("ShowSFeatures: the name of the surface feature not correctly provided."));
+					}
+				}
+				else
+				{
+					Show_Errors(QString("ShowSFeature: No parameters given."));
 				}
 			}
 			else if(command_string == "quitsession")
@@ -1128,6 +1266,7 @@ void structrock::command_parser()
 	                        testworker.setSplitMode(true);
 	                    }
 	                }
+					connect(&testworker, SIGNAL(ReadFileReady(int)), this, SLOT(ShowPCD(int)));
 					connect(&testworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
 					connect(&testworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
 					connect(&testworker, SIGNAL(GoWorkFlow()), this, SLOT(command_parser()));
@@ -1173,9 +1312,8 @@ void structrock::ShowPCD(int i)
         
         viewer->resetCameraViewpoint (dataLibrary::cloudID);
         // Position, Viewpoint, Down
-        viewer->setCameraPosition (0,0,0,0,0,-1,0,1,0);
+        viewer->setCameraPose (0,0,0,0,0,-1,0,1,0);
         viewer->resetCamera();
-        
 		ui.qvtkWidget->update();
 	}
 	else if(i==CLOUDXYZRGB)
@@ -1184,7 +1322,19 @@ void structrock::ShowPCD(int i)
         
         viewer->resetCameraViewpoint (dataLibrary::cloudID);
         // Position, Viewpoint, Down
-        viewer->setCameraPosition (0,0,0,0,0,-1,0,1,0);
+        viewer->setCameraPose (0,0,0,0,0,-1,0,1,0);
+        viewer->resetCamera();
+        
+		ui.qvtkWidget->update();
+	}
+	else if(i==CLOUDXYZI)
+	{
+		pcl::visualization::PointCloudColorHandlerGenericField<pcl::PointXYZI> intensity_distribution(dataLibrary::cloudxyzi, "intensity"); 
+		viewer->addPointCloud<pcl::PointXYZI> (dataLibrary::cloudxyzi, intensity_distribution, dataLibrary::cloudID, v1);
+
+        viewer->resetCameraViewpoint (dataLibrary::cloudID);
+        // Position, Viewpoint, Down
+        viewer->setCameraPose (0,0,0,0,0,-1,0,1,0);
         viewer->resetCamera();
         
 		ui.qvtkWidget->update();
@@ -1219,8 +1369,10 @@ void structrock::saveasbinary()
 
 void structrock::exit()
 {
+	//begin kinect v2
     if (grabber && grabber->isRunning ()) grabber->stop ();
-    
+    //end kinect v2
+
     cout << '\a';
 	QApplication::closeAllWindows();
 	qApp->exit();
@@ -1319,11 +1471,20 @@ void structrock::k_neighbor()
     }
 }
 
-void structrock::ShowknNormal()
+void structrock::ShowknNormal(bool showCurvature)
 {
-	viewer->removeAllPointClouds(v1);
-	viewer->addPointCloud(dataLibrary::cloudxyz, dataLibrary::cloudID, v1);
-	viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 0.0, 0.7, 0.0, dataLibrary::cloudID, v1);
+	if(!showCurvature)
+	{
+		viewer->removeAllPointClouds(v1);
+		viewer->addPointCloud(dataLibrary::cloudxyz, dataLibrary::cloudID, v1);
+		viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 0.0, 0.7, 0.0, dataLibrary::cloudID, v1);
+	}
+	else
+	{
+		viewer->removeAllPointClouds(v1);
+		pcl::visualization::PointCloudColorHandlerGenericField<pcl::PointNormal> handler_k(dataLibrary::pointnormals, "curvature");
+		viewer->addPointCloud(dataLibrary::pointnormals, handler_k, "curvature", v1);
+	}
 
 	viewer->removeAllPointClouds(v2);
 	viewer->addPointCloudNormals<pcl::PointXYZ, pcl::Normal>(dataLibrary::cloudxyz, dataLibrary::normal, 50, 0.02, "normals", v2);
@@ -1355,11 +1516,20 @@ void structrock::radius()
     }
 }
 
-void structrock::ShowraNormal()
+void structrock::ShowraNormal(bool showCurvature)
 {
-	viewer->removeAllPointClouds(v1);
-	viewer->addPointCloud(dataLibrary::cloudxyz, dataLibrary::cloudID, v1);
-	viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 0.0, 0.7, 0.0, dataLibrary::cloudID, v1);
+	if(!showCurvature)
+	{
+		viewer->removeAllPointClouds(v1);
+		viewer->addPointCloud(dataLibrary::cloudxyz, dataLibrary::cloudID, v1);
+		viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 0.0, 0.7, 0.0, dataLibrary::cloudID, v1);
+	}
+	else
+	{
+		viewer->removeAllPointClouds(v1);
+		pcl::visualization::PointCloudColorHandlerGenericField<pcl::PointNormal> handler_k(dataLibrary::pointnormals, "curvature");
+		viewer->addPointCloud(dataLibrary::pointnormals, handler_k, "curvature", v1);
+	}
 
 	viewer->removeAllPointClouds(v2);
 	viewer->addPointCloudNormals<pcl::PointXYZ, pcl::Normal>(dataLibrary::cloudxyz, dataLibrary::normal, 50, 0.02, "normals", v2);
@@ -1811,6 +1981,27 @@ void structrock::Show_Process()
 			viewer->addPointCloud(dataLibrary::segmentation_rem, dataLibrary::cloudID+"v2", v2);
 		}
 	}
+
+	ui.qvtkWidget->update();
+}
+
+void structrock::Show_SFeature()
+{
+	if(!dataLibrary::cloudxyzrgb->empty())
+	{
+		viewer->removeAllPointClouds(v1);
+		viewer->addPointCloud(dataLibrary::cloudxyzrgb, dataLibrary::cloudID, v1);
+	}
+	else
+	{
+		viewer->removeAllPointClouds(v1);
+		viewer->addPointCloud(dataLibrary::cloudxyz, dataLibrary::cloudID, v1);
+		viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 0.0, 0.7, 0.0, dataLibrary::cloudID, v1);
+	}
+
+	viewer->removeAllPointClouds(v2);
+	viewer->removeAllShapes(v2);
+	viewer->addPointCloud(dataLibrary::cloudxyzrgb_features, "feature", v2);
 
 	ui.qvtkWidget->update();
 }
@@ -2522,6 +2713,14 @@ void structrock::ShowStatus(int i)
 	case STATUS_SHOWPROCESS:
 		{
 			head="Busy	preparing to show process";
+			head+=tail;
+			ui.label->setText(QString::fromStdString(head));
+			ui.label->setPalette(pa);
+			break;
+		}
+	case STATUS_SHOWSFEATURE:
+		{
+			head="Busy	preparing to show surface features";
 			head+=tail;
 			ui.label->setText(QString::fromStdString(head));
 			ui.label->setPalette(pa);

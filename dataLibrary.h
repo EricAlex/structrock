@@ -55,7 +55,9 @@ class dataLibrary
 public:
 	static pcl::PointCloud<pcl::PointXYZ>::Ptr cloudxyz;
 	static pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloudxyzrgb;
-	static pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloudxyzrgb_clusters;
+	static pcl::PointCloud<pcl::PointXYZI>::Ptr cloudxyzi;
+	static pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloudxyzrgb_clusters; //for showing the segmentation result
+	static pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloudxyzrgb_features; //for showing the surface features
 	static pcl::PCLPointCloud2::Ptr cloud_blob;
 	static pcl::PointCloud<pcl::Normal>::Ptr normal;
 	static pcl::PointCloud<pcl::PointNormal>::Ptr pointnormals;
@@ -67,18 +69,20 @@ public:
 	static pcl::PointCloud<pcl::PointXYZ>::Ptr segmentation_rem;
 	static std::string cloudID;
 	static std::vector<pcl::PointIndices> clusters;
-	static std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> cluster_patches;
+	static std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> cluster_patches; //for reading in the saved clusters data
 	static std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> fracture_faces_hull;
 	static std::vector<float> dips;
 	static std::vector<float> dip_directions;
 	static std::vector<float> out_dips;
 	static std::vector<float> out_dip_directions;
 	static std::vector<float> areas;
+	static std::vector<float> roughnesses;
 	static std::vector<std::string> patchIDs;
 	static int currentPatch;
 	static std::vector<int> selectedPatches;
 	static int Status;
     static RGSpara RGSparameter;
+    static FeaturePara FeatureParameter;
 	static std::vector<std::string> contents;
     static pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_hull_all;
     static Eigen::Vector3f plane_normal_all;

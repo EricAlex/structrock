@@ -292,22 +292,24 @@ void structrock::OpenWorkFlow()
 				std::vector<std::string> tokens;
 				for(std::string each; std::getline(line_stream, each, command_split_str); tokens.push_back(each));
 
+				for(int i=0; i<tokens.size(); i++)
+				{
+					tokens[i].erase(std::remove(tokens[i].begin(), tokens[i].end(),'\n'), tokens[i].end());
+					tokens[i].erase(std::remove(tokens[i].begin(), tokens[i].end(),' '), tokens[i].end());
+					tokens[i].erase(std::remove(tokens[i].begin(), tokens[i].end(),'\r'), tokens[i].end());
+					tokens[i].erase(std::remove(tokens[i].begin(), tokens[i].end(),'\t'), tokens[i].end());
+					if(tokens[i].empty())
+						tokens.erase(tokens.begin()+i);
+				}
+
 				if(tokens.size()>0)
 				{
-					tokens[0].erase(std::remove(tokens[0].begin(), tokens[0].end(),'\n'), tokens[0].end());
-					tokens[0].erase(std::remove(tokens[0].begin(), tokens[0].end(),' '), tokens[0].end());
-					if(boost::starts_with(tokens[0],"#"))
-					{
-
-					}
-					else
+					if(!boost::starts_with(tokens[0],"#"))
 					{
 						WorkLine work;
 						work.command = tokens[0];
 						for(int i=1; i<tokens.size(); i++)
 						{
-							tokens[i].erase(std::remove(tokens[i].begin(), tokens[i].end(),'\n'), tokens[i].end());
-							tokens[i].erase(std::remove(tokens[i].begin(), tokens[i].end(),' '), tokens[i].end());
 							work.parameters.push_back(tokens[i]);
 						}
 						dataLibrary::Workflow.push_back(work);
@@ -351,22 +353,24 @@ void structrock::OpenWorkFlow(QString filename)
 				std::vector<std::string> tokens;
 				for(std::string each; std::getline(line_stream, each, command_split_str); tokens.push_back(each));
 
+				for(int i=0; i<tokens.size(); i++)
+				{
+					tokens[i].erase(std::remove(tokens[i].begin(), tokens[i].end(),'\n'), tokens[i].end());
+					tokens[i].erase(std::remove(tokens[i].begin(), tokens[i].end(),' '), tokens[i].end());
+					tokens[i].erase(std::remove(tokens[i].begin(), tokens[i].end(),'\r'), tokens[i].end());
+					tokens[i].erase(std::remove(tokens[i].begin(), tokens[i].end(),'\t'), tokens[i].end());
+					if(tokens[i].empty())
+						tokens.erase(tokens.begin()+i);
+				}
+
 				if(tokens.size()>0)
 				{
-					tokens[0].erase(std::remove(tokens[0].begin(), tokens[0].end(),'\n'), tokens[0].end());
-					tokens[0].erase(std::remove(tokens[0].begin(), tokens[0].end(),' '), tokens[0].end());
-					if(boost::starts_with(tokens[0],"#"))
-					{
-
-					}
-					else
+					if(!boost::starts_with(tokens[0],"#"))
 					{
 						WorkLine work;
 						work.command = tokens[0];
 						for(int i=1; i<tokens.size(); i++)
 						{
-							tokens[i].erase(std::remove(tokens[i].begin(), tokens[i].end(),'\n'), tokens[i].end());
-							tokens[i].erase(std::remove(tokens[i].begin(), tokens[i].end(),' '), tokens[i].end());
 							work.parameters.push_back(tokens[i]);
 						}
 						dataLibrary::Workflow.push_back(work);
@@ -399,22 +403,24 @@ void structrock::OpenWorkFlow(std::string commands)
 		std::vector<std::string> tokens;
 		for(std::string each; std::getline(line_stream, each, command_split_str); tokens.push_back(each));
 
+		for(int i=0; i<tokens.size(); i++)
+		{
+			tokens[i].erase(std::remove(tokens[i].begin(), tokens[i].end(),'\n'), tokens[i].end());
+			tokens[i].erase(std::remove(tokens[i].begin(), tokens[i].end(),' '), tokens[i].end());
+			tokens[i].erase(std::remove(tokens[i].begin(), tokens[i].end(),'\r'), tokens[i].end());
+			tokens[i].erase(std::remove(tokens[i].begin(), tokens[i].end(),'\t'), tokens[i].end());
+			if(tokens[i].empty())
+				tokens.erase(tokens.begin()+i);
+		}
+
 		if(tokens.size()>0)
 		{
-			tokens[0].erase(std::remove(tokens[0].begin(), tokens[0].end(),'\n'), tokens[0].end());
-			tokens[0].erase(std::remove(tokens[0].begin(), tokens[0].end(),' '), tokens[0].end());
-			if(boost::starts_with(tokens[0],"#"))
-			{
-
-			}
-			else
+			if(!boost::starts_with(tokens[0],"#"))
 			{
 				WorkLine work;
 				work.command = tokens[0];
 				for(int i=1; i<tokens.size(); i++)
 				{
-					tokens[i].erase(std::remove(tokens[i].begin(), tokens[i].end(),'\n'), tokens[i].end());
-					tokens[i].erase(std::remove(tokens[i].begin(), tokens[i].end(),' '), tokens[i].end());
 					work.parameters.push_back(tokens[i]);
 				}
 				dataLibrary::Workflow.push_back(work);

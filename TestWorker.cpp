@@ -103,6 +103,7 @@ bool splitData (const string &filename, const string &lsavefilename, const strin
 	return true;
 }
 
+// Some XYZ data format transformation operation
 /*void TestWorker::doWork(const QString &filename)
 {
 	bool is_success(false);
@@ -135,7 +136,8 @@ bool splitData (const string &filename, const string &lsavefilename, const strin
 	}
 }*/
 
-void TestWorker::doWork(const QString &filename)
+// Read XYZRGB data, convert it into XYZI data and show it
+/*void TestWorker::doWork(const QString &filename)
 {
 	bool is_success(false);
 
@@ -159,6 +161,39 @@ void TestWorker::doWork(const QString &filename)
 	else
 	{
 		emit showErrors("Error opening pcd file.");
+	}
+	//end of processing
+
+	dataLibrary::Status = STATUS_READY;
+    emit showReadyStatus();
+	delete strfilename;
+	if(this->getWorkFlowMode()&&is_success)
+	{
+		this->Sleep(1000);
+		emit GoWorkFlow();
+	}
+}*/
+
+// 
+void TestWorker::doWork(const QString &filename)
+{
+	bool is_success(false);
+
+    QByteArray ba = filename.toLocal8Bit();
+	string* strfilename = new std::string(ba.data());
+    
+    dataLibrary::Status = STATUS_TESTING;
+	
+	//begin of processing
+	if(!pcl::io::loadPCDFile (*strfilename, *dataLibrary::pointnormals))
+	{
+		is_success = true;
+		pcl::copyPointCloud(*dataLibrary::pointnormals, *dataLibrary::cloudxyz);
+		pcl::copyPointCloud(*dataLibrary::pointnormals, *dataLibrary::normal);
+	}
+	else
+	{
+		emit showErrors("Error opening pointnormal pcd file.");
 	}
 	//end of processing
 

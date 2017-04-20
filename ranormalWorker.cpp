@@ -61,7 +61,7 @@ void ranormalWorker::doWork(const double &radius)
 	//begin of processing
     pcl::NormalEstimationOMP<pcl::PointXYZ, pcl::Normal> ne;
     ne.setInputCloud(dataLibrary::cloudxyz);
-    pcl::search::KdTree<pcl::PointXYZ>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZ>());
+    pcl::search::KdTree<pcl::PointXYZ>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZ>);
     ne.setSearchMethod(tree);
     ne.setRadiusSearch(radius);
 	if(!dataLibrary::normal->empty())
@@ -74,7 +74,10 @@ void ranormalWorker::doWork(const double &radius)
 	{
 		dataLibrary::pointnormals->clear();
 	}
-	pcl::concatenateFields(*dataLibrary::cloudxyz, *dataLibrary::normal, *dataLibrary::pointnormals);
+	
+    //pcl::concatenateFields(*dataLibrary::cloudxyz, *dataLibrary::normal, *dataLibrary::pointnormals);
+    pcl::copyPointCloud(*dataLibrary::cloudxyz, *dataLibrary::pointnormals);
+    pcl::copyPointCloud(*dataLibrary::normal, *dataLibrary::pointnormals);
 
 	is_success = true;
 	//end of processing

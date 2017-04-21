@@ -63,7 +63,7 @@ void ShowSFeatureWorker::doWork()
 		}
 		else if(dataLibrary::FeatureParameter.percent_out<0.0 || dataLibrary::FeatureParameter.percent_out>0.5)
 		{
-			emit showErrors(QString("ShowSFeatures (roughness): Percentage Out was not correctly provided."));
+			emit showErrors(QString("ShowSFeatures (roughness): Percentage Out was not correctly provided (0.0<Percentage Out<0.5)."));
 		}
 		else
 		{
@@ -130,7 +130,7 @@ void ShowSFeatureWorker::doWork()
 		}
 		else if(dataLibrary::FeatureParameter.percent_out<0.0 || dataLibrary::FeatureParameter.percent_out>0.5)
 		{
-			emit showErrors(QString("ShowSFeatures (area): Percentage Out was not correctly provided."));
+			emit showErrors(QString("ShowSFeatures (area): Percentage Out was not correctly provided (0.0<Percentage Out<0.5)."));
 		}
 		else
 		{
@@ -183,6 +183,67 @@ void ShowSFeatureWorker::doWork()
 					dataLibrary::cloudxyzrgb_features->at(dataLibrary::clusters[cluster_index].indices[j]).g = g;
 					dataLibrary::cloudxyzrgb_features->at(dataLibrary::clusters[cluster_index].indices[j]).b = b;
 				}
+			}
+
+			is_success = true;
+			//end of processing
+		}
+	}
+	else if(dataLibrary::FeatureParameter.feature_type == FEATURE_CURVATURE)
+	{
+		if(dataLibrary::pointnormals->empty())
+		{
+			emit showErrors(QString("ShowSFeatures (curvature): You Haven't Extracted Any Normals Yet! Please Extract Normals First."));
+		}
+		else if(dataLibrary::FeatureParameter.percent_out<0.0 || dataLibrary::FeatureParameter.percent_out>0.5)
+		{
+			emit showErrors(QString("ShowSFeatures (curvature): Percentage Out was not correctly provided (0.0<Percentage Out<0.5)."));
+		}
+		else
+		{
+			//begin of processing
+			//Clear data if needed
+			if(!dataLibrary::cloudxyzrgb_features->empty())
+				dataLibrary::cloudxyzrgb_features->clear();
+			pcl::copyPointCloud(*dataLibrary::pointnormals, *dataLibrary::cloudxyzrgb_features);
+
+			std::vector<float> temp_curvature;
+			for(int i=0; i<dataLibrary::pointnormals->points.size(); i++)
+			{
+				temp_curvature.push_back(dataLibrary::pointnormals->points[i].curvature);
+			}
+			std::sort(temp_curvature.begin(), temp_curvature.end());
+			float max_val = temp_curvature[(int)(temp_curvature.size()*(1.0-dataLibrary::FeatureParameter.percent_out))];
+			float min_val = temp_curvature[(int)(temp_curvature.size()*dataLibrary::FeatureParameter.percent_out)];
+			
+			for(int j=0; j<dataLibrary::cloudxyzrgb_features->points.size(); j++)
+			{
+				unsigned char r, g, b;
+				if(dataLibrary::pointnormals->points[j].curvature>max_val)
+				{
+					r=255;g=0;b=0;
+				}
+				else if(dataLibrary::pointnormals->points[j].curvature<min_val)
+				{
+					r=0;g=0;b=255;
+				}
+				else
+				{
+					float a = 4.0*(max_val - dataLibrary::pointnormals->points[j].curvature)/(max_val-min_val);
+					int X = floor(a);
+					int Y = floor(255*(a-X));
+					switch(X)
+					{
+					case 0:r=255;g=Y;b=0; break;
+					case 1:r=255-Y;g=255;b=0; break;
+					case 2:r=0;g=255;b=Y; break;
+					case 3:r=0;g=255-Y;b=255; break;
+					case 4:r=0;g=0;b=255; break;
+					}
+				}
+				dataLibrary::cloudxyzrgb_features->at(j).r = r;
+				dataLibrary::cloudxyzrgb_features->at(j).g = g;
+				dataLibrary::cloudxyzrgb_features->at(j).b = b;
 			}
 
 			is_success = true;

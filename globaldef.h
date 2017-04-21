@@ -65,8 +65,9 @@
 #define STATUS_TESTING  114
 #define STATUS_SHOWSFEATURE 115
 
-#define FEATURE_ROUGHNESS 1001
-#define FEATURE_AREA 1002
+#define FEATURE_ROUGHNESS   1001
+#define FEATURE_AREA    1002
+#define FEATURE_CURVATURE   1003
 
 struct RGSpara{
     double curvature;

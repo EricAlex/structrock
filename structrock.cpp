@@ -992,81 +992,95 @@ void structrock::command_parser()
 		}
 		else if(command_string == "rgsegmentation")
 		{
-			if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>5)
-			{
-				double smoothness;
-				std::stringstream ss_smoothness(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[0]);
-				ss_smoothness >> smoothness;
-				dataLibrary::RGSparameter.smoothness = smoothness;
-				double curvature;
-				std::stringstream ss_curvature(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1]);
-				ss_curvature >> curvature;
-				dataLibrary::RGSparameter.curvature = curvature;
-				double residual;
-				std::stringstream ss_residual(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[2]);
-				ss_residual >> residual;
-				dataLibrary::RGSparameter.residual = residual;
-				int min_number_of_Points;
-				std::stringstream ss_min_number_of_Points(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[3]);
-				ss_min_number_of_Points >> min_number_of_Points;
-				dataLibrary::RGSparameter.min_number_of_Points = min_number_of_Points;
-				int number_of_neighbors;
-				std::stringstream ss_number_of_neighbors(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[4]);
-				ss_number_of_neighbors >> number_of_neighbors;
-				dataLibrary::RGSparameter.number_of_neighbors = number_of_neighbors;
-				std::string IsSmoothMode_string = dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[5];
-				std::transform(IsSmoothMode_string.begin(), IsSmoothMode_string.end(), IsSmoothMode_string.begin(), ::tolower);
-				if((IsSmoothMode_string == "true")||(IsSmoothMode_string == "false"))
+			if(dataLibrary::haveBaseData())
+    		{
+				if(!dataLibrary::pointnormals->empty())
 				{
-					if(IsSmoothMode_string == "true")
+					if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>5)
 					{
-						dataLibrary::RGSparameter.IsSmoothMode=true;
-					}
-					else if(IsSmoothMode_string == "false")
-					{
-						dataLibrary::RGSparameter.IsSmoothMode=false;
-					}
-					rgsworker.setWorkFlowMode(true);
-					rgsworker.setUnmute();
-					rgsworker.setWriteLog();
-                    if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>6)
-                    {
-                        if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[6] == "mute")
-                        {
-                            rgsworker.setMute();
-                        }
-                        else if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[6] == "nolog")
-	                    {
-	                        rgsworker.setUnWriteLog();
-	                    }
-	                    if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>7)
-	                    {
-	                    	if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[7] == "mute")
-	                        {
-	                            rgsworker.setMute();
-	                        }
-	                        else if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[7] == "nolog")
-		                    {
-		                        rgsworker.setUnWriteLog();
-		                    }
-	                    }
-                    }
-					connect(&rgsworker, SIGNAL(show()), this, SLOT(ShowRGS()));
-					connect(&rgsworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
-					connect(&rgsworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
-					connect(&rgsworker, SIGNAL(GoWorkFlow()), this, SLOT(command_parser()));
+						double smoothness;
+						std::stringstream ss_smoothness(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[0]);
+						ss_smoothness >> smoothness;
+						dataLibrary::RGSparameter.smoothness = smoothness;
+						double curvature;
+						std::stringstream ss_curvature(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1]);
+						ss_curvature >> curvature;
+						dataLibrary::RGSparameter.curvature = curvature;
+						double residual;
+						std::stringstream ss_residual(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[2]);
+						ss_residual >> residual;
+						dataLibrary::RGSparameter.residual = residual;
+						int min_number_of_Points;
+						std::stringstream ss_min_number_of_Points(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[3]);
+						ss_min_number_of_Points >> min_number_of_Points;
+						dataLibrary::RGSparameter.min_number_of_Points = min_number_of_Points;
+						int number_of_neighbors;
+						std::stringstream ss_number_of_neighbors(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[4]);
+						ss_number_of_neighbors >> number_of_neighbors;
+						dataLibrary::RGSparameter.number_of_neighbors = number_of_neighbors;
+						std::string IsSmoothMode_string = dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[5];
+						std::transform(IsSmoothMode_string.begin(), IsSmoothMode_string.end(), IsSmoothMode_string.begin(), ::tolower);
+						if((IsSmoothMode_string == "true")||(IsSmoothMode_string == "false"))
+						{
+							if(IsSmoothMode_string == "true")
+							{
+								dataLibrary::RGSparameter.IsSmoothMode=true;
+							}
+							else if(IsSmoothMode_string == "false")
+							{
+								dataLibrary::RGSparameter.IsSmoothMode=false;
+							}
+							rgsworker.setWorkFlowMode(true);
+							rgsworker.setUnmute();
+							rgsworker.setWriteLog();
+							if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>6)
+							{
+								if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[6] == "mute")
+								{
+									rgsworker.setMute();
+								}
+								else if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[6] == "nolog")
+								{
+									rgsworker.setUnWriteLog();
+								}
+								if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>7)
+								{
+									if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[7] == "mute")
+									{
+										rgsworker.setMute();
+									}
+									else if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[7] == "nolog")
+									{
+										rgsworker.setUnWriteLog();
+									}
+								}
+							}
+							connect(&rgsworker, SIGNAL(show()), this, SLOT(ShowRGS()));
+							connect(&rgsworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
+							connect(&rgsworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
+							connect(&rgsworker, SIGNAL(GoWorkFlow()), this, SLOT(command_parser()));
 
-					rgsworker.rgs();
+							rgsworker.rgs();
+						}
+						else
+						{
+							Show_Errors(QString("Rgsegmentation: IsSmoothMode not set correctly, set with \"true\" or \"false\"."));
+						}
+					}
+					else
+					{
+						Show_Errors(QString("Rgsegmentation: Not enough parameters given."));
+					}
 				}
 				else
 				{
-					Show_Errors(QString("Rgsegmentation: IsSmoothMode not set correctly, set with \"true\" or \"false\"."));
+					Show_Errors(QString("You Haven't Extracted Any Normals Yet! Please Extract Normals First."));
 				}
 			}
-			else
-			{
-				Show_Errors(QString("Rgsegmentation: Not enough parameters given."));
-			}
+    		else
+    		{
+				Show_Errors(QString("You Do Not Have Any Point Cloud Data in Memery!"));
+    		}
 		}
 		else if(command_string == "showprocess")
 		{
@@ -1131,6 +1145,22 @@ void structrock::command_parser()
 				else if(feature_str == "area")
 				{
 					dataLibrary::FeatureParameter.feature_type = FEATURE_AREA;
+					if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>1)
+					{
+						float percent_out;
+						std::stringstream ss(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1]);
+						ss >> percent_out;
+						dataLibrary::FeatureParameter.percent_out = percent_out;
+					}
+					else
+					{
+						dataLibrary::FeatureParameter.percent_out = 0.0f;
+					}
+					showsfeatureworker.showSFeature();
+				}
+				else if(feature_str == "curvature")
+				{
+					dataLibrary::FeatureParameter.feature_type = FEATURE_CURVATURE;
 					if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>1)
 					{
 						float percent_out;

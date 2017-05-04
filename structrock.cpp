@@ -1174,6 +1174,22 @@ void structrock::command_parser()
 					}
 					showsfeatureworker.showSFeature();
 				}
+				else if(feature_str == "fracture_curvature")
+				{
+					dataLibrary::FeatureParameter.feature_type = FEATURE_FRACTURE_CURVATURE;
+					if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>1)
+					{
+						float percent_out;
+						std::stringstream ss(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1]);
+						ss >> percent_out;
+						dataLibrary::FeatureParameter.percent_out = percent_out;
+					}
+					else
+					{
+						dataLibrary::FeatureParameter.percent_out = 0.0f;
+					}
+					showsfeatureworker.showSFeature();
+				}
 				else
 				{
 					Show_Errors(QString("ShowSFeatures: the name of the surface feature not correctly provided."));

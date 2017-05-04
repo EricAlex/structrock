@@ -250,6 +250,84 @@ void ShowSFeatureWorker::doWork()
 			//end of processing
 		}
 	}
+	else if(dataLibrary::FeatureParameter.feature_type == FEATURE_FRACTURE_CURVATURE)
+	{
+		if(dataLibrary::pointnormals->empty())
+		{
+			emit showErrors(QString("ShowSFeatures (fracture_curvature): You Haven't Extracted Any Normals Yet! Please Extract Normals First."));
+		}
+		else if(dataLibrary::clusters.empty())
+		{
+			emit showErrors(QString("ShowSFeatures (fracture_curvature): Please perform the region growing segmentation first."));
+		}
+		else if(dataLibrary::FeatureParameter.percent_out<0.0 || dataLibrary::FeatureParameter.percent_out>0.5)
+		{
+			emit showErrors(QString("ShowSFeatures (fracture_curvature): Percentage Out was not correctly provided (0.0<Percentage Out<0.5)."));
+		}
+		else
+		{
+			//begin of processing
+			//Clear data if needed
+			if(!dataLibrary::cloudxyzrgb_features->empty())
+				dataLibrary::cloudxyzrgb_features->clear();
+			pcl::copyPointCloud(*dataLibrary::pointnormals, *dataLibrary::cloudxyzrgb_features);
+
+			for(int i=0; i<dataLibrary::cloudxyzrgb_features->points.size(); i++)
+			{
+				dataLibrary::cloudxyzrgb_features->at(i).r = 255;
+				dataLibrary::cloudxyzrgb_features->at(i).g = 255;
+				dataLibrary::cloudxyzrgb_features->at(i).b = 255;
+			}
+
+			std::vector<float> temp_curvature;
+			for(int cluster_index = 0; cluster_index < dataLibrary::clusters.size(); cluster_index++)
+			{
+				for(int j = 0; j < dataLibrary::clusters[cluster_index].indices.size(); j++)
+				{
+					temp_curvature.push_back(dataLibrary::pointnormals->points[dataLibrary::clusters[cluster_index].indices[j]].curvature);
+				}
+			}
+			std::sort(temp_curvature.begin(), temp_curvature.end());
+			float max_val = temp_curvature[(int)(temp_curvature.size()*(1.0-dataLibrary::FeatureParameter.percent_out))];
+			float min_val = temp_curvature[(int)(temp_curvature.size()*dataLibrary::FeatureParameter.percent_out)];
+
+			for(int cluster_index = 0; cluster_index < dataLibrary::clusters.size(); cluster_index++)
+			{
+				for(int j = 0; j < dataLibrary::clusters[cluster_index].indices.size(); j++)
+				{
+					unsigned char r, g, b;
+					if(dataLibrary::pointnormals->points[dataLibrary::clusters[cluster_index].indices[j]].curvature>max_val)
+					{
+						r=255;g=0;b=0;
+					}
+					else if(dataLibrary::pointnormals->points[dataLibrary::clusters[cluster_index].indices[j]].curvature<min_val)
+					{
+						r=0;g=0;b=255;
+					}
+					else
+					{
+						float a = 4.0*(max_val - dataLibrary::pointnormals->points[dataLibrary::clusters[cluster_index].indices[j]].curvature)/(max_val-min_val);
+						int X = floor(a);
+						int Y = floor(255*(a-X));
+						switch(X)
+						{
+						case 0:r=255;g=Y;b=0; break;
+						case 1:r=255-Y;g=255;b=0; break;
+						case 2:r=0;g=255;b=Y; break;
+						case 3:r=0;g=255-Y;b=255; break;
+						case 4:r=0;g=0;b=255; break;
+						}
+					}
+					dataLibrary::cloudxyzrgb_features->at(dataLibrary::clusters[cluster_index].indices[j]).r = r;
+					dataLibrary::cloudxyzrgb_features->at(dataLibrary::clusters[cluster_index].indices[j]).g = g;
+					dataLibrary::cloudxyzrgb_features->at(dataLibrary::clusters[cluster_index].indices[j]).b = b;
+				}
+			}
+
+			is_success = true;
+			//end of processing
+		}
+	}
 
 	dataLibrary::finish = clock();
 

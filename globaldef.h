@@ -68,6 +68,7 @@
 #define FEATURE_ROUGHNESS   1001
 #define FEATURE_AREA    1002
 #define FEATURE_CURVATURE   1003
+#define FEATURE_FRACTURE_CURVATURE  1004
 
 struct RGSpara{
     double curvature;

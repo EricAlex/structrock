@@ -9,13 +9,15 @@ You are welcomed to make contributions to this project. Email ericrussell@zju.ed
 Citation (more to be added soon):
 
 ``` tex
-@article{Wang_cageo2016,
+@article{Wang17,
 	title={A region-growing approach for automatic outcrop fracture extraction from a three-dimensional point cloud},
 	author={Wang, Xin and Zou, Lejun and Shen, Xiaohua and Ren, Yupeng and Qin, Yi},
 	journal={Computers \& Geosciences},
-	year={2016},
+	volume={99},
+	pages={100-106},
+	year={2017},
 	doi={10.1016/j.cageo.2016.11.002},
-	publisher={Elsevier}
+	publisher={Elsevier},
 }
 ```
 

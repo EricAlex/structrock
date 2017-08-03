@@ -19,6 +19,12 @@ Citation (more to be added soon):
 	doi={10.1016/j.cageo.2016.11.002},
 	publisher={Elsevier},
 }
+@article{Wang_arxiv2017,
+  title={Outcrop fracture characterization on suppositional planes cutting through digital outcrop models (DOMs)},
+  author={Wang, Xin and Zou, Lejun and Ren, Yupeng and Qin, Yi and Guo, Zhonghao and Shen, Xiaohua},
+  journal={arXiv preprint arXiv:1707.03437},
+  year={2017}
+}
 ```
 
 ![Detailed results.](https://github.com/EricAlex/structrock/blob/master/wiki/img/detailed_results.jpg)

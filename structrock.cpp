@@ -46,7 +46,7 @@
 #include <time.h>
 #include <math.h>
 #include <libpq-fe.h>
-#include "pcl/common/common_headers.h"
+#include <pcl/common/common_headers.h>
 #include <pcl/search/search.h>
 #include <pcl/search/kdtree.h>
 #include <pcl/visualization/cloud_viewer.h>
@@ -528,9 +528,46 @@ void structrock::command_parser()
 				Show_Errors(QString("Openpcd: Location of PCD file not provided."));
 			}
 		}
-		else if(command_string == "openbin")
+		else if(command_string == "openclusters")
 		{
+			if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>0)
+			{
+				openclustersworker.setWorkFlowMode(true);
+				openclustersworker.setUnmute();
+				openclustersworker.setWriteLog();
+				if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>1)
+				{
+					if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1] == "mute")
+					{
+						openclustersworker.setMute();
+					}
+					else if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1] == "nolog")
+					{
+						openclustersworker.setUnWriteLog();
+					}
+					if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>2)
+					{
+						if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[2] == "mute")
+						{
+							openclustersworker.setMute();
+						}
+						else if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[2] == "nolog")
+						{
+							openclustersworker.setUnWriteLog();
+						}
+					}
+				}
+				connect(&openclustersworker, SIGNAL(show()), this, SLOT(ShowClusters()));
+				connect(&openclustersworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
+				connect(&openclustersworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
+				connect(&openclustersworker, SIGNAL(GoWorkFlow()), this, SLOT(command_parser()));
 
+				openclustersworker.openclusters(QString::fromUtf8(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[0].c_str()));
+			}
+			else
+			{
+				Show_Errors(QString("openclusters: Location of cluster (bin) file not provided."));
+			}
 		}
 		else if(command_string == "openxyz")
 		{
@@ -1069,7 +1106,7 @@ void structrock::command_parser()
 					}
 					else
 					{
-						Show_Errors(QString("Rgsegmentation: Not enough parameters given."));
+						Show_Errors(QString("Rgsegmentation: No (or not enough) parameter given."));
 					}
 				}
 				else
@@ -1111,6 +1148,98 @@ void structrock::command_parser()
 				{
 					Show_Errors(QString("Showprocess: No parameters given."));
 				}
+			}
+		}
+		else if(command_string == "ftriangulation")
+		{
+			if((dataLibrary::clusters.size()>0)||(dataLibrary::cluster_patches.size()>0))
+    		{
+				if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>7)
+				{
+					int knNeighbors;
+					std::stringstream ss_knNeighbors(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[0]);
+					ss_knNeighbors >> knNeighbors;
+					dataLibrary::TriangulationParameter.knNeighbors = knNeighbors;
+					double searchRadius;
+					std::stringstream ss_searchRadius(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1]);
+					ss_searchRadius >> searchRadius;
+					dataLibrary::TriangulationParameter.searchRadius = searchRadius;
+					double Mu;
+					std::stringstream ss_Mu(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[2]);
+					ss_Mu >> Mu;
+					dataLibrary::TriangulationParameter.Mu = Mu;
+					int maxNearestNeighbors;
+					std::stringstream ss_maxNearestNeighbors(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[3]);
+					ss_maxNearestNeighbors >> maxNearestNeighbors;
+					dataLibrary::TriangulationParameter.maxNearestNeighbors = maxNearestNeighbors;
+					double maxSurfaceAngle;
+					std::stringstream ss_maxSurfaceAngle(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[4]);
+					ss_maxSurfaceAngle >> maxSurfaceAngle;
+					dataLibrary::TriangulationParameter.maxSurfaceAngle = maxSurfaceAngle;
+					double minAngle;
+					std::stringstream ss_minAngle(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[5]);
+					ss_minAngle >> minAngle;
+					dataLibrary::TriangulationParameter.minAngle = minAngle;
+					double maxAngle;
+					std::stringstream ss_maxAngle(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[6]);
+					ss_maxAngle >> maxAngle;
+					dataLibrary::TriangulationParameter.maxAngle = maxAngle;
+					std::string normalConsistancy_string = dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[7];
+					if((normalConsistancy_string == "true")||(normalConsistancy_string == "false"))
+					{
+						if(normalConsistancy_string == "true")
+						{
+							dataLibrary::TriangulationParameter.normalConsistancy=true;
+						}
+						else if(normalConsistancy_string == "false")
+						{
+							dataLibrary::TriangulationParameter.normalConsistancy=false;
+						}
+						triangulationworker.setWorkFlowMode(true);
+						triangulationworker.setUnmute();
+						triangulationworker.setWriteLog();
+						if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>8)
+						{
+							if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[8] == "mute")
+							{
+								triangulationworker.setMute();
+							}
+							else if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[8] == "nolog")
+							{
+								triangulationworker.setUnWriteLog();
+							}
+							if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>9)
+							{
+								if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[9] == "mute")
+								{
+									triangulationworker.setMute();
+								}
+								else if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[9] == "nolog")
+								{
+									triangulationworker.setUnWriteLog();
+								}
+							}
+						}
+						connect(&triangulationworker, SIGNAL(show()), this, SLOT(ShowTriangulation()));
+						connect(&triangulationworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
+						connect(&triangulationworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
+						connect(&triangulationworker, SIGNAL(GoWorkFlow()), this, SLOT(command_parser()));
+
+						triangulationworker.triangulation();
+					}
+					else
+					{
+						Show_Errors(QString("ftriangulation: normalConsistancy not set correctly, set with \"true\" or \"false\"."));
+					}
+				}
+				else
+				{
+					Show_Errors(QString("ftriangulation: No (or not enough) parameter given."));
+				}
+			}
+			else
+			{
+				Show_Errors(QString("ftriangulation: Fracture data was not opened or extracted."));
 			}
 		}
 		else if(command_string == "showsfeature")
@@ -1677,6 +1806,23 @@ void structrock::ShowRGS()
 	ui.qvtkWidget->update();
 }
 
+void structrock::ShowTriangulation()
+{
+	if(dataLibrary::Fracture_Triangles.size()>0)
+	{
+		viewer->removeAllPointClouds(v2);
+		viewer->removeAllShapes(v2);
+		for(int i=0; i<dataLibrary::Fracture_Triangles.size(); i++)
+		{
+			stringstream ss;
+			ss << i;
+			string patchID = "Mesh_" + ss.str();
+			viewer->addPolygonMesh(*dataLibrary::Fracture_Triangles[i], patchID, v2);
+		}
+		ui.qvtkWidget->update();
+	}
+}
+
 void structrock::DrawLine(const Eigen::Vector3f begin, const Eigen::Vector3f end, float r, float g, float b, std::string id, int viewpot)
 {
 	pcl::PointXYZ point_begin, point_end;
@@ -2013,84 +2159,29 @@ void structrock::Show_SFeature()
 void structrock::OpenClusters()
 {
 	QString filename = QFileDialog::getOpenFileName(this,tr("Open Point Cloud Clusters Data"),QDir::currentPath(),tr("(*.bin)"));
-	QByteArray ba = filename.toLocal8Bit();
-	string* strfilename = new string(ba.data());
-    stringstream ss;
-
-	if(!filename.isNull())
-	{
-		if(!dataLibrary::cluster_patches.empty())
-			dataLibrary::cluster_patches.clear();
-		if(!dataLibrary::dips.empty())
-			dataLibrary::dips.clear();
-		if(!dataLibrary::dip_directions.empty())
-			dataLibrary::dip_directions.clear();
-		if(!dataLibrary::areas.empty())
-			dataLibrary::areas.clear();
-		if(!dataLibrary::patchIDs.empty())
-			dataLibrary::patchIDs.clear();
-		if(!dataLibrary::selectedPatches.empty())
-			dataLibrary::selectedPatches.clear();
-
-		ifstream fbinaryin(strfilename->c_str(), ios::in|ios::binary);
-		if(fbinaryin.is_open())
-		{
-			viewer->removeAllPointClouds(v2);
-
-			int num_of_clusters, num_of_points;
-			float x, y, z, rgb, dip, dip_direction, area;
-			fbinaryin.read(reinterpret_cast<char*>(&num_of_clusters), sizeof(num_of_clusters));
-			Eigen::Vector4f centroid;
-			float centor_x, centor_y, centor_z;
-			for(int i=0; i<num_of_clusters; i++)
-			{
-				pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_patch (new pcl::PointCloud<pcl::PointXYZRGB>);
-				fbinaryin.read(reinterpret_cast<char*>(&num_of_points), sizeof(num_of_points));
-				fbinaryin.read(reinterpret_cast<char*>(&rgb), sizeof(rgb));
-				for(int j=0; j<num_of_points; j++)
-				{
-					fbinaryin.read(reinterpret_cast<char*>(&x), sizeof(x));
-					fbinaryin.read(reinterpret_cast<char*>(&y), sizeof(y));
-					fbinaryin.read(reinterpret_cast<char*>(&z), sizeof(z));
-					pcl::PointXYZRGB point;
-					point.x = x;
-					point.y = y;
-					point.z = z;
-					point.rgb = rgb;
-					cloud_patch->push_back(point);
-				}
-				fbinaryin.read(reinterpret_cast<char*>(&dip), sizeof(dip));
-				fbinaryin.read(reinterpret_cast<char*>(&dip_direction), sizeof(dip_direction));
-				fbinaryin.read(reinterpret_cast<char*>(&area), sizeof(area));
-				dataLibrary::cluster_patches.push_back(cloud_patch);
-				dataLibrary::dips.push_back(dip);
-				dataLibrary::dip_directions.push_back(dip_direction);
-				dataLibrary::areas.push_back(area);
-
-                ss << i;
-				string patchID = *strfilename += ss.str();
-				dataLibrary::patchIDs.push_back(patchID);
-				viewer->addPointCloud(cloud_patch, patchID, v2);
-				pcl::compute3DCentroid(*cloud_patch, centroid);
-				centor_x += centroid[0];
-				centor_y += centroid[1];
-				centor_z += centroid[2];
-			}
-			centor_x /= num_of_clusters;
-			centor_y /= num_of_clusters;
-			centor_z /= num_of_clusters;
-			viewer->setCameraPosition(centor_x,centor_y,centor_z,centor_x,centor_y,centor_z);
-			viewer->resetCamera();
-			ui.qvtkWidget->update();
-			fbinaryin.close();
-		}
-		else
-		{
-			Show_Errors(QString("Can Not Open the File!"));
-		}
+    
+    if(!filename.isNull())
+    {
+		openclustersworker.setWorkFlowMode(false);
+		openclustersworker.setUnmute();
+        connect(&openclustersworker, SIGNAL(show()), this, SLOT(ShowClusters()));
+		connect(&openclustersworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
+        connect(&openclustersworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
+        
+        openclustersworker.openclusters(filename);
 	}
+}
 
-	delete strfilename;
+void structrock::ShowClusters()
+{
+	viewer->removeAllPointClouds(v2);
+	for(int i=0; i<dataLibrary::cluster_patches.size(); i++)
+	{
+		viewer->addPointCloud(dataLibrary::cluster_patches[i], dataLibrary::patchIDs[i], v2);
+	}
+	viewer->setCameraPosition(dataLibrary::cloud_centor.x,dataLibrary::cloud_centor.y,dataLibrary::cloud_centor.z,dataLibrary::cloud_centor.x,dataLibrary::cloud_centor.y,dataLibrary::cloud_centor.z);
+	viewer->resetCamera();
+	ui.qvtkWidget->update();
 }
 
 void structrock::MoveForwardPatch()
@@ -2722,6 +2813,14 @@ void structrock::ShowStatus(int i)
 			ui.label->setPalette(pa);
 			break;
 		}
+	case STATUS_TESTING:
+		{
+			head="Busy	testing";
+			head+=tail;
+			ui.label->setText(QString::fromStdString(head));
+			ui.label->setPalette(pa);
+			break;
+		}
 	case STATUS_SHOWSFEATURE:
 		{
 			head="Busy	preparing to show surface features";
@@ -2730,9 +2829,17 @@ void structrock::ShowStatus(int i)
 			ui.label->setPalette(pa);
 			break;
 		}
-	case STATUS_TESTING:
+	case STATUS_TRIANGULATION:
 		{
-			head="Busy	testing";
+			head="Busy	performing fracture surface triangulation";
+			head+=tail;
+			ui.label->setText(QString::fromStdString(head));
+			ui.label->setPalette(pa);
+			break;
+		}
+	case STATUS_OPENCLUSTERS:
+		{
+			head="Busy	opening fracture point cluster data";
 			head+=tail;
 			ui.label->setText(QString::fromStdString(head));
 			ui.label->setPalette(pa);

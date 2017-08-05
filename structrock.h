@@ -71,6 +71,8 @@
 #include "SaveNormalsWorker.h"
 #include "ShowProcessWorker.h"
 #include "ShowSFeatureWorker.h"
+#include "triangulationWorker.h"
+#include "openClustersWorker.h"
 #include "TestWorker.h"
 #include "TimingShutdown.h"
 
@@ -107,7 +109,9 @@ private slots:
 	void Show_SaveTraceMap(QString filename);
 	void RegionGrowingSegmentation();
 	void ShowRGS();
+	void ShowTriangulation();
 	void OpenClusters();
+	void ShowClusters();
 	void OpenXYZ();
 	void OpenWorkFlow();
 	void Testing();
@@ -197,6 +201,8 @@ private:
 	SaveNormalsWorker savenormalsworker;
 	ShowProcessWorker showprocessworker;
 	ShowSFeatureWorker showsfeatureworker;
+	triangulationWorker triangulationworker;
+	openClustersWorker openclustersworker;
 	TestWorker testworker;
 
 public:

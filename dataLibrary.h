@@ -45,6 +45,7 @@
 #include <pcl/io/io.h>
 #include <pcl/io/pcd_io.h>
 #include <pcl/PCLPointCloud2.h>
+#include <pcl/PolygonMesh.h>
 #include <Eigen/src/Core/Matrix.h>
 #include "ReadFileWorker.h"
 #include "checkstatusThread.h"
@@ -82,6 +83,8 @@ public:
 	static std::vector<int> selectedPatches;
 	static int Status;
     static RGSpara RGSparameter;
+	static TriangulationPara TriangulationParameter;
+	static std::vector<pcl::PolygonMesh::Ptr> Fracture_Triangles;
 	static FeaturePara FeatureParameter;
 	static std::vector<std::string> contents;
     static pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_hull_all;
@@ -94,6 +97,7 @@ public:
 	static bool have_called_read_file;
 	static clock_t start;
 	static clock_t finish;
+	static Vector3f cloud_centor;
 
 public:
 	static void checkupflow();

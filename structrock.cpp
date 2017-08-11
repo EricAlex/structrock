@@ -1242,6 +1242,54 @@ void structrock::command_parser()
 				Show_Errors(QString("ftriangulation: Fracture data was not opened or extracted."));
 			}
 		}
+		else if(command_string == "shearpara")
+		{
+			if(dataLibrary::Fracture_Triangles.size() == 0)
+			{
+				Show_Errors(QString("shearpara: You Haven't Performed Fracture Triangulation Yet!"));
+			}
+			else
+			{
+				if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>0)
+				{
+					shearparaworker.setWorkFlowMode(true);
+					shearparaworker.setUnmute();
+					shearparaworker.setWriteLog();
+					if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>1)
+					{
+						if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1] == "mute")
+						{
+							shearparaworker.setMute();
+						}
+						else if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1] == "nolog")
+						{
+							shearparaworker.setUnWriteLog();
+						}
+						if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>2)
+						{
+							if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[2] == "mute")
+							{
+								shearparaworker.setMute();
+							}
+							else if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[2] == "nolog")
+							{
+								shearparaworker.setUnWriteLog();
+							}
+						}
+					}
+					connect(&shearparaworker, SIGNAL(show()), this, SLOT(ShowShearPara()));
+					connect(&shearparaworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
+					connect(&shearparaworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
+					connect(&shearparaworker, SIGNAL(GoWorkFlow()), this, SLOT(command_parser()));
+				
+					shearparaworker.shearpara(QString::fromUtf8(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[0].c_str()));
+				}
+				else
+				{
+					Show_Errors(QString("shearpara: No Parameter given."));
+				}
+			}
+		}
 		else if(command_string == "showsfeature")
 		{
 			if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>0)
@@ -1822,6 +1870,9 @@ void structrock::ShowTriangulation()
 		ui.qvtkWidget->update();
 	}
 }
+
+void structrock::ShowShearPara()
+{}
 
 void structrock::DrawLine(const Eigen::Vector3f begin, const Eigen::Vector3f end, float r, float g, float b, std::string id, int viewpot)
 {
@@ -2840,6 +2891,14 @@ void structrock::ShowStatus(int i)
 	case STATUS_OPENCLUSTERS:
 		{
 			head="Busy	opening fracture point cluster data";
+			head+=tail;
+			ui.label->setText(QString::fromStdString(head));
+			ui.label->setPalette(pa);
+			break;
+		}
+	case STATUS_SHEARPARA:
+		{
+			head="Busy	estimating fracture shear parameters";
 			head+=tail;
 			ui.label->setText(QString::fromStdString(head));
 			ui.label->setPalette(pa);

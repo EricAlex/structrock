@@ -73,6 +73,7 @@
 #include "ShowSFeatureWorker.h"
 #include "triangulationWorker.h"
 #include "openClustersWorker.h"
+#include "ShearParaWorker.h"
 #include "TestWorker.h"
 #include "TimingShutdown.h"
 
@@ -110,6 +111,7 @@ private slots:
 	void RegionGrowingSegmentation();
 	void ShowRGS();
 	void ShowTriangulation();
+	void ShowShearPara();
 	void OpenClusters();
 	void ShowClusters();
 	void OpenXYZ();
@@ -203,6 +205,7 @@ private:
 	ShowSFeatureWorker showsfeatureworker;
 	triangulationWorker triangulationworker;
 	openClustersWorker openclustersworker;
+	ShearParaWorker shearparaworker;
 	TestWorker testworker;
 
 public:

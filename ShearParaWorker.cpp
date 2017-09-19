@@ -112,7 +112,11 @@ void ShearParaWorker::doWork(const QString &filename)
 
     dataLibrary::start = clock();
 
-	//begin of processing
+    //begin of processing
+    string dip_dipdir_file = *strfilename + "_dip_dipdir.txt";
+    ofstream dip_dipdir_out(dip_dipdir_file.c_str());
+    string is_large_enough = *strfilename + "_is_large_enough.txt";
+    ofstream is_large_enough_out(is_large_enough.c_str());
     for(int i=0; i<dataLibrary::Fracture_Triangles.size(); i++)
     {
         std::ostringstream strs;
@@ -135,6 +139,37 @@ void ShearParaWorker::doWork(const QString &filename)
         centroid(0)=xyz_centroid(0);
         centroid(1)=xyz_centroid(1);
         centroid(2)=xyz_centroid(2);
+
+        is_large_enough_out<<cloud_ptr->points.size()<<"\n";
+
+        float dip_direction, dip;
+        //Dip Direction
+        if(nx == 0.0)
+        {
+            if((ny > 0.0)||(ny == 0.0))
+                dip_direction = 0.0;
+            else
+                dip_direction = 180.0;
+        }
+        else if(nx > 0.0)
+        {
+            dip_direction = 90.0 - atan(ny/nx)*180/M_PI;
+        }
+        else
+        {
+            dip_direction = 270.0 - atan(ny/nx)*180/M_PI;
+        }
+        //dip
+        if((nx*nx + ny*ny) == 0.0)
+        {
+            dip = 0.0;
+        }
+        else
+        {
+            dip = 90.0 - atan(fabs(nz)/sqrt((nx*nx + ny*ny)))*180/M_PI;
+        }
+        dip_dipdir_out<<dip<<"\t"<<dip_direction<<"\n";
+
         // shear directions parallel to P
         std::vector<Eigen::Vector3f> sdirections;
         Eigen::Vector3f original;
@@ -237,6 +272,10 @@ void ShearParaWorker::doWork(const QString &filename)
         fout<<flush;
         fout.close();
     }
+    dip_dipdir_out<<flush;
+    dip_dipdir_out.close();
+    is_large_enough_out<<flush;
+    is_large_enough_out.close();
     is_success = true;
 	//end of processing
 

@@ -71,6 +71,9 @@
 #include "SaveNormalsWorker.h"
 #include "ShowProcessWorker.h"
 #include "ShowSFeatureWorker.h"
+#include "triangulationWorker.h"
+#include "openClustersWorker.h"
+#include "ShearParaWorker.h"
 #include "TestWorker.h"
 #include "TimingShutdown.h"
 
@@ -105,9 +108,14 @@ private slots:
 	void SaveClusters();
     void ShowSavedClusters(QString filename);
 	void Show_SaveTraceMap(QString filename);
+	void Prepare_2_s_f();
+	void Show_f_n_SaveScreen(const QString &filename);
 	void RegionGrowingSegmentation();
 	void ShowRGS();
+	void ShowTriangulation();
+	void ShowShearPara();
 	void OpenClusters();
+	void ShowClusters();
 	void OpenXYZ();
 	void OpenWorkFlow();
 	void Testing();
@@ -197,6 +205,9 @@ private:
 	SaveNormalsWorker savenormalsworker;
 	ShowProcessWorker showprocessworker;
 	ShowSFeatureWorker showsfeatureworker;
+	triangulationWorker triangulationworker;
+	openClustersWorker openclustersworker;
+	ShearParaWorker shearparaworker;
 	TestWorker testworker;
 
 public:

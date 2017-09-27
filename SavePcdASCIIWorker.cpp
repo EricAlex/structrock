@@ -59,7 +59,7 @@ void SavePcdASCIIWorker::doWork(const QString &filename)
 	{
 		emit showErrors(QString("You Haven't Opened Any Dataset Yet!"));
 	}
-	else if(!dataLibrary::cloudxyz->empty())
+	else if((!this->getSaveRGBMode())&&(!dataLibrary::cloudxyz->empty()))
 	{
 		if(!pcl::io::savePCDFileASCII(*strfilename, *dataLibrary::cloudxyz))
 		{
@@ -80,6 +80,10 @@ void SavePcdASCIIWorker::doWork(const QString &filename)
 		{
 			emit showErrors("Saving pcd as ASCII failed.");
 		}
+	}
+	else
+	{
+		emit showErrors("You Want to Save RGB Data as ASCII, But You Haven't Opened Any RGB Dataset Yet!");
 	}
 	//end of processing
 

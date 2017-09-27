@@ -64,10 +64,14 @@
 #define STATUS_SHOWPROCESS	113
 #define STATUS_TESTING  114
 #define STATUS_SHOWSFEATURE 115
+#define STATUS_TRIANGULATION    116
+#define STATUS_OPENCLUSTERS 117
+#define STATUS_SHEARPARA    118
 
 #define FEATURE_ROUGHNESS   1001
 #define FEATURE_AREA    1002
 #define FEATURE_CURVATURE   1003
+#define FEATURE_FRACTURE_CURVATURE  1004
 
 struct RGSpara{
     double curvature;
@@ -76,6 +80,17 @@ struct RGSpara{
     int number_of_neighbors;
     int min_number_of_Points;
     bool IsSmoothMode;
+};
+
+struct TriangulationPara{
+    int knNeighbors;
+    double searchRadius;
+    double Mu;
+    int maxNearestNeighbors;
+    double maxSurfaceAngle;
+    double minAngle;
+    double maxAngle;
+    bool normalConsistancy;
 };
 
 struct FeaturePara{

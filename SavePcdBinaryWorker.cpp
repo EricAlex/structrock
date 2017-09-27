@@ -59,7 +59,7 @@ void SavePcdBinaryWorker::doWork(const QString &filename)
 	{
 		emit showErrors(QString("You Haven't Opened Any Dataset Yet!"));
 	}
-	else if(!dataLibrary::cloudxyz->empty())
+	else if((!this->getSaveRGBMode())&&(!dataLibrary::cloudxyz->empty()))
 	{
 		if(!pcl::io::savePCDFileBinary(*strfilename, *dataLibrary::cloudxyz))
 		{
@@ -80,6 +80,10 @@ void SavePcdBinaryWorker::doWork(const QString &filename)
 		{
 			emit showErrors("Saving pcd as binary failed.");
 		}
+	}
+	else
+	{
+		emit showErrors("You Want to Save RGB Data as Binary, But You Haven't Opened Any RGB Dataset Yet!");
 	}
 	//end of processing
 

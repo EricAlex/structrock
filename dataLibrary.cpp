@@ -71,9 +71,12 @@ std::vector<int> dataLibrary::selectedPatches;
 std::string dataLibrary::cloudID("");
 int dataLibrary::Status(STATUS_READY);
 RGSpara dataLibrary::RGSparameter;
+TriangulationPara dataLibrary::TriangulationParameter;
+std::vector<pcl::PolygonMesh::Ptr> dataLibrary::Fracture_Triangles;
 FeaturePara dataLibrary::FeatureParameter;
 std::vector<std::string> dataLibrary::contents;
 pcl::PointCloud<pcl::PointXYZ>::Ptr dataLibrary::cloud_hull_all (new pcl::PointCloud<pcl::PointXYZ>);
+std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> dataLibrary::fracture_patches;
 Eigen::Vector3f dataLibrary::plane_normal_all;
 std::vector<Line> dataLibrary::Lines;
 std::vector<Line> dataLibrary::Lines_max;
@@ -83,6 +86,7 @@ int dataLibrary::current_workline_index = 0;
 bool dataLibrary::have_called_read_file = false;
 clock_t dataLibrary::start;
 clock_t dataLibrary::finish;
+Vector3f dataLibrary::cloud_centor;
 
 void dataLibrary::checkupflow()
 {

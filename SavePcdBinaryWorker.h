@@ -44,6 +44,10 @@ class SavePcdBinaryWorker : public Worker
 	Q_OBJECT
 
 public:
+	SavePcdBinaryWorker() : Worker()
+	{
+		_save_rgb = false;
+	}
 	void savebinary(const QString &filename)
 	{
 		QMetaObject::invokeMethod(this, "doWork", Q_ARG(const QString &, filename));
@@ -51,4 +55,16 @@ public:
 
 public slots:
 	void doWork(const QString &filename);
+
+private:
+	bool _save_rgb;
+public:
+	void setSaveRGBMode(bool mode)
+	{
+		_save_rgb = mode;
+	}
+	bool getSaveRGBMode()
+	{
+		return _save_rgb;
+	}
 };

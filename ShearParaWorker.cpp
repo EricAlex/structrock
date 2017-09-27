@@ -148,6 +148,8 @@ void ShearParaWorker::doWork(const QString &filename)
 
         emit show_f_save_screen(QString::fromUtf8(screen_png.c_str()));
 
+		this->Sleep(1000);
+
 		is_large_enough_out<<cloud_ptr->points.size()<<"\n";
 
         float dip_direction, dip;

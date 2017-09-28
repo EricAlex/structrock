@@ -84,7 +84,9 @@ void openClustersWorker::doWork(const QString &filename)
         float x, y, z, rgb, dip, dip_direction, area;
         fbinaryin.read(reinterpret_cast<char*>(&num_of_clusters), sizeof(num_of_clusters));
         Eigen::Vector4f centroid;
-        float centor_x, centor_y, centor_z;
+        float centor_x = 0.0;
+		float centor_y = 0.0;
+		float centor_z = 0.0;
         for(int i=0; i<num_of_clusters; i++)
         {
             pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_patch (new pcl::PointCloud<pcl::PointXYZRGB>);

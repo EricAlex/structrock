@@ -74,6 +74,8 @@
 #include "triangulationWorker.h"
 #include "openClustersWorker.h"
 #include "ShearParaWorker.h"
+#include "SavePolygonMeshWorker.h"
+#include "ReadPolygonMeshWorker.h"
 #include "TestWorker.h"
 #include "TimingShutdown.h"
 
@@ -208,6 +210,8 @@ private:
 	triangulationWorker triangulationworker;
 	openClustersWorker openclustersworker;
 	ShearParaWorker shearparaworker;
+	SavePolygonMeshWorker savePolygonMeshworker;
+	ReadPolygonMeshWorker readPolygonMeshworker;
 	TestWorker testworker;
 
 public:

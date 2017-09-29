@@ -701,6 +701,52 @@ void structrock::command_parser()
 				Show_Errors(QString("Savepcdbinary: Save path not provided."));
 			}
 		}
+		else if(command_string == "saveftriangulation")
+		{
+			if(dataLibrary::Fracture_Triangles.size()>0)
+			{
+				if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>0)
+				{
+					savePolygonMeshworker.setWorkFlowMode(true);
+					connect(&savePolygonMeshworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
+					connect(&savePolygonMeshworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
+					connect(&savePolygonMeshworker, SIGNAL(GoWorkFlow()), this, SLOT(command_parser()));
+
+					savePolygonMeshworker.savepolygonmesh(QString::fromUtf8(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[0].c_str()));
+				}
+				else
+				{
+					Show_Errors(QString("saveftriangulation: Save path not provided."));
+				}
+			}
+			else
+			{
+				Show_Errors(QString("saveftriangulation: You Must Do the Triangulation First!"));
+			}
+		}
+		else if(command_string == "openftriangulation")
+		{
+			if(dataLibrary::Fracture_Triangles.size()>0)
+			{
+				Show_Errors(QString("openftriangulation: Triangulation Data Already Loaded!"));
+			}
+			else
+			{
+				if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>0)
+				{
+					readPolygonMeshworker.setWorkFlowMode(true);
+					connect(&readPolygonMeshworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
+					connect(&readPolygonMeshworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
+					connect(&readPolygonMeshworker, SIGNAL(GoWorkFlow()), this, SLOT(command_parser()));
+
+					readPolygonMeshworker.readpolygonmesh(QString::fromUtf8(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[0].c_str()));
+				}
+				else
+				{
+					Show_Errors(QString("openftriangulation: Save path not provided."));
+				}
+			}
+		}
 		else if(command_string == "savenormals")
 		{
 			if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>0)
@@ -2972,6 +3018,22 @@ void structrock::ShowStatus(int i)
 	case STATUS_SHEARPARA:
 		{
 			head="Busy	estimating fracture shear parameters";
+			head+=tail;
+			ui.label->setText(QString::fromStdString(head));
+			ui.label->setPalette(pa);
+			break;
+		}
+	case STATUS_SAVEPOLYGONMESH:
+		{
+			head="Busy	saving triangulated polymeshes";
+			head+=tail;
+			ui.label->setText(QString::fromStdString(head));
+			ui.label->setPalette(pa);
+			break;
+		}
+	case STATUS_OPENPOLYGONMESH:
+		{
+			head="Busy	opening triangulated polymeshes";
 			head+=tail;
 			ui.label->setText(QString::fromStdString(head));
 			ui.label->setPalette(pa);

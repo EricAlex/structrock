@@ -77,6 +77,8 @@ FeaturePara dataLibrary::FeatureParameter;
 std::vector<std::string> dataLibrary::contents;
 pcl::PointCloud<pcl::PointXYZ>::Ptr dataLibrary::cloud_hull_all (new pcl::PointCloud<pcl::PointXYZ>);
 std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> dataLibrary::fracture_patches;
+std::vector<int> dataLibrary::fracture_classes;
+std::vector<Vector3f> dataLibrary::fracture_classes_rgb;
 Eigen::Vector3f dataLibrary::plane_normal_all;
 std::vector<Line> dataLibrary::Lines;
 std::vector<Line> dataLibrary::Lines_max;

@@ -674,7 +674,7 @@ void structrock::command_parser()
 			}
 			else
 			{
-				Show_Errors(QString("Savepcdascii: Save path not provided."));
+				Show_Errors(QString("Savepcdascii: Path not provided."));
 			}
 		}
 		else if(command_string == "savepcdbinary")
@@ -698,7 +698,7 @@ void structrock::command_parser()
 			}
 			else
 			{
-				Show_Errors(QString("Savepcdbinary: Save path not provided."));
+				Show_Errors(QString("Savepcdbinary: Path not provided."));
 			}
 		}
 		else if(command_string == "saveftriangulation")
@@ -716,7 +716,7 @@ void structrock::command_parser()
 				}
 				else
 				{
-					Show_Errors(QString("saveftriangulation: Save path not provided."));
+					Show_Errors(QString("saveftriangulation: Path not provided."));
 				}
 			}
 			else
@@ -743,7 +743,7 @@ void structrock::command_parser()
 				}
 				else
 				{
-					Show_Errors(QString("openftriangulation: Save path not provided."));
+					Show_Errors(QString("openftriangulation: Path not provided."));
 				}
 			}
 		}
@@ -760,7 +760,7 @@ void structrock::command_parser()
 			}
 			else
 			{
-				Show_Errors(QString("Savenormals: Save path not provided."));
+				Show_Errors(QString("Savenormals: Path not provided."));
 			}
 		}
 		else if(command_string == "saveclusters")
@@ -801,7 +801,7 @@ void structrock::command_parser()
 			}
 			else
 			{
-				Show_Errors(QString("Saveclusters: Save path not provided."));
+				Show_Errors(QString("Saveclusters: Path not provided."));
 			}
 		}
 		else if(command_string == "downsample")
@@ -1355,6 +1355,38 @@ void structrock::command_parser()
 				else
 				{
 					Show_Errors(QString("shearpara: No Parameter given."));
+				}
+			}
+		}
+		else if(command_string == "readnshowfracturetypes")
+		{
+			if(dataLibrary::Fracture_Triangles.size() == 0)
+			{
+				Show_Errors(QString("readnshowfracturetypes: Please Performed Fracture Triangulation or Read Triangulation PolygonMesh Data First!"));
+			}
+			else if(dataLibrary::cloudxyz->empty()&&dataLibrary::cloudxyzrgb->empty())
+			{
+				Show_Errors(QString("readnshowfracturetypes: Please Read Point Cloud Data First (to show fracture types)!"));
+			}
+			else if(dataLibrary::fracture_classes.size()>0)
+			{
+				Show_Errors(QString("readnshowfracturetypes: Fracture Types Data Already Loaded!"));
+			}
+			else
+			{
+				if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>0)
+				{
+					readnShowClassesworker.setWorkFlowMode(true);
+					connect(&readnShowClassesworker, SIGNAL(show()), this, SLOT(ShowFractureClasses()));
+					connect(&readnShowClassesworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
+					connect(&readnShowClassesworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
+					connect(&readnShowClassesworker, SIGNAL(GoWorkFlow()), this, SLOT(command_parser()));
+
+					readnShowClassesworker.readnshowclasses(QString::fromUtf8(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[0].c_str()));
+				}
+				else
+				{
+					Show_Errors(QString("readnshowfracturetypes: Path not provided."));
 				}
 			}
 		}
@@ -1992,6 +2024,53 @@ void structrock::ShowTriangulation()
 
 void structrock::ShowShearPara()
 {}
+
+void structrock::ShowFractureClasses()
+{
+	if(dataLibrary::fracture_classes.size()!=dataLibrary::Fracture_Triangles.size())
+	{
+		std::ostringstream count_1_strs, count_2_strs;
+		count_1_strs << dataLibrary::fracture_classes.size();
+		count_2_strs << dataLibrary::Fracture_Triangles.size();
+		std::string message = "(" + count_1_strs.str() + "/" + count_2_strs.str() + ") Fracture Types Data and Fracture PolygonMeshes Data MUST HAVE THE SAME LENGTH!";
+		Show_Errors(QString::fromUtf8(message.c_str()));
+	}
+	else
+	{
+		if(!dataLibrary::cloudxyzrgb->empty())
+		{
+			viewer->removeAllPointClouds(v2);
+			viewer->removeAllShapes(v2);
+			viewer->addPointCloud(dataLibrary::cloudxyzrgb, dataLibrary::cloudID+"2", v2);
+			ui.qvtkWidget->update();
+		}
+		else if(!dataLibrary::cloudxyz->empty())
+		{
+			viewer->removeAllPointClouds(v2);
+			viewer->removeAllShapes(v2);
+			viewer->addPointCloud(dataLibrary::cloudxyz, dataLibrary::cloudID+"2", v2);
+			viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 0.0, 0.7, 0.0, dataLibrary::cloudID+"2", v2);
+			ui.qvtkWidget->update();
+		}
+		else
+		{
+			Show_Errors(QString("shearpara: Please Read Point Cloud Data First (to show each fracture)!"));
+		}
+
+		for(int i=0; i<dataLibrary::Fracture_Triangles.size(); i++)
+		{
+			std::ostringstream strs;
+			strs << i;
+			pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_ptr(new pcl::PointCloud<pcl::PointXYZ>);
+			pcl::fromROSMsg(dataLibrary::Fracture_Triangles[i]->cloud, *cloud_ptr);
+			
+			viewer->addPointCloud(cloud_ptr, strs.str(), v1);
+			viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, dataLibrary::fracture_classes_rgb[i].x, dataLibrary::fracture_classes_rgb[i].y, dataLibrary::fracture_classes_rgb[i].z, strs.str(), v1);
+			viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 3, strs.str(), v1);
+		}
+		ui.qvtkWidget->update();
+	}
+}
 
 void structrock::DrawLine(const Eigen::Vector3f begin, const Eigen::Vector3f end, float r, float g, float b, std::string id, int viewpot)
 {
@@ -3034,6 +3113,14 @@ void structrock::ShowStatus(int i)
 	case STATUS_OPENPOLYGONMESH:
 		{
 			head="Busy	opening triangulated polymeshes";
+			head+=tail;
+			ui.label->setText(QString::fromStdString(head));
+			ui.label->setPalette(pa);
+			break;
+		}
+	case STATUS_READNSHOWCLASSES:
+		{
+			head="Busy	opening fracture types data";
 			head+=tail;
 			ui.label->setText(QString::fromStdString(head));
 			ui.label->setPalette(pa);

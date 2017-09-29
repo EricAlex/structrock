@@ -76,6 +76,7 @@
 #include "ShearParaWorker.h"
 #include "SavePolygonMeshWorker.h"
 #include "ReadPolygonMeshWorker.h"
+#include "ReadnShowClassesWorker.h"
 #include "TestWorker.h"
 #include "TimingShutdown.h"
 
@@ -116,6 +117,7 @@ private slots:
 	void ShowRGS();
 	void ShowTriangulation();
 	void ShowShearPara();
+	void ShowFractureClasses();
 	void OpenClusters();
 	void ShowClusters();
 	void OpenXYZ();
@@ -212,6 +214,7 @@ private:
 	ShearParaWorker shearparaworker;
 	SavePolygonMeshWorker savePolygonMeshworker;
 	ReadPolygonMeshWorker readPolygonMeshworker;
+	ReadnShowClassesWorker readnShowClassesworker;
 	TestWorker testworker;
 
 public:

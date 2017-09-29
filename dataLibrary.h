@@ -88,6 +88,8 @@ public:
 	static std::vector<std::string> contents;
     static pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_hull_all;
 	static std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> fracture_patches;
+	static std::vector<int> fracture_classes;
+	static std::vector<Vector3f> fracture_classes_rgb;
     static Eigen::Vector3f plane_normal_all;
     static std::vector<Line> Lines;
 	static std::vector<Line> Lines_max;

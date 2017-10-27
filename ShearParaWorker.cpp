@@ -236,7 +236,7 @@ void ShearParaWorker::doWork(const QString &filename)
                 {
                     Eigen::Vector3f trinormal = PolygonNormal(*cloud_polygon);
                     float temp_area = PolygonArea(*cloud_polygon, trinormal);
-                    ADAs_As.push_back(make_pair<float, float>(apparentDA, temp_area));
+                    ADAs_As.push_back(make_pair(apparentDA, temp_area));
                     A_0 += temp_area;
                 }
             }

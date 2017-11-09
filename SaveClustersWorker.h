@@ -42,12 +42,23 @@
 #include "Worker.h"
 class SaveClustersWorker : public Worker
 {
-    Q_OBJECT
+	Q_OBJECT
     
 public:
 	void saveclusters(const QString &filename)
 	{
 		QMetaObject::invokeMethod(this, "doWork", Q_ARG(const QString &, filename));
+	}
+private:
+	bool _trim_trace_edges;
+public:
+	void setTrimTraceEdgesMode(bool mode)
+	{
+		_trim_trace_edges = mode;
+	}
+	bool getTrimTraceEdgesMode()
+	{
+		return _trim_trace_edges;
 	}
 private slots:
     void doWork(const QString &filename);

@@ -770,23 +770,30 @@ void structrock::command_parser()
 				saveclustersworker.setWorkFlowMode(true);
 				saveclustersworker.setUnmute();
 				saveclustersworker.setWriteLog();
-                if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>1)
+				saveclustersworker.setTrimTraceEdgesMode(false);
+				para_index = 1;
+				if((dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>para_index)&&(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[para_index] == "trimedges"))
+				{
+					saveclustersworker.setTrimTraceEdgesMode(true);
+					para_index++;
+				}
+                if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>para_index)
                 {
-                    if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1] == "mute")
+                    if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[para_index] == "mute")
                     {
                         saveclustersworker.setMute();
                     }
-                    else if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1] == "nolog")
+                    else if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[para_index] == "nolog")
                     {
                         saveclustersworker.setUnWriteLog();
-                    }
-                    if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>2)
+					}
+                    if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>(para_index+1))
                     {
-                    	if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[2] == "mute")
+                    	if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[para_index+1] == "mute")
                         {
                             saveclustersworker.setMute();
                         }
-                        else if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[2] == "nolog")
+                        else if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[para_index+1] == "nolog")
 	                    {
 	                        saveclustersworker.setUnWriteLog();
 	                    }

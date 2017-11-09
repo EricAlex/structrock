@@ -396,6 +396,174 @@ bool dataLibrary::CheckClusters(const Eigen::Vector3f &V, const Eigen::Vector3f 
 							NewLine_min.b = 1;
 							NewLine_min.ID = "Line_auxiliary_min"+ss.str();
 							dataLibrary::Lines_min.push_back(NewLine_min);
+						}
+
+                        if((isInPolygon(convex_hull_2d, test_point_2d_max))||(isInPolygon(convex_hull_2d, test_point_2d_min)))
+                        {
+                            ss << patchNum;
+
+                            Line NewLine;
+                            NewLine.begin.x = max_intersection(0);
+                            NewLine.begin.y = max_intersection(1);
+                            NewLine.begin.z = max_intersection(2);
+                            NewLine.end.x = min_intersection(0);
+                            NewLine.end.y = min_intersection(1);
+                            NewLine.end.z = min_intersection(2);
+                            NewLine.r = 0;
+                            NewLine.g = 1;
+                            NewLine.b = 0;
+                            NewLine.ID = "Line_in"+ss.str();
+                            dataLibrary::Lines.push_back(NewLine);
+
+                            length=temp_length;
+                            return true;
+                        }
+                        else if(isSegmentCrossPolygon(test_point_2d_max, test_point_2d_min, convex_hull_2d))
+                        {
+                            ss << patchNum;
+
+                            Line NewLine;
+                            NewLine.begin.x = max_intersection(0);
+                            NewLine.begin.y = max_intersection(1);
+                            NewLine.begin.z = max_intersection(2);
+                            NewLine.end.x = min_intersection(0);
+                            NewLine.end.y = min_intersection(1);
+                            NewLine.end.z = min_intersection(2);
+                            NewLine.r = 0;
+                            NewLine.g = 1;
+                            NewLine.b = 0;
+                            NewLine.ID = "Line_in"+ss.str();
+                            dataLibrary::Lines.push_back(NewLine);
+
+                            length=temp_length;
+                            return true;
+                        }
+                        else
+                        {
+                            ss << patchNum;
+
+                            Line NewLine;
+                            NewLine.begin.x = max_intersection(0);
+                            NewLine.begin.y = max_intersection(1);
+                            NewLine.begin.z = max_intersection(2);
+                            NewLine.end.x = min_intersection(0);
+                            NewLine.end.y = min_intersection(1);
+                            NewLine.end.z = min_intersection(2);
+                            NewLine.r = 1;
+                            NewLine.g = 0;
+                            NewLine.b = 0;
+                            NewLine.ID = "Line_out"+ss.str();
+                            dataLibrary::Lines.push_back(NewLine);
+
+                            length=temp_length;
+                            return false;
+                        }
+                    }
+                }
+            }
+            else
+            {
+                length=temp_length;
+                return false;
+            }
+        }
+        else
+        {
+            length=temp_length;
+            return false;
+        }
+        return false;
+    }
+}
+
+bool dataLibrary::CheckClusters_trim_edges(const Eigen::Vector3f &V, const Eigen::Vector3f &xyz_centroid, pcl::PointCloud<pcl::PointXYZ>::Ptr convex_hull, const Eigen::Vector3f &V_i, const Eigen::Vector3f &xyz_centroid_i, pcl::PointCloud<pcl::PointXYZ>::Ptr projected_i, int patchNum, float &length, bool needExLine)
+{
+    Eigen::Vector3f on_plane_direction = V.cross(V_i);
+    float temp_length;
+    stringstream ss;
+    
+    if((on_plane_direction(0) == 0)&&(on_plane_direction(1) == 0)&&(on_plane_direction(2) == 0))
+    {
+        length=0.0;
+        return false;
+    }
+    else
+    {
+        float max_value, min_value;
+        int max_index, min_index;
+        Eigen::Vector3f point;
+        point(0) = projected_i->at(0).x;
+        point(1) = projected_i->at(0).y;
+        point(2) = projected_i->at(0).z;
+        max_value = min_value = on_plane_direction.dot(point - xyz_centroid_i);
+        max_index = min_index = 0;
+        for(int i=1; i<projected_i->size(); i++)
+        {
+            Eigen::Vector3f point;
+            point(0) = projected_i->at(i).x;
+            point(1) = projected_i->at(i).y;
+            point(2) = projected_i->at(i).z;
+            
+            float value = on_plane_direction.dot(point - xyz_centroid_i);
+            
+            if(max_value<value)
+            {
+                max_value = value;
+                max_index = i;
+            }
+            if(min_value>value)
+            {
+                min_value = value;
+                min_index = i;
+            }
+        }
+        Eigen::Vector3f line_direction = V_i.cross(on_plane_direction);
+        
+        Eigen::Vector3f max_intersection, min_intersection;
+        if(PlaneWithLineIntersection(V, xyz_centroid, projected_i->at(max_index).getVector3fMap(), line_direction, max_intersection))
+        {
+            if(PlaneWithLineIntersection(V, xyz_centroid, projected_i->at(min_index).getVector3fMap(), line_direction, min_intersection))
+            {
+                Eigen::Vector3f V_x = convex_hull->at(1).getVector3fMap() - convex_hull->at(0).getVector3fMap();
+                Eigen::Vector3f V_y = V.cross(V_x);
+                std::vector<Eigen::Vector2f> convex_hull_2d;
+                
+                temp_length=std::sqrt((max_intersection-min_intersection).dot(max_intersection-min_intersection));
+                
+                if(dataLibrary::projection322(V_x, V_y, convex_hull, convex_hull_2d))
+                {
+                    Eigen::Vector2f test_point_2d_max, test_point_2d_min;
+                    if((dataLibrary::projection322(V_x, V_y, max_intersection, test_point_2d_max))&&(dataLibrary::projection322(V_x, V_y, min_intersection, test_point_2d_min)))
+                    {
+						ss << patchNum;
+
+						if(needExLine)
+						{
+							Line NewLine_max, NewLine_min;
+
+							NewLine_max.begin.x = projected_i->at(max_index).getVector3fMap()(0);
+							NewLine_max.begin.y = projected_i->at(max_index).getVector3fMap()(1);
+							NewLine_max.begin.z = projected_i->at(max_index).getVector3fMap()(2);
+							NewLine_max.end.x = max_intersection(0);
+							NewLine_max.end.y = max_intersection(1);
+							NewLine_max.end.z = max_intersection(2);
+							NewLine_max.r = 1;
+							NewLine_max.g = 1;
+							NewLine_max.b = 1;
+							NewLine_max.ID = "Line_auxiliary_max"+ss.str();
+							dataLibrary::Lines_max.push_back(NewLine_max);
+
+							NewLine_min.begin.x = projected_i->at(min_index).getVector3fMap()(0);
+							NewLine_min.begin.y = projected_i->at(min_index).getVector3fMap()(1);
+							NewLine_min.begin.z = projected_i->at(min_index).getVector3fMap()(2);
+							NewLine_min.end.x = min_intersection(0);
+							NewLine_min.end.y = min_intersection(1);
+							NewLine_min.end.z = min_intersection(2);
+							NewLine_min.r = 1;
+							NewLine_min.g = 1;
+							NewLine_min.b = 1;
+							NewLine_min.ID = "Line_auxiliary_min"+ss.str();
+							dataLibrary::Lines_min.push_back(NewLine_min);
                         }
                         
                         if((isInPolygon(convex_hull_2d, test_point_2d_max))&&(isInPolygon(convex_hull_2d, test_point_2d_min)))

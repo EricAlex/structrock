@@ -396,9 +396,9 @@ bool dataLibrary::CheckClusters(const Eigen::Vector3f &V, const Eigen::Vector3f 
 							NewLine_min.b = 1;
 							NewLine_min.ID = "Line_auxiliary_min"+ss.str();
 							dataLibrary::Lines_min.push_back(NewLine_min);
-						}
-
-                        if((isInPolygon(convex_hull_2d, test_point_2d_max))||(isInPolygon(convex_hull_2d, test_point_2d_min)))
+                        }
+                        
+                        if((isInPolygon(convex_hull_2d, test_point_2d_max))&&(isInPolygon(convex_hull_2d, test_point_2d_min)))
                         {
                             ss << patchNum;
 
@@ -416,6 +416,94 @@ bool dataLibrary::CheckClusters(const Eigen::Vector3f &V, const Eigen::Vector3f 
                             dataLibrary::Lines.push_back(NewLine);
 
                             length=temp_length;
+                            return true;
+                        }
+                        else if((isInPolygon(convex_hull_2d, test_point_2d_max))&&!(isInPolygon(convex_hull_2d, test_point_2d_min)))
+                        {
+                            int hull_size = convex_hull->size();
+                            Eigen::Vector3f P_in = max_intersection;
+                            Eigen::Vector3f P_out = min_intersection;
+                            Eigen::Vector3f P_edge;
+                            for(int i=0; i<hull_size; i++)
+                            {
+                                Eigen::Vector3f N_i = convex_hull->at(i).getVector3fMap();
+                                Eigen::Vector3f P_in_P_out = P_out - P_in;
+                                Eigen::Vector3f P_in_N_i = N_i - P_in;
+                                if(std::acos(P_in_P_out.dot(P_in_N_i)/(std::sqrt(P_in_P_out.dot(P_in_P_out))*std::sqrt(P_in_N_i.dot(P_in_N_i))))<=EPSILON)
+                                {
+                                    P_edge = N_i;
+                                    break;
+                                }
+                                Eigen::Vector3f N_j = convex_hull->at((i+1)%hull_size).getVector3fMap();
+                                Eigen::Vector3f P_in_N_j = N_j - P_in;
+                                Eigen::Vector3f N_i_N_j = N_j - N_i;
+                                if(P_in_N_i.cross(P_in_P_out).dot(P_in_P_out.cross(P_in_N_j))>0)
+                                {
+                                    float x = P_in_P_out.cross(P_in_N_i)(0)/N_i_N_j.cross(P_in_P_out)(0);
+                                    P_edge = P_in + (P_in_N_i + x*N_i_N_j);
+                                    break;
+                                }
+                            }
+                            ss << patchNum;
+
+                            Line NewLine;
+                            NewLine.begin.x = P_in(0);
+                            NewLine.begin.y = P_in(1);
+                            NewLine.begin.z = P_in(2);
+                            NewLine.end.x = P_edge(0);
+                            NewLine.end.y = P_edge(1);
+                            NewLine.end.z = P_edge(2);
+                            NewLine.r = 0;
+                            NewLine.g = 1;
+                            NewLine.b = 0;
+                            NewLine.ID = "Line_in"+ss.str();
+                            dataLibrary::Lines.push_back(NewLine);
+
+                            length=std::sqrt((P_edge - P_in).dot(P_edge - P_in));
+                            return true;
+                        }
+                        else if(!(isInPolygon(convex_hull_2d, test_point_2d_max))&&(isInPolygon(convex_hull_2d, test_point_2d_min)))
+                        {
+                            int hull_size = convex_hull->size();
+                            Eigen::Vector3f P_in = min_intersection;
+                            Eigen::Vector3f P_out = max_intersection;
+                            Eigen::Vector3f P_edge;
+                            for(int i=0; i<hull_size; i++)
+                            {
+                                Eigen::Vector3f N_i = convex_hull->at(i).getVector3fMap();
+                                Eigen::Vector3f P_in_P_out = P_out - P_in;
+                                Eigen::Vector3f P_in_N_i = N_i - P_in;
+                                if(std::acos(P_in_P_out.dot(P_in_N_i)/(std::sqrt(P_in_P_out.dot(P_in_P_out))*std::sqrt(P_in_N_i.dot(P_in_N_i))))<=EPSILON)
+                                {
+                                    P_edge = N_i;
+                                    break;
+                                }
+                                Eigen::Vector3f N_j = convex_hull->at((i+1)%hull_size).getVector3fMap();
+                                Eigen::Vector3f P_in_N_j = N_j - P_in;
+                                Eigen::Vector3f N_i_N_j = N_j - N_i;
+                                if(P_in_N_i.cross(P_in_P_out).dot(P_in_P_out.cross(P_in_N_j))>0)
+                                {
+                                    float x = P_in_P_out.cross(P_in_N_i)(0)/N_i_N_j.cross(P_in_P_out)(0);
+                                    P_edge = P_in + (P_in_N_i + x*N_i_N_j);
+                                    break;
+                                }
+                            }
+                            ss << patchNum;
+
+                            Line NewLine;
+                            NewLine.begin.x = P_in(0);
+                            NewLine.begin.y = P_in(1);
+                            NewLine.begin.z = P_in(2);
+                            NewLine.end.x = P_edge(0);
+                            NewLine.end.y = P_edge(1);
+                            NewLine.end.z = P_edge(2);
+                            NewLine.r = 0;
+                            NewLine.g = 1;
+                            NewLine.b = 0;
+                            NewLine.ID = "Line_in"+ss.str();
+                            dataLibrary::Lines.push_back(NewLine);
+
+                            length=std::sqrt((P_edge - P_in).dot(P_edge - P_in));
                             return true;
                         }
                         else if(isSegmentCrossPolygon(test_point_2d_max, test_point_2d_min, convex_hull_2d))

@@ -301,7 +301,15 @@ void SaveClustersWorker::doWork(const QString &filename)
 		dataLibrary::roughnesses.push_back(fracture_roughness);
 
 		float length;
-        bool flag = dataLibrary::CheckClusters(dataLibrary::plane_normal_all, centroid_all, dataLibrary::cloud_hull_all, normal, centroid, cloud_projected, cluster_index, length, false);
+        bool flag;
+		if(this->getTrimTraceEdgesMode())
+		{
+			flag = dataLibrary::CheckClusters_trim_edges(dataLibrary::plane_normal_all, centroid_all, dataLibrary::cloud_hull_all, normal, centroid, cloud_projected, cluster_index, length);
+		}
+		else
+		{
+			flag = dataLibrary::CheckClusters(dataLibrary::plane_normal_all, centroid_all, dataLibrary::cloud_hull_all, normal, centroid, cloud_projected, cluster_index, length, false);
+		}
         fout<<flag<<"\t"<<cluster_index+1<<"\t"<<dataLibrary::clusters[cluster_index].indices.size()<<"\t"<<dip_direction<<"\t"<<dip<<"\t"<<area<<"\t"<<length<<"\t"<<fracture_roughness<<"\n";
 
 		//calculate displacement
@@ -396,7 +404,7 @@ void SaveClustersWorker::doWork(const QString &filename)
     fracture_intensity_out.close();
     fbinaryout.close();
     
-    //save outcrop convex hull and fracture traces
+    //save outcrop convex hull and fracture traces, both 3d and 2d
 	Eigen::Vector3f V_x = dataLibrary::cloud_hull_all->at(1).getVector3fMap() - dataLibrary::cloud_hull_all->at(0).getVector3fMap();
     Eigen::Vector3f V_y = dataLibrary::plane_normal_all.cross(V_x);
     std::vector<Eigen::Vector2f> convex_hull_all_2d;

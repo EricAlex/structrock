@@ -770,11 +770,11 @@ void structrock::command_parser()
 				saveclustersworker.setWorkFlowMode(true);
 				saveclustersworker.setUnmute();
 				saveclustersworker.setWriteLog();
-				saveclustersworker.setTrimTraceEdgesMode(false);
-				para_index = 1;
-				if((dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>para_index)&&(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[para_index] == "trimedges"))
+				saveclustersworker.setTrimTraceEdgesMode(true);
+				int para_index = 1;
+				if((dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>para_index)&&(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[para_index] == "notrimedges"))
 				{
-					saveclustersworker.setTrimTraceEdgesMode(true);
+					saveclustersworker.setTrimTraceEdgesMode(false);
 					para_index++;
 				}
                 if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>para_index)

@@ -37,6 +37,7 @@
  *
  */
 
+#include <unistd.h>
 #include <vector>
 #include <iostream>
 #include <fstream>
@@ -651,6 +652,261 @@ void structrock::command_parser()
 			else
 			{
 				Show_Errors(QString("Openxyz: Location of XYZ file not provided."));
+			}
+		}
+		else if(command_string == "foreach")
+		{
+			if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>1)
+			{
+				std::string loop_var = dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[0];
+				std::string key_word = "$"+loop_var+"$";
+				std::istringstream line_stream(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1]);
+				char command_split_str = ':';
+				std::vector<std::string> tokens;
+				for(std::string each; std::getline(line_stream, each, command_split_str); tokens.push_back(each));
+
+				for(int i=0; i<tokens.size(); i++)
+				{
+					tokens[i].erase(std::remove(tokens[i].begin(), tokens[i].end(),'\n'), tokens[i].end());
+					tokens[i].erase(std::remove(tokens[i].begin(), tokens[i].end(),'\r'), tokens[i].end());
+					tokens[i].erase(std::remove(tokens[i].begin(), tokens[i].end(),'\t'), tokens[i].end());
+					if(tokens[i].empty())
+						tokens.erase(tokens.begin()+i);
+				}
+
+				if(tokens.size()>0&&(dataLibrary::current_workline_index+1<dataLibrary::Workflow.size()))
+				{
+					std::string commands = "";
+					for(int i=dataLibrary::current_workline_index+1; i<dataLibrary::Workflow.size(); i++)
+					{
+						if(dataLibrary::Workflow[i].parameters.size()>0)
+						{
+							commands += dataLibrary::Workflow[i].command;
+							commands += ",";
+							for(int j=0; j<dataLibrary::Workflow[i].parameters.size()-1; j++)
+							{
+								commands += dataLibrary::Workflow[i].parameters[j];
+								commands += ",";
+							}
+							commands += dataLibrary::Workflow[i].parameters[dataLibrary::Workflow[i].parameters.size()-1];
+							commands += ";";
+						}
+						else
+						{
+							commands += dataLibrary::Workflow[i].command;
+							commands += ";";
+						}
+					}
+
+					std::string commands_all = "";
+					for(int i=0; i<tokens.size(); i++)
+					{
+						std::string temp_commands = commands;
+						std::string::size_type n = 0;
+						while( (n = temp_commands.find(key_word, n) ) != std::string::npos )
+						{
+							temp_commands.replace( n, key_word.size(), tokens[i]);
+							n += tokens[i].size();
+						}
+
+						commands_all += temp_commands;
+					}
+
+					#if defined(_WIN32)||defined(_WIN64)
+						size_t f = commands_all.find("\\");
+						commands_all.replace(f, std::string("\\").length(), "\\\\");
+					#endif
+
+					QProcess *myProcess = new QProcess;
+					QStringList commandsList;
+					commandsList << "-c"<<commands_all.c_str();
+					myProcess->setWorkingDirectory(QApplication::applicationDirPath());
+					#if !defined(_WIN32)&&(defined(__unix__)||defined(__unix)||(defined(__APPLE__)&&defined(__MACH__)))
+						myProcess->start("./structrock",commandsList);
+					#elif defined(_WIN32)||defined(_WIN64)
+						myProcess->start("structrock",commandsList);
+					#endif
+
+					TimingShutdown *shutdown(new TimingShutdown);
+					connect(shutdown, SIGNAL(shutdown()), this, SLOT(exit()));
+					shutdown->start();
+				}
+				else
+				{
+					Show_Errors(QString("foreach: None Loop Element provided and/or No Operations specified."));
+				}
+			}
+			else
+			{
+				Show_Errors(QString("foreach: Loop Variable and/or Loop Array not provided."));
+			}
+		}
+		else if(command_string == "delete")
+		{
+			if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>0)
+			{
+				std::string file_path = dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[0];
+				#if defined(_WIN32)||defined(_WIN64)
+					size_t f = file_path.find("\\");
+					file_path.replace(f, std::string("\\").length(), "\\\\");
+				#endif
+				#if !defined(_WIN32)&&(defined(__unix__)||defined(__unix)||(defined(__APPLE__)&&defined(__MACH__)))
+					unlink(file_path.c_str());
+				#elif defined(_WIN32)||defined(_WIN64)
+					DeleteFile(file_path.c_str());
+				#endif
+
+				dataLibrary::current_workline_index+=1;
+				command_parser();
+			}
+			else
+			{
+				Show_Errors(QString("delete: Path not provided."));
+			}
+		}
+		else if(command_string == "movefile")
+		{
+			if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>1)
+			{
+				std::string existing_file_path = dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[0];
+				std::string new_file_path = dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1];
+				#if defined(_WIN32)||defined(_WIN64)
+					size_t f = existing_file_path.find("\\");
+					existing_file_path.replace(f, std::string("\\").length(), "\\\\");
+					size_t t = new_file_path.find("\\");
+					new_file_path.replace(t, std::string("\\").length(), "\\\\");
+				#endif
+				#if !defined(_WIN32)&&(defined(__unix__)||defined(__unix)||(defined(__APPLE__)&&defined(__MACH__)))
+					rename(existing_file_path.c_str(), new_file_path.c_str());
+				#elif defined(_WIN32)||defined(_WIN64)
+					MoveFile(existing_file_path.c_str(), new_file_path.c_str());
+				#endif
+
+				dataLibrary::current_workline_index+=1;
+				command_parser();
+			}
+			else
+			{
+				Show_Errors(QString("movefile: Existing and/or New File Path not provided."));
+			}
+		}
+		else if(command_string == "multistation")
+		{
+			if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>1)
+			{
+				std::istringstream line_stream(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[0]);
+				char command_split_str = '|';
+				std::vector<std::string> tokens;
+				for(std::string each; std::getline(line_stream, each, command_split_str); tokens.push_back(each));
+
+				for(int i=0; i<tokens.size(); i++)
+				{
+					tokens[i].erase(std::remove(tokens[i].begin(), tokens[i].end(),'\n'), tokens[i].end());
+					tokens[i].erase(std::remove(tokens[i].begin(), tokens[i].end(),'\r'), tokens[i].end());
+					tokens[i].erase(std::remove(tokens[i].begin(), tokens[i].end(),'\t'), tokens[i].end());
+					if(tokens[i].empty())
+						tokens.erase(tokens.begin()+i);
+				}
+				if(tokens.size()>0)
+				{
+					if(tokens.size()>1)
+					{
+						if(!dataLibrary::have_called_read_file)
+						{
+							for(int i=0; i<tokens.size(); i++)
+							{
+								dataLibrary::multiStationFilePath.push_back(tokens[i]);
+							}
+							double leaf;
+							std::stringstream ss(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1]);
+							ss >> leaf;
+
+							multiStationworker.setWorkFlowMode(true);
+							multiStationworker.setUnmute();
+							multiStationworker.setWriteLog();
+							if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>2)
+							{
+								if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[2] == "mute")
+								{
+									multiStationworker.setMute();
+								}
+								else if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[2] == "nolog")
+								{
+									multiStationworker.setUnWriteLog();
+								}
+								if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>3)
+								{
+	                    			if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[3] == "mute")
+									{
+										multiStationworker.setMute();
+									}
+									else if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[3] == "nolog")
+									{
+										multiStationworker.setUnWriteLog();
+									}
+								}
+							}
+							connect(&multiStationworker, SIGNAL(show(int)), this, SLOT(ShowPCD(int)));
+							connect(&multiStationworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
+							connect(&multiStationworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
+							connect(&multiStationworker, SIGNAL(GoWorkFlow()), this, SLOT(command_parser()));
+
+							multiStationworker.multiStation(leaf);
+							dataLibrary::have_called_read_file = true;
+						}
+						else
+						{
+							std::string commands = "";
+							for(int i=dataLibrary::current_workline_index; i<dataLibrary::Workflow.size(); i++)
+							{
+								if(dataLibrary::Workflow[i].parameters.size()>0)
+								{
+									commands += dataLibrary::Workflow[i].command;
+									commands += ",";
+									for(int j=0; j<dataLibrary::Workflow[i].parameters.size()-1; j++)
+									{
+										commands += dataLibrary::Workflow[i].parameters[j];
+										commands += ",";
+									}
+									commands += dataLibrary::Workflow[i].parameters[dataLibrary::Workflow[i].parameters.size()-1];
+									commands += ";";
+								}
+								else
+								{
+									commands += dataLibrary::Workflow[i].command;
+									commands += ";";
+								}
+							}
+
+							#if defined(_WIN32)||defined(_WIN64)
+								size_t f = commands.find("\\");
+								commands.replace(f, std::string("\\").length(), "\\\\");
+							#endif
+
+							QProcess *myProcess = new QProcess;
+							QStringList commandsList;
+							commandsList << "-c"<<commands.c_str();
+							myProcess->setWorkingDirectory(QApplication::applicationDirPath());
+							#if !defined(_WIN32)&&(defined(__unix__)||defined(__unix)||(defined(__APPLE__)&&defined(__MACH__)))
+								myProcess->start("./structrock",commandsList);
+							#elif defined(_WIN32)||defined(_WIN64)
+								myProcess->start("structrock",commandsList);
+							#endif
+						}
+					}
+					else
+					{
+						Show_Errors(QString("multistation: At Least Two MultiStation Point Cloud Files Should be provided."));
+					}
+				}
+				else
+				{
+					Show_Errors(QString("multistation: None MultiStation Point Cloud File Path provided."));
+				}
+			}
+			else
+			{
+				Show_Errors(QString("multistation: MultiStation Point Cloud File Paths and/or Downsample Leaf not provided."));
 			}
 		}
 		else if(command_string == "savepcdascii")
@@ -3007,7 +3263,7 @@ void structrock::ShowStatus(int i)
 		}
 	case STATUS_STATICRO:
 		{
-			head="Busy	removing outlier via static";
+			head="Busy	removing outlier via statistic";
 			head+=tail;
 			ui.label->setText(QString::fromStdString(head));
 			ui.label->setPalette(pa);
@@ -3128,6 +3384,14 @@ void structrock::ShowStatus(int i)
 	case STATUS_READNSHOWCLASSES:
 		{
 			head="Busy	opening fracture types data";
+			head+=tail;
+			ui.label->setText(QString::fromStdString(head));
+			ui.label->setPalette(pa);
+			break;
+		}
+	case STATUS_MULTISTATION:
+		{
+			head="Busy processing multistation point cloud data";
 			head+=tail;
 			ui.label->setText(QString::fromStdString(head));
 			ui.label->setPalette(pa);

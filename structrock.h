@@ -77,6 +77,7 @@
 #include "SavePolygonMeshWorker.h"
 #include "ReadPolygonMeshWorker.h"
 #include "ReadnShowClassesWorker.h"
+#include "MultiStationWorker.h"
 #include "TestWorker.h"
 #include "TimingShutdown.h"
 
@@ -215,6 +216,7 @@ private:
 	SavePolygonMeshWorker savePolygonMeshworker;
 	ReadPolygonMeshWorker readPolygonMeshworker;
 	ReadnShowClassesWorker readnShowClassesworker;
+	MultiStationWorker multiStationworker;
 	TestWorker testworker;
 
 public:

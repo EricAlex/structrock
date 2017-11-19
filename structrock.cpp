@@ -792,7 +792,7 @@ void structrock::command_parser()
 		}
 		else if(command_string == "multistation")
 		{
-			if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>1)
+			if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>2)
 			{
 				std::istringstream line_stream(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[0]);
 				char command_split_str = '|';
@@ -809,94 +809,88 @@ void structrock::command_parser()
 				}
 				if(tokens.size()>0)
 				{
-					if(tokens.size()>1)
+					if(!dataLibrary::have_called_read_file)
 					{
-						if(!dataLibrary::have_called_read_file)
+						for(int i=0; i<tokens.size(); i++)
 						{
-							for(int i=0; i<tokens.size(); i++)
-							{
-								dataLibrary::multiStationFilePath.push_back(tokens[i]);
-							}
-							double leaf;
-							std::stringstream ss(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1]);
-							ss >> leaf;
+							dataLibrary::multiStationFilePath.push_back(tokens[i]);
+						}
+						std::stringstream ss_stdDev(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1]);
+						ss_stdDev >> dataLibrary::msPara.stdDev;
+						std::stringstream ss_leaf(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[2]);
+						ss_leaf >> dataLibrary::msPara.leaf;
 
-							multiStationworker.setWorkFlowMode(true);
-							multiStationworker.setUnmute();
-							multiStationworker.setWriteLog();
-							if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>2)
+						multiStationworker.setWorkFlowMode(true);
+						multiStationworker.setUnmute();
+						multiStationworker.setWriteLog();
+						if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>3)
+						{
+							if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[3] == "mute")
 							{
-								if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[2] == "mute")
+								multiStationworker.setMute();
+							}
+							else if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[3] == "nolog")
+							{
+								multiStationworker.setUnWriteLog();
+							}
+							if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>4)
+							{
+	                    		if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[4] == "mute")
 								{
 									multiStationworker.setMute();
 								}
-								else if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[2] == "nolog")
+								else if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[4] == "nolog")
 								{
 									multiStationworker.setUnWriteLog();
 								}
-								if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>3)
-								{
-	                    			if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[3] == "mute")
-									{
-										multiStationworker.setMute();
-									}
-									else if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[3] == "nolog")
-									{
-										multiStationworker.setUnWriteLog();
-									}
-								}
 							}
-							connect(&multiStationworker, SIGNAL(show(int)), this, SLOT(ShowPCD(int)));
-							connect(&multiStationworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
-							connect(&multiStationworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
-							connect(&multiStationworker, SIGNAL(GoWorkFlow()), this, SLOT(command_parser()));
-
-							multiStationworker.multiStation(leaf);
-							dataLibrary::have_called_read_file = true;
 						}
-						else
-						{
-							std::string commands = "";
-							for(int i=dataLibrary::current_workline_index; i<dataLibrary::Workflow.size(); i++)
-							{
-								if(dataLibrary::Workflow[i].parameters.size()>0)
-								{
-									commands += dataLibrary::Workflow[i].command;
-									commands += ",";
-									for(int j=0; j<dataLibrary::Workflow[i].parameters.size()-1; j++)
-									{
-										commands += dataLibrary::Workflow[i].parameters[j];
-										commands += ",";
-									}
-									commands += dataLibrary::Workflow[i].parameters[dataLibrary::Workflow[i].parameters.size()-1];
-									commands += ";";
-								}
-								else
-								{
-									commands += dataLibrary::Workflow[i].command;
-									commands += ";";
-								}
-							}
+						connect(&multiStationworker, SIGNAL(show(int)), this, SLOT(ShowPCD(int)));
+						connect(&multiStationworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
+						connect(&multiStationworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
+						connect(&multiStationworker, SIGNAL(GoWorkFlow()), this, SLOT(command_parser()));
 
-							#if defined(_WIN32)||defined(_WIN64)
-								size_t f = commands.find("\\");
-								commands.replace(f, std::string("\\").length(), "\\\\");
-							#endif
-
-							QProcess *myProcess = new QProcess;
-							QStringList commandsList;
-							commandsList << "-c"<<commands.c_str();
-							myProcess->setWorkingDirectory(QApplication::applicationDirPath());
-							#if !defined(_WIN32)&&(defined(__unix__)||defined(__unix)||(defined(__APPLE__)&&defined(__MACH__)))
-								myProcess->start("./structrock",commandsList);
-							#elif defined(_WIN32)||defined(_WIN64)
-								myProcess->start("structrock",commandsList);
-							#endif
-						}
+						multiStationworker.multiStation();
+						dataLibrary::have_called_read_file = true;
 					}
 					else
 					{
-						Show_Errors(QString("multistation: At Least Two MultiStation Point Cloud Files Should be provided."));
+						std::string commands = "";
+						for(int i=dataLibrary::current_workline_index; i<dataLibrary::Workflow.size(); i++)
+						{
+							if(dataLibrary::Workflow[i].parameters.size()>0)
+							{
+								commands += dataLibrary::Workflow[i].command;
+								commands += ",";
+								for(int j=0; j<dataLibrary::Workflow[i].parameters.size()-1; j++)
+								{
+									commands += dataLibrary::Workflow[i].parameters[j];
+									commands += ",";
+								}
+								commands += dataLibrary::Workflow[i].parameters[dataLibrary::Workflow[i].parameters.size()-1];
+								commands += ";";
+							}
+							else
+							{
+								commands += dataLibrary::Workflow[i].command;
+								commands += ";";
+							}
+						}
+
+						#if defined(_WIN32)||defined(_WIN64)
+							size_t f = commands.find("\\");
+							commands.replace(f, std::string("\\").length(), "\\\\");
+						#endif
+
+						QProcess *myProcess = new QProcess;
+						QStringList commandsList;
+						commandsList << "-c"<<commands.c_str();
+						myProcess->setWorkingDirectory(QApplication::applicationDirPath());
+						#if !defined(_WIN32)&&(defined(__unix__)||defined(__unix)||(defined(__APPLE__)&&defined(__MACH__)))
+							myProcess->start("./structrock",commandsList);
+						#elif defined(_WIN32)||defined(_WIN64)
+							myProcess->start("structrock",commandsList);
+						#endif
 					}
 				}
 				else

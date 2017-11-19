@@ -45,13 +45,13 @@ class MultiStationWorker :
 	Q_OBJECT
 
 public:
-	void multiStation(const double &leaf)
+	void multiStation()
 	{
-		QMetaObject::invokeMethod(this, "doWork", Q_ARG(const double &, leaf));
+		QMetaObject::invokeMethod(this, "doWork");
 	}
 
 private slots:
-    void doWork(const double &leaf);
+    void doWork();
 
 signals:
 	void show(int i);

@@ -86,6 +86,7 @@ std::vector<Line> dataLibrary::Lines_min;
 std::vector<WorkLine> dataLibrary::Workflow;
 std::vector<std::string> dataLibrary::multiStationFilePath;
 std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> dataLibrary::multiStationPointClouds;
+MultiStationPara dataLibrary::msPara;
 int dataLibrary::current_workline_index = 0;
 bool dataLibrary::have_called_read_file = false;
 clock_t dataLibrary::start;

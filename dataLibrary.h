@@ -97,6 +97,7 @@ public:
 	static std::vector<WorkLine> Workflow;
 	static std::vector<std::string> multiStationFilePath;
 	static std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> multiStationPointClouds;
+	static MultiStationPara msPara;
 	static int current_workline_index;
 	static bool have_called_read_file;
 	static clock_t start;

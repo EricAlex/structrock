@@ -43,12 +43,15 @@
 #include <pcl/io/io.h>
 #include <pcl/io/pcd_io.h>
 #include <pcl/point_types.h>
+#include <pcl/kdtree/kdtree_flann.h>
+#include <pcl/surface/mls.h>
 #include <pcl/filters/voxel_grid.h>
+#include <pcl/filters/statistical_outlier_removal.h>
 #include "globaldef.h"
 #include "MultiStationWorker.h"
 #include "dataLibrary.h"
 
-void MultiStationWorker::doWork(const double &leaf)
+void MultiStationWorker::doWork()
 {
 	bool is_success(false);
 
@@ -78,20 +81,32 @@ void MultiStationWorker::doWork(const double &leaf)
 	if(is_reading_success)
 	{
 		pcl::PointCloud<pcl::PointXYZRGB>::Ptr temp_cloudxyzrgb_all(new pcl::PointCloud<pcl::PointXYZRGB>);
+		pcl::StatisticalOutlierRemoval<pcl::PointXYZRGB> sor;
+		sor.setInputCloud(dataLibrary::multiStationPointClouds[0]);
+		sor.setMeanK(50);
+		sor.setStddevMulThresh(dataLibrary::msPara.stdDev);
+		sor.setNegative(false);
+		sor.filter(*dataLibrary::multiStationPointClouds[0]);
 		*temp_cloudxyzrgb_all = *dataLibrary::multiStationPointClouds[0];
 		for(int i=1; i<dataLibrary::multiStationPointClouds.size(); i++)
 		{
+			pcl::StatisticalOutlierRemoval<pcl::PointXYZRGB> sor_i;
+			sor_i.setInputCloud(dataLibrary::multiStationPointClouds[i]);
+			sor_i.setMeanK(50);
+			sor_i.setStddevMulThresh(dataLibrary::msPara.stdDev);
+			sor_i.setNegative(false);
+			sor_i.filter(*dataLibrary::multiStationPointClouds[i]);
 			*temp_cloudxyzrgb_all += *dataLibrary::multiStationPointClouds[i];
 		}
-		// Create the filtering object
-		pcl::VoxelGrid<pcl::PointXYZRGB> sor;
-		sor.setInputCloud (temp_cloudxyzrgb_all);
-		sor.setLeafSize (leaf, leaf, leaf);
+
+		pcl::VoxelGrid<pcl::PointXYZRGB> vg;
+		vg.setInputCloud (temp_cloudxyzrgb_all);
+		vg.setLeafSize (dataLibrary::msPara.leaf, dataLibrary::msPara.leaf, dataLibrary::msPara.leaf);
 		if(!dataLibrary::cloudxyzrgb->empty())
 		{
 			dataLibrary::cloudxyzrgb->clear();
 		}
-		sor.filter (*dataLibrary::cloudxyzrgb);
+		vg.filter (*dataLibrary::cloudxyzrgb);
 
 		if(!dataLibrary::cloudxyz->empty())
 		{

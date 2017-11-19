@@ -86,6 +86,11 @@ struct RGSpara{
     bool IsSmoothMode;
 };
 
+struct MultiStationPara{
+    double stdDev;
+    double leaf;
+};
+
 struct TriangulationPara{
     int knNeighbors;
     double searchRadius;

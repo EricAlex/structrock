@@ -80,33 +80,51 @@ void MultiStationWorker::doWork()
 	}
 	if(is_reading_success)
 	{
-		pcl::PointCloud<pcl::PointXYZRGB>::Ptr temp_cloudxyzrgb_all(new pcl::PointCloud<pcl::PointXYZRGB>);
+		pcl::PointCloud<pcl::PointXYZRGB>::Ptr mid_rgb_cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
 		pcl::StatisticalOutlierRemoval<pcl::PointXYZRGB> sor;
 		sor.setInputCloud(dataLibrary::multiStationPointClouds[0]);
 		sor.setMeanK(50);
 		sor.setStddevMulThresh(dataLibrary::msPara.stdDev);
 		sor.setNegative(false);
-		sor.filter(*dataLibrary::multiStationPointClouds[0]);
-		*temp_cloudxyzrgb_all = *dataLibrary::multiStationPointClouds[0];
+		sor.filter(*mid_rgb_cloud);
+		if(!dataLibrary::cloudxyzrgb->empty())
+		{
+			dataLibrary::cloudxyzrgb->clear();
+		}
+		if(dataLibrary::msPara.leaf == 0.0)
+		{
+			*dataLibrary::cloudxyzrgb = *mid_rgb_cloud;
+		}
+		else
+		{
+			pcl::VoxelGrid<pcl::PointXYZRGB> vg;
+			vg.setInputCloud (mid_rgb_cloud);
+			vg.setLeafSize (dataLibrary::msPara.leaf, dataLibrary::msPara.leaf, dataLibrary::msPara.leaf);
+			vg.filter (*dataLibrary::cloudxyzrgb);
+		}
 		for(int i=1; i<dataLibrary::multiStationPointClouds.size(); i++)
 		{
+			pcl::PointCloud<pcl::PointXYZRGB>::Ptr mid_rgb_cloud_i(new pcl::PointCloud<pcl::PointXYZRGB>);
+			pcl::PointCloud<pcl::PointXYZRGB>::Ptr dsed_rgb_cloud_i(new pcl::PointCloud<pcl::PointXYZRGB>);
 			pcl::StatisticalOutlierRemoval<pcl::PointXYZRGB> sor_i;
 			sor_i.setInputCloud(dataLibrary::multiStationPointClouds[i]);
 			sor_i.setMeanK(50);
 			sor_i.setStddevMulThresh(dataLibrary::msPara.stdDev);
 			sor_i.setNegative(false);
-			sor_i.filter(*dataLibrary::multiStationPointClouds[i]);
-			*temp_cloudxyzrgb_all += *dataLibrary::multiStationPointClouds[i];
+			sor_i.filter(*mid_rgb_cloud_i);
+			if(dataLibrary::msPara.leaf == 0.0)
+			{
+				*dataLibrary::cloudxyzrgb += *mid_rgb_cloud_i;
+			}
+			else
+			{
+				pcl::VoxelGrid<pcl::PointXYZRGB> vg_i;
+				vg_i.setInputCloud (mid_rgb_cloud_i);
+				vg_i.setLeafSize (dataLibrary::msPara.leaf, dataLibrary::msPara.leaf, dataLibrary::msPara.leaf);
+				vg_i.filter (*dsed_rgb_cloud_i);
+				*dataLibrary::cloudxyzrgb += *dsed_rgb_cloud_i;
+			}
 		}
-
-		pcl::VoxelGrid<pcl::PointXYZRGB> vg;
-		vg.setInputCloud (temp_cloudxyzrgb_all);
-		vg.setLeafSize (dataLibrary::msPara.leaf, dataLibrary::msPara.leaf, dataLibrary::msPara.leaf);
-		if(!dataLibrary::cloudxyzrgb->empty())
-		{
-			dataLibrary::cloudxyzrgb->clear();
-		}
-		vg.filter (*dataLibrary::cloudxyzrgb);
 
 		if(!dataLibrary::cloudxyz->empty())
 		{

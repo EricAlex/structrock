@@ -37,23 +37,28 @@
  *
  */
 
-#pragma once
 #include "Worker.h"
+#include "dataLibrary.h"
 
-class MultiStationWorker :
-	public Worker
+void Worker::check_mute_nolog()
 {
-	Q_OBJECT
-
-public:
-	void multiStation()
+	for(int i=1; i<=2; i++)
 	{
-		QMetaObject::invokeMethod(this, "doWork");
+		if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>this->getParaIndex())
+		{
+			if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[this->getParaIndex()] == "mute")
+			{
+				this->setMute();
+			}
+			else if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[this->getParaIndex()] == "nolog")
+			{
+				this->setUnWriteLog();
+			}
+			this->setParaIndex(this->getParaIndex()+1);
+		}
+		else
+		{
+			break;
+		}
 	}
-
-private slots:
-    void doWork();
-
-signals:
-	void show(int i);
-};
+}

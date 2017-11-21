@@ -243,11 +243,12 @@ void structrock::open()
     {
 		readfileworker.setWorkFlowMode(false);
 		readfileworker.setUnmute();
+		readfileworker.setFileName(filename);
 		QObject::connect(&readfileworker, SIGNAL(ReadFileReady(int)), this, SLOT(ShowPCD(int)));
 		connect(&readfileworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
 		QObject::connect(&readfileworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
 
-		readfileworker.readFile(filename);
+		readfileworker.readFile();
     }
 }
 
@@ -259,11 +260,12 @@ void structrock::OpenXYZ()
     {
 		readxyzworker.setWorkFlowMode(false);
 		readxyzworker.setUnmute();
+		readxyzworker.setFileName(filename);
         connect(&readxyzworker, SIGNAL(ReadXYZReady(int)), this, SLOT(ShowPCD(int)));
 		connect(&readxyzworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
         connect(&readxyzworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
         
-        readxyzworker.readXYZ(filename);
+        readxyzworker.readXYZ();
 	}
 }
 
@@ -446,43 +448,21 @@ void structrock::command_parser()
 
 		std::string command_string = dataLibrary::Workflow[dataLibrary::current_workline_index].command;
 		std::transform(command_string.begin(), command_string.end(), command_string.begin(), ::tolower);
+		QString error_msg("");
 		if(command_string == "openpcd")
 		{
-			if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>0)
+			if(readfileworker.is_para_satisfying(error_msg))
 			{
 				if(!dataLibrary::have_called_read_file)
 				{
 					readfileworker.setWorkFlowMode(true);
-					readfileworker.setUnmute();
-					readfileworker.setWriteLog();
-                    if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>1)
-                    {
-                        if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1] == "mute")
-                        {
-                            readfileworker.setMute();
-                        }
-                        else if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1] == "nolog")
-	                    {
-	                        readfileworker.setUnWriteLog();
-	                    }
-	                    if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>2)
-	                    {
-	                    	if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[2] == "mute")
-	                        {
-	                            readfileworker.setMute();
-	                        }
-	                        else if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[2] == "nolog")
-		                    {
-		                        readfileworker.setUnWriteLog();
-		                    }
-	                    }
-                    }
+					readfileworker.prepare();
 					QObject::connect(&readfileworker, SIGNAL(ReadFileReady(int)), this, SLOT(ShowPCD(int)));
 					QObject::connect(&readfileworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
 					QObject::connect(&readfileworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
 					QObject::connect(&readfileworker, SIGNAL(GoWorkFlow()), this, SLOT(command_parser()));
 
-					readfileworker.readFile(QString::fromUtf8(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[0].c_str()));
+					readfileworker.readFile();
 					dataLibrary::have_called_read_file = true;
 				}
 				else
@@ -526,87 +506,41 @@ void structrock::command_parser()
 			}
 			else
 			{
-				Show_Errors(QString("Openpcd: Location of PCD file not provided."));
+				Show_Errors(error_msg);
 			}
 		}
 		else if(command_string == "openclusters")
 		{
-			if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>0)
+			if(openclustersworker.is_para_satisfying(error_msg))
 			{
 				openclustersworker.setWorkFlowMode(true);
-				openclustersworker.setUnmute();
-				openclustersworker.setWriteLog();
-				if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>1)
-				{
-					if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1] == "mute")
-					{
-						openclustersworker.setMute();
-					}
-					else if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1] == "nolog")
-					{
-						openclustersworker.setUnWriteLog();
-					}
-					if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>2)
-					{
-						if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[2] == "mute")
-						{
-							openclustersworker.setMute();
-						}
-						else if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[2] == "nolog")
-						{
-							openclustersworker.setUnWriteLog();
-						}
-					}
-				}
+				openclustersworker.prepare();
 				connect(&openclustersworker, SIGNAL(show()), this, SLOT(ShowClusters()));
 				connect(&openclustersworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
 				connect(&openclustersworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
 				connect(&openclustersworker, SIGNAL(GoWorkFlow()), this, SLOT(command_parser()));
 
-				openclustersworker.openclusters(QString::fromUtf8(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[0].c_str()));
+				openclustersworker.openclusters();
 			}
 			else
 			{
-				Show_Errors(QString("openclusters: Location of cluster (bin) file not provided."));
+				Show_Errors(error_msg);
 			}
 		}
 		else if(command_string == "openxyz")
 		{
-			if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>0)
+			if(readxyzworker.is_para_satisfying(error_msg))
 			{
 				if(!dataLibrary::have_called_read_file)
 				{
 					readxyzworker.setWorkFlowMode(true);
-					readxyzworker.setUnmute();
-					readxyzworker.setWriteLog();
-                    if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>1)
-                    {
-                        if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1] == "mute")
-                        {
-                            readxyzworker.setMute();
-                        }
-                        else if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1] == "nolog")
-	                    {
-	                        readxyzworker.setUnWriteLog();
-	                    }
-	                    if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>2)
-	                    {
-	                    	if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[2] == "mute")
-	                        {
-	                            readxyzworker.setMute();
-	                        }
-	                        else if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[2] == "nolog")
-		                    {
-		                        readxyzworker.setUnWriteLog();
-		                    }
-	                    }
-                    }
+					readxyzworker.prepare();
 					connect(&readxyzworker, SIGNAL(ReadXYZReady(int)), this, SLOT(ShowPCD(int)));
 					connect(&readxyzworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
 					connect(&readxyzworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
 					connect(&readxyzworker, SIGNAL(GoWorkFlow()), this, SLOT(command_parser()));
 
-					readxyzworker.readXYZ(QString::fromUtf8(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[0].c_str()));
+					readxyzworker.readXYZ();
 					dataLibrary::have_called_read_file = true;
 				}
 				else
@@ -651,7 +585,7 @@ void structrock::command_parser()
 			}
 			else
 			{
-				Show_Errors(QString("Openxyz: Location of XYZ file not provided."));
+				Show_Errors(error_msg);
 			}
 		}
 		else if(command_string == "foreach")
@@ -794,6 +728,7 @@ void structrock::command_parser()
 		{
 			if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>2)
 			{
+				int para_index = 3;
 				std::istringstream line_stream(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[0]);
 				char command_split_str = '|';
 				std::vector<std::string> tokens;
@@ -823,26 +758,23 @@ void structrock::command_parser()
 						multiStationworker.setWorkFlowMode(true);
 						multiStationworker.setUnmute();
 						multiStationworker.setWriteLog();
-						if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>3)
+						for(int i=1; i<=2; i++)
 						{
-							if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[3] == "mute")
+							if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>para_index)
 							{
-								multiStationworker.setMute();
-							}
-							else if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[3] == "nolog")
-							{
-								multiStationworker.setUnWriteLog();
-							}
-							if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>4)
-							{
-	                    		if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[4] == "mute")
+								if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[para_index] == "mute")
 								{
 									multiStationworker.setMute();
 								}
-								else if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[4] == "nolog")
+								else if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[para_index] == "nolog")
 								{
 									multiStationworker.setUnWriteLog();
 								}
+								para_index++;
+							}
+							else
+							{
+								break;
 							}
 						}
 						connect(&multiStationworker, SIGNAL(show(int)), this, SLOT(ShowPCD(int)));
@@ -900,31 +832,24 @@ void structrock::command_parser()
 			}
 			else
 			{
-				Show_Errors(QString("multistation: MultiStation Point Cloud File Paths and/or Downsample Leaf not provided."));
+				Show_Errors(QString("multistation: MultiStation Point Cloud File Paths and/or Remove Outliers 'stdDev' and/or Downsample 'Leaf' not provided."));
 			}
 		}
 		else if(command_string == "savepcdascii")
 		{
-			if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>0)
+			if(savepcdASCIIworker.is_para_satisfying(error_msg))
 			{
 				savepcdASCIIworker.setWorkFlowMode(true);
-				savepcdASCIIworker.setSaveRGBMode(false);
-				if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>1)
-                {
-                    if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1] == "rgb")
-                    {
-                        savepcdASCIIworker.setSaveRGBMode(true);
-                    }
-				}
+				savepcdASCIIworker.prepare();
 				connect(&savepcdASCIIworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
 				connect(&savepcdASCIIworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
 				connect(&savepcdASCIIworker, SIGNAL(GoWorkFlow()), this, SLOT(command_parser()));
 
-				savepcdASCIIworker.saveascii(QString::fromUtf8(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[0].c_str()));
+				savepcdASCIIworker.saveascii();
 			}
 			else
 			{
-				Show_Errors(QString("Savepcdascii: Path not provided."));
+				Show_Errors(error_msg);
 			}
 		}
 		else if(command_string == "savepcdbinary")
@@ -1027,28 +952,25 @@ void structrock::command_parser()
 					saveclustersworker.setTrimTraceEdgesMode(false);
 					para_index++;
 				}
-                if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>para_index)
-                {
-                    if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[para_index] == "mute")
-                    {
-                        saveclustersworker.setMute();
-                    }
-                    else if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[para_index] == "nolog")
-                    {
-                        saveclustersworker.setUnWriteLog();
+				for(int i=1; i<=2; i++)
+				{
+					if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>para_index)
+					{
+						if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[para_index] == "mute")
+						{
+							saveclustersworker.setMute();
+						}
+						else if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[para_index] == "nolog")
+						{
+							saveclustersworker.setUnWriteLog();
+						}
+						para_index++;
 					}
-                    if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>(para_index+1))
-                    {
-                    	if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[para_index+1] == "mute")
-                        {
-                            saveclustersworker.setMute();
-                        }
-                        else if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[para_index+1] == "nolog")
-	                    {
-	                        saveclustersworker.setUnWriteLog();
-	                    }
-                    }
-                }
+					else
+					{
+						break;
+					}
+				}
 				connect(&saveclustersworker, SIGNAL(SaveClustersReady(QString)), this, SLOT(ShowSavedClusters(QString)));
 				connect(&saveclustersworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
 				connect(&saveclustersworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
@@ -1924,18 +1846,12 @@ void structrock::saveasascii()
 	if(!filename.isNull())
 	{
 		savepcdASCIIworker.setWorkFlowMode(false);
+		savepcdASCIIworker.setFileName(filename);
 		savepcdASCIIworker.setSaveRGBMode(false);
-		if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>1)
-        {
-			if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1] == "rgb")
-            {
-				savepcdASCIIworker.setSaveRGBMode(true);
-            }
-		}
 		connect(&savepcdASCIIworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
 		connect(&savepcdASCIIworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
 
-		savepcdASCIIworker.saveascii(filename);
+		savepcdASCIIworker.saveascii();
 	}
 }
 
@@ -2670,11 +2586,12 @@ void structrock::OpenClusters()
     {
 		openclustersworker.setWorkFlowMode(false);
 		openclustersworker.setUnmute();
+		openclustersworker.setFileName(filename);
         connect(&openclustersworker, SIGNAL(show()), this, SLOT(ShowClusters()));
 		connect(&openclustersworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
         connect(&openclustersworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
         
-        openclustersworker.openclusters(filename);
+        openclustersworker.openclusters();
 	}
 }
 

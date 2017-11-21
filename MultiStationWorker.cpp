@@ -140,7 +140,7 @@ void MultiStationWorker::doWork()
 
     if(this->getWriteLogMpde()&&is_success)
     {
-        std::string log_text = "\tMultiStation costs: ";
+        std::string log_text = "MultiStation costs: ";
         std::ostringstream strs;
         strs << (double)(dataLibrary::finish-dataLibrary::start)/CLOCKS_PER_SEC;
         log_text += (strs.str() +" seconds.");

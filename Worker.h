@@ -42,6 +42,7 @@
 #include <QObject>
 #include <QThread>
 #include "MyThread.h"
+
 class Worker : public QObject
 {
     Q_OBJECT
@@ -52,6 +53,7 @@ public:
 		_workflow_mode = false;
 		_is_mute = false;
 		_write_log = true;
+		_para_size = 0;
 		moveToThread(&t);
 		t.start();
 	}
@@ -69,6 +71,8 @@ private:
 	bool _workflow_mode;
 	bool _is_mute;
 	bool _write_log;
+	int _para_size;
+	int _para_index;
 public:
 	void setWorkFlowMode(bool mode)
 	{
@@ -105,6 +109,25 @@ public:
 	void Sleep(unsigned long ms)
 	{
 		t.Sleep(ms);
+	}
+	void check_mute_nolog();
+	bool is_para_satisfying(QString message){}
+	void prepare(){}
+	void setParaSize(int size)
+	{
+		_para_size = size;
+	}
+	int getParaSize()
+	{
+		return _para_size;
+	}
+	void setParaIndex(int index)
+	{
+		_para_index = index;
+	}
+	int getParaIndex()
+	{
+		return _para_index;
 	}
 
 private:

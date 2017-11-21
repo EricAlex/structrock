@@ -50,11 +50,33 @@
 
 using namespace std;
 
-void openClustersWorker::doWork(const QString &filename)
+bool openClustersWorker::is_para_satisfying(QString message)
+{
+	this->setParaSize(1);
+	if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>0)
+	{
+		this->setFileName(QString::fromUtf8(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[0].c_str()));
+		this->setParaIndex(this->getParaSize());
+		return true;
+	}
+	else
+	{
+		message = QString("openclusters: Location of Clusters (bin) File Not Provided.");
+		return false;
+	}
+}
+void openClustersWorker::prepare()
+{
+	this->setUnmute();
+	this->setWriteLog();
+	this->check_mute_nolog();
+}
+
+void openClustersWorker::doWork()
 {
 	bool is_success(false);
 
-    QByteArray ba = filename.toLocal8Bit();
+    QByteArray ba = this->getFileName().toLocal8Bit();
 	string* strfilename = new std::string(ba.data());
     
     dataLibrary::Status = STATUS_OPENCLUSTERS;
@@ -143,7 +165,7 @@ void openClustersWorker::doWork(const QString &filename)
 
     if(this->getWriteLogMpde()&&is_success)
     {
-		std::string string_filename = filename.toUtf8().constData();
+		std::string string_filename = this->getFileName().toUtf8().constData();
         std::string log_text = string_filename + "\n\tReading Clusters costs: ";
         std::ostringstream strs;
         strs << (double)(dataLibrary::finish-dataLibrary::start)/CLOCKS_PER_SEC;

@@ -43,13 +43,42 @@
 #include "globaldef.h"
 #include "dataLibrary.h"
 
-void SavePcdASCIIWorker::doWork(const QString &filename)
+bool SavePcdASCIIWorker::is_para_satisfying(QString message)
+{
+	this->setParaSize(1);
+	if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>0)
+	{
+		this->setFileName(QString::fromUtf8(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[0].c_str()));
+		this->setParaIndex(this->getParaSize());
+		return true;
+	}
+	else
+	{
+		message = QString("savepcdascii: Save Path Not Provided.");
+		return false;
+	}
+}
+
+void SavePcdASCIIWorker::prepare()
+{
+	this->setSaveRGBMode(false);
+	if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>this->getParaIndex())
+	{
+		if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[this->getParaIndex()] == "rgb")
+		{
+			this->setSaveRGBMode(true);
+			this->setParaIndex(this->getParaIndex()+1);
+		}
+	}
+}
+
+void SavePcdASCIIWorker::doWork()
 {
 	bool is_success(false);
 
 	dataLibrary::checkupflow();
 
-	QByteArray ba = filename.toLocal8Bit();
+	QByteArray ba = this->getFileName().toLocal8Bit();
 	std::string* strfilename = new std::string(ba.data());
 
 	dataLibrary::Status = STATUS_SAVEASCII;

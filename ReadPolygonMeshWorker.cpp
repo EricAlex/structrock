@@ -48,11 +48,40 @@
 #include "globaldef.h"
 #include "dataLibrary.h"
 
-void ReadPolygonMeshWorker::doWork(const QString &filename)
+bool ReadPolygonMeshWorker::is_para_satisfying(QString message)
+{
+	if(dataLibrary::Fracture_Triangles.size()>0)
+	{
+		message = QString("openftriangulation: Triangulation Data Already Loaded!");
+		return false;
+	}
+	else
+	{
+		this->setParaSize(1);
+		if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>0)
+		{
+			this->setFileName(QString::fromUtf8(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[0].c_str()));
+			this->setParaIndex(this->getParaSize());
+			return true;
+		}
+		else
+		{
+			message = QString("openftriangulation: Save Path Not Provided.");
+			return false;
+		}
+	}
+}
+
+void ReadPolygonMeshWorker::prepare()
+{
+	
+}
+
+void ReadPolygonMeshWorker::doWork()
 {
 	bool is_success(false);
 
-	QByteArray ba = filename.toLocal8Bit();
+	QByteArray ba = this->getFileName().toLocal8Bit();
 	std::string* strfilename = new std::string(ba.data());
 
 	dataLibrary::Status = STATUS_OPENPOLYGONMESH;

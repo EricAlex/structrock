@@ -854,72 +854,53 @@ void structrock::command_parser()
 		}
 		else if(command_string == "savepcdbinary")
 		{
-			if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>0)
+			if(savepcdBinaryworker.is_para_satisfying(error_msg))
 			{
 				savepcdBinaryworker.setWorkFlowMode(true);
-				savepcdBinaryworker.setSaveRGBMode(false);
-				if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>1)
-                {
-                    if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1] == "rgb")
-                    {
-                        savepcdBinaryworker.setSaveRGBMode(true);
-                    }
-				}
+				savepcdBinaryworker.prepare();
 				connect(&savepcdBinaryworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
 				connect(&savepcdBinaryworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
 				connect(&savepcdBinaryworker, SIGNAL(GoWorkFlow()), this, SLOT(command_parser()));
 
-				savepcdBinaryworker.savebinary(QString::fromUtf8(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[0].c_str()));
+				savepcdBinaryworker.savebinary();
 			}
 			else
 			{
-				Show_Errors(QString("Savepcdbinary: Path not provided."));
+				Show_Errors(error_msg);
 			}
 		}
 		else if(command_string == "saveftriangulation")
 		{
-			if(dataLibrary::Fracture_Triangles.size()>0)
+			if(savePolygonMeshworker.is_para_satisfying(error_msg))
 			{
-				if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>0)
-				{
-					savePolygonMeshworker.setWorkFlowMode(true);
-					connect(&savePolygonMeshworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
-					connect(&savePolygonMeshworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
-					connect(&savePolygonMeshworker, SIGNAL(GoWorkFlow()), this, SLOT(command_parser()));
+				savePolygonMeshworker.setWorkFlowMode(true);
+				savePolygonMeshworker.prepare();
+				connect(&savePolygonMeshworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
+				connect(&savePolygonMeshworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
+				connect(&savePolygonMeshworker, SIGNAL(GoWorkFlow()), this, SLOT(command_parser()));
 
-					savePolygonMeshworker.savepolygonmesh(QString::fromUtf8(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[0].c_str()));
-				}
-				else
-				{
-					Show_Errors(QString("saveftriangulation: Path not provided."));
-				}
+				savePolygonMeshworker.savepolygonmesh();
 			}
 			else
 			{
-				Show_Errors(QString("saveftriangulation: You Must Do the Triangulation First!"));
+				Show_Errors(error_msg);
 			}
 		}
 		else if(command_string == "openftriangulation")
 		{
-			if(dataLibrary::Fracture_Triangles.size()>0)
+			if(readPolygonMeshworker.is_para_satisfying(error_msg))
 			{
-				Show_Errors(QString("openftriangulation: Triangulation Data Already Loaded!"));
+				readPolygonMeshworker.setWorkFlowMode(true);
+				readPolygonMeshworker.prepare();
+				connect(&readPolygonMeshworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
+				connect(&readPolygonMeshworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
+				connect(&readPolygonMeshworker, SIGNAL(GoWorkFlow()), this, SLOT(command_parser()));
+
+				readPolygonMeshworker.readpolygonmesh();
 			}
 			else
 			{
-				if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>0)
-				{
-					readPolygonMeshworker.setWorkFlowMode(true);
-					connect(&readPolygonMeshworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
-					connect(&readPolygonMeshworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
-					connect(&readPolygonMeshworker, SIGNAL(GoWorkFlow()), this, SLOT(command_parser()));
-
-					readPolygonMeshworker.readpolygonmesh(QString::fromUtf8(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[0].c_str()));
-				}
-				else
-				{
-					Show_Errors(QString("openftriangulation: Path not provided."));
-				}
+				Show_Errors(error_msg);
 			}
 		}
 		else if(command_string == "savenormals")
@@ -1861,18 +1842,12 @@ void structrock::saveasbinary()
 	if(!filename.isNull())
 	{
 		savepcdBinaryworker.setWorkFlowMode(false);
+		savepcdBinaryworker.setFileName(filename);
 		savepcdBinaryworker.setSaveRGBMode(false);
-		if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>1)
-        {
-			if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1] == "rgb")
-            {
-				savepcdBinaryworker.setSaveRGBMode(true);
-            }
-		}
 		connect(&savepcdBinaryworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
 		connect(&savepcdBinaryworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
 
-		savepcdBinaryworker.savebinary(filename);
+		savepcdBinaryworker.savebinary();
 	}
 }
 

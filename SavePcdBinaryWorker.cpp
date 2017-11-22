@@ -43,13 +43,42 @@
 #include "globaldef.h"
 #include "dataLibrary.h"
 
-void SavePcdBinaryWorker::doWork(const QString &filename)
+bool SavePcdBinaryWorker::is_para_satisfying(QString message)
+{
+	this->setParaSize(1);
+	if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>0)
+	{
+		this->setFileName(QString::fromUtf8(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[0].c_str()));
+		this->setParaIndex(this->getParaSize());
+		return true;
+	}
+	else
+	{
+		message = QString("savepcdbinary: Path Not Provided.");
+		return false;
+	}
+}
+
+void SavePcdBinaryWorker::prepare()
+{
+	this->setSaveRGBMode(false);
+	if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>this->getParaIndex())
+	{
+		if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[this->getParaIndex()] == "rgb")
+		{
+			this->setSaveRGBMode(true);
+			this->setParaIndex(this->getParaIndex()+1);
+		}
+	}
+}
+
+void SavePcdBinaryWorker::doWork()
 {
 	bool is_success(false);
 
 	dataLibrary::checkupflow();
 
-	QByteArray ba = filename.toLocal8Bit();
+	QByteArray ba = this->getFileName().toLocal8Bit();
 	std::string* strfilename = new std::string(ba.data());
 
 	dataLibrary::Status = STATUS_SAVEBINARY;

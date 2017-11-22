@@ -58,7 +58,6 @@ public:
 	static pcl::PointCloud<pcl::PointXYZI>::Ptr cloudxyzi;
 	static pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloudxyzrgb_clusters; //for showing the segmentation result
 	static pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloudxyzrgb_features; //for showing the surface features
-	static sensor_msgs::PointCloud2::Ptr cloud_blob;
 	static pcl::PointCloud<pcl::Normal>::Ptr normal;
 	static pcl::PointCloud<pcl::PointNormal>::Ptr pointnormals;
 	static pcl::PointCloud<pcl::PointXYZ>::Ptr mls_points;
@@ -81,11 +80,7 @@ public:
 	static int currentPatch;
 	static std::vector<int> selectedPatches;
 	static int Status;
-    static RGSpara RGSparameter;
-	static TriangulationPara TriangulationParameter;
 	static std::vector<pcl::PolygonMesh::Ptr> Fracture_Triangles;
-	static FeaturePara FeatureParameter;
-	static std::vector<std::string> contents;
     static pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_hull_all;
 	static std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> fracture_patches;
 	static std::vector<int> fracture_classes;
@@ -95,13 +90,12 @@ public:
 	static std::vector<Line> Lines_max;
 	static std::vector<Line> Lines_min;
 	static std::vector<WorkLine> Workflow;
-	static std::vector<std::string> multiStationFilePath;
-	static std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> multiStationPointClouds;
-	static MultiStationPara msPara;
 	static int current_workline_index;
 	static bool have_called_read_file;
+	// <-- remove
 	static clock_t start;
 	static clock_t finish;
+	// remove -->
 	static Vector3f cloud_centor;
 
 public:

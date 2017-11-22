@@ -47,7 +47,42 @@
 #include "dataLibrary.h"
 #include "globaldef.h"
 
-void StaticROWorker::doWork(const double &stdDev)
+bool StaticROWorker::is_para_satisfying(QString message)
+{
+	if(dataLibrary::haveBaseData())
+    {
+		this->setParaSize(1);
+		if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>0)
+		{
+			double stdDev;
+			std::stringstream ss(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[0]);
+			ss >> stdDev;
+			this->setStdDev(stdDev);
+
+			this->setParaIndex(this->getParaSize());
+			return true;
+		}
+		else
+		{
+			message = QString("rostatic: Standard Deviation Not Given.");
+			return false;
+		}
+	}
+	else
+	{
+		message = QString("rostatic: You Do Not Have Any Point Cloud Data in Memery!");
+		return false;
+	}
+}
+
+void StaticROWorker::prepare()
+{
+	this->setUnmute();
+	this->setWriteLog();
+	this->check_mute_nolog();
+}
+
+void StaticROWorker::doWork()
 {
 	bool is_success(false);
 
@@ -61,7 +96,7 @@ void StaticROWorker::doWork(const double &stdDev)
     pcl::StatisticalOutlierRemoval<pcl::PointXYZ> sor;
     sor.setInputCloud(dataLibrary::cloudxyz);
     sor.setMeanK(50);
-    sor.setStddevMulThresh(stdDev);
+    sor.setStddevMulThresh(this->getStdDev());
 
 	if(!dataLibrary::outlier_removed_outlier->empty())
 	{

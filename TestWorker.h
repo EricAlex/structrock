@@ -43,17 +43,18 @@ class TestWorker : public Worker
 {
     Q_OBJECT
 
+private:
+	QString _filename;
+
 public:
     TestWorker() : Worker()
     {
         _is_split = false;
     }
-    
-	void testing(const QString &filename)
+	void testing()
 	{
-		QMetaObject::invokeMethod(this, "doWork", Q_ARG(const QString &, filename));
+		QMetaObject::invokeMethod(this, "doWork");
 	}
-    
     void setSplitMode(bool mode)
     {
         _is_split = mode;
@@ -62,9 +63,19 @@ public:
     {
         return _is_split;
     }
+	void setFileName(QString name)
+	{
+		_filename = name;
+	}
+	QString getFileName()
+	{
+		return _filename;
+	}
+	virtual bool is_para_satisfying(QString message);
+	virtual void prepare();
 
 private slots:
-    void doWork(const QString &filename);
+    void doWork();
 
 signals:
 	void ReadFileReady(int i);

@@ -48,7 +48,42 @@
 #include "globaldef.h"
 #include "dataLibrary.h"
 
-void resampleWorker::doWork(const double &radius)
+bool resampleWorker::is_para_satisfying(QString message)
+{
+	if(dataLibrary::haveBaseData())
+    {
+		this->setParaSize(1);
+		if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>0)
+		{
+			double radius;
+			std::stringstream ss(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[0]);
+			ss >> radius;
+			this->setRadius(radius);
+
+			this->setParaIndex(this->getParaSize());
+			return true;
+		}
+		else
+		{
+			message = QString("resample: Search Radius Not Given.");
+			return false;
+		}
+	}
+	else
+	{
+		message = QString("resample: You Do Not Have Any Point Cloud Data in Memery!");
+		return false;
+	}
+}
+
+void resampleWorker::prepare()
+{
+	this->setUnmute();
+	this->setWriteLog();
+	this->check_mute_nolog();
+}
+
+void resampleWorker::doWork()
 {
     bool is_success(false);
 
@@ -71,7 +106,7 @@ void resampleWorker::doWork(const double &radius)
     mls.setInputCloud (dataLibrary::cloudxyz);
     mls.setPolynomialFit (true);
     mls.setSearchMethod (tree);
-    mls.setSearchRadius (radius);
+    mls.setSearchRadius (this->getRadius());
 
     // Reconstruct
 	if(!dataLibrary::mls_points->empty())

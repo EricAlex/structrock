@@ -45,11 +45,29 @@ class RGSWorker :
 {
 Q_OBJECT
 
+private:
+	RGSpara _para;
+
 public:
 	void rgs()
 	{
 		QMetaObject::invokeMethod(this, "doWork");
 	}
+	void setRGSpara(RGSpara para)
+	{
+		_para.curvature = para.curvature;
+		_para.IsSmoothMode = para.IsSmoothMode;
+		_para.min_number_of_Points = para.min_number_of_Points;
+		_para.number_of_neighbors = para.number_of_neighbors;
+		_para.residual = para.residual;
+		_para.smoothness = para.smoothness;
+	}
+	RGSpara getRGSpara()
+	{
+		return _para;
+	}
+	virtual bool is_para_satisfying(QString message);
+	virtual void prepare();
 
 private slots:
     void doWork();

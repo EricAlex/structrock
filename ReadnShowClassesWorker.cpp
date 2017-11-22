@@ -44,11 +44,50 @@
 #include "globaldef.h"
 #include "dataLibrary.h"
 
-void ReadnShowClassesWorker::doWork(const QString &filename)
+bool ReadnShowClassesWorker::is_para_satisfying(QString message)
+{
+	if(dataLibrary::Fracture_Triangles.size() == 0)
+	{
+		message = QString("readnshowfracturetypes: Please Performed Fracture Triangulation or Read Triangulation PolygonMesh Data First!");
+		return false;
+	}
+	else if(dataLibrary::cloudxyz->empty()&&dataLibrary::cloudxyzrgb->empty())
+	{
+		message = QString("readnshowfracturetypes: Please Read Point Cloud Data First (to show fracture types)!");
+		return false;
+	}
+	else if(dataLibrary::fracture_classes.size()>0)
+	{
+		message = QString("readnshowfracturetypes: Fracture Types Data Already Loaded!");
+		return false;
+	}
+	else
+	{
+		this->setParaSize(1);
+		if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>0)
+		{
+			this->setFileName(QString::fromUtf8(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[0].c_str()));
+			this->setParaIndex(this->getParaSize());
+			return true;
+		}
+		else
+		{
+			message = QString("readnshowfracturetypes: Path Not Provided.");
+			return false;
+		}
+	}
+}
+
+void ReadnShowClassesWorker::prepare()
+{
+	
+}
+
+void ReadnShowClassesWorker::doWork()
 {
 	bool is_success(false);
 
-	QByteArray ba = filename.toLocal8Bit();
+	QByteArray ba = this->getFileName().toLocal8Bit();
 	std::string* strfilename = new std::string(ba.data());
 
 	dataLibrary::Status = STATUS_READNSHOWCLASSES;

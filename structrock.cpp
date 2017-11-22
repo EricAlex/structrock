@@ -235,15 +235,111 @@ structrock::~structrock()
 	
 }
 
+void structrock::NewWindow_current_command()
+{
+	std::string commands = "";
+	for(int i=dataLibrary::current_workline_index; i<dataLibrary::Workflow.size(); i++)
+	{
+		if(dataLibrary::Workflow[i].parameters.size()>0)
+		{
+			commands += dataLibrary::Workflow[i].command;
+			commands += ",";
+			for(int j=0; j<dataLibrary::Workflow[i].parameters.size()-1; j++)
+			{
+				commands += dataLibrary::Workflow[i].parameters[j];
+				commands += ",";
+			}
+			commands += dataLibrary::Workflow[i].parameters[dataLibrary::Workflow[i].parameters.size()-1];
+			commands += ";";
+		}
+		else
+		{
+			commands += dataLibrary::Workflow[i].command;
+			commands += ";";
+		}
+	}
+	#if defined(_WIN32)||defined(_WIN64)
+		size_t f = commands.find("\\");
+		commands.replace(f, std::string("\\").length(), "\\\\");
+	#endif
+
+	QProcess *myProcess = new QProcess;
+	QStringList commandsList;
+	commandsList << "-c"<<commands.c_str();
+	myProcess->setWorkingDirectory(QApplication::applicationDirPath());
+	#if !defined(_WIN32)&&(defined(__unix__)||defined(__unix)||(defined(__APPLE__)&&defined(__MACH__)))
+		myProcess->start("./structrock",commandsList);
+	#elif defined(_WIN32)||defined(_WIN64)
+		myProcess->start("structrock",commandsList);
+	#endif
+}
+void structrock::NewWindow_next_command()
+{
+	std::string commands = "";
+	for(int i=dataLibrary::current_workline_index+1; i<dataLibrary::Workflow.size(); i++)
+	{
+		if(dataLibrary::Workflow[i].parameters.size()>0)
+		{
+			commands += dataLibrary::Workflow[i].command;
+			commands += ",";
+			for(int j=0; j<dataLibrary::Workflow[i].parameters.size()-1; j++)
+			{
+				commands += dataLibrary::Workflow[i].parameters[j];
+				commands += ",";
+			}
+			commands += dataLibrary::Workflow[i].parameters[dataLibrary::Workflow[i].parameters.size()-1];
+			commands += ";";
+		}
+		else
+		{
+			commands += dataLibrary::Workflow[i].command;
+			commands += ";";
+		}
+	}
+				
+	#if defined(_WIN32)||defined(_WIN64)
+		size_t f = commands.find("\\");
+		commands.replace(f, std::string("\\").length(), "\\\\");
+	#endif
+
+	QProcess *myProcess = new QProcess;
+	QStringList commandsList;
+	commandsList << "-c"<<commands.c_str();
+	myProcess->setWorkingDirectory(QApplication::applicationDirPath());
+	#if !defined(_WIN32)&&(defined(__unix__)||defined(__unix)||(defined(__APPLE__)&&defined(__MACH__)))
+		myProcess->start("./structrock",commandsList);
+	#elif defined(_WIN32)||defined(_WIN64)
+		myProcess->start("structrock",commandsList);
+	#endif
+}
+
+void structrock::Reboot_with_commands(std::string commands)
+{
+	QProcess *myProcess = new QProcess;
+	QStringList commandsList;
+	commandsList << "-c"<<commands.c_str();
+	myProcess->setWorkingDirectory(QApplication::applicationDirPath());
+	#if !defined(_WIN32)&&(defined(__unix__)||defined(__unix)||(defined(__APPLE__)&&defined(__MACH__)))
+		myProcess->start("./structrock",commandsList);
+	#elif defined(_WIN32)||defined(_WIN64)
+		myProcess->start("structrock",commandsList);
+	#endif
+
+	TimingShutdown *shutdown(new TimingShutdown);
+	connect(shutdown, SIGNAL(shutdown()), this, SLOT(exit()));
+	shutdown->start();
+}
+
 void structrock::open()
 {
     QString filename = QFileDialog::getOpenFileName(NULL,tr("Open Point Cloud Data"),QDir::currentPath(),tr("Point Cloud Data (*.pcd);;All files (*.*)"));
     
     if(!filename.isNull())
     {
+		readfileworker.setFileName(filename);
 		readfileworker.setWorkFlowMode(false);
 		readfileworker.setUnmute();
-		readfileworker.setFileName(filename);
+		readfileworker.setWriteLog();
 		QObject::connect(&readfileworker, SIGNAL(ReadFileReady(int)), this, SLOT(ShowPCD(int)));
 		connect(&readfileworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
 		QObject::connect(&readfileworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
@@ -258,9 +354,10 @@ void structrock::OpenXYZ()
     
     if(!filename.isNull())
     {
+		readxyzworker.setFileName(filename);
 		readxyzworker.setWorkFlowMode(false);
 		readxyzworker.setUnmute();
-		readxyzworker.setFileName(filename);
+		readxyzworker.setWriteLog();
         connect(&readxyzworker, SIGNAL(ReadXYZReady(int)), this, SLOT(ShowPCD(int)));
 		connect(&readxyzworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
         connect(&readxyzworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
@@ -467,41 +564,7 @@ void structrock::command_parser()
 				}
 				else
 				{
-					std::string commands = "";
-					for(int i=dataLibrary::current_workline_index; i<dataLibrary::Workflow.size(); i++)
-					{
-						if(dataLibrary::Workflow[i].parameters.size()>0)
-						{
-							commands += dataLibrary::Workflow[i].command;
-							commands += ",";
-							for(int j=0; j<dataLibrary::Workflow[i].parameters.size()-1; j++)
-							{
-								commands += dataLibrary::Workflow[i].parameters[j];
-								commands += ",";
-							}
-							commands += dataLibrary::Workflow[i].parameters[dataLibrary::Workflow[i].parameters.size()-1];
-							commands += ";";
-						}
-						else
-						{
-							commands += dataLibrary::Workflow[i].command;
-							commands += ";";
-						}
-					}
-					#if defined(_WIN32)||defined(_WIN64)
-						size_t f = commands.find("\\");
-						commands.replace(f, std::string("\\").length(), "\\\\");
-					#endif
-
-					QProcess *myProcess = new QProcess;
-					QStringList commandsList;
-					commandsList << "-c"<<commands.c_str();
-					myProcess->setWorkingDirectory(QApplication::applicationDirPath());
-					#if !defined(_WIN32)&&(defined(__unix__)||defined(__unix)||(defined(__APPLE__)&&defined(__MACH__)))
-						myProcess->start("./structrock",commandsList);
-					#elif defined(_WIN32)||defined(_WIN64)
-						myProcess->start("structrock",commandsList);
-					#endif
+					this->NewWindow_current_command();
 				}
 			}
 			else
@@ -545,42 +608,7 @@ void structrock::command_parser()
 				}
 				else
 				{
-					std::string commands = "";
-					for(int i=dataLibrary::current_workline_index; i<dataLibrary::Workflow.size(); i++)
-					{
-						if(dataLibrary::Workflow[i].parameters.size()>0)
-						{
-							commands += dataLibrary::Workflow[i].command;
-							commands += ",";
-							for(int j=0; j<dataLibrary::Workflow[i].parameters.size()-1; j++)
-							{
-								commands += dataLibrary::Workflow[i].parameters[j];
-								commands += ",";
-							}
-							commands += dataLibrary::Workflow[i].parameters[dataLibrary::Workflow[i].parameters.size()-1];
-							commands += ";";
-						}
-						else
-						{
-							commands += dataLibrary::Workflow[i].command;
-							commands += ";";
-						}
-					}
-					
-					#if defined(_WIN32)||defined(_WIN64)
-						size_t f = commands.find("\\");
-						commands.replace(f, std::string("\\").length(), "\\\\");
-					#endif
-
-					QProcess *myProcess = new QProcess;
-					QStringList commandsList;
-					commandsList << "-c"<<commands.c_str();
-					myProcess->setWorkingDirectory(QApplication::applicationDirPath());
-					#if !defined(_WIN32)&&(defined(__unix__)||defined(__unix)||(defined(__APPLE__)&&defined(__MACH__)))
-						myProcess->start("./structrock",commandsList);
-					#elif defined(_WIN32)||defined(_WIN64)
-						myProcess->start("structrock",commandsList);
-					#endif
+					this->NewWindow_current_command();
 				}
 			}
 			else
@@ -651,19 +679,7 @@ void structrock::command_parser()
 						commands_all.replace(f, std::string("\\").length(), "\\\\");
 					#endif
 
-					QProcess *myProcess = new QProcess;
-					QStringList commandsList;
-					commandsList << "-c"<<commands_all.c_str();
-					myProcess->setWorkingDirectory(QApplication::applicationDirPath());
-					#if !defined(_WIN32)&&(defined(__unix__)||defined(__unix)||(defined(__APPLE__)&&defined(__MACH__)))
-						myProcess->start("./structrock",commandsList);
-					#elif defined(_WIN32)||defined(_WIN64)
-						myProcess->start("structrock",commandsList);
-					#endif
-
-					TimingShutdown *shutdown(new TimingShutdown);
-					connect(shutdown, SIGNAL(shutdown()), this, SLOT(exit()));
-					shutdown->start();
+					this->Reboot_with_commands(commands_all);
 				}
 				else
 				{
@@ -726,113 +742,28 @@ void structrock::command_parser()
 		}
 		else if(command_string == "multistation")
 		{
-			if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>2)
+			if(multiStationworker.is_para_satisfying(error_msg))
 			{
-				int para_index = 3;
-				std::istringstream line_stream(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[0]);
-				char command_split_str = '|';
-				std::vector<std::string> tokens;
-				for(std::string each; std::getline(line_stream, each, command_split_str); tokens.push_back(each));
-
-				for(int i=0; i<tokens.size(); i++)
+				if(!dataLibrary::have_called_read_file)
 				{
-					tokens[i].erase(std::remove(tokens[i].begin(), tokens[i].end(),'\n'), tokens[i].end());
-					tokens[i].erase(std::remove(tokens[i].begin(), tokens[i].end(),'\r'), tokens[i].end());
-					tokens[i].erase(std::remove(tokens[i].begin(), tokens[i].end(),'\t'), tokens[i].end());
-					if(tokens[i].empty())
-						tokens.erase(tokens.begin()+i);
-				}
-				if(tokens.size()>0)
-				{
-					if(!dataLibrary::have_called_read_file)
-					{
-						for(int i=0; i<tokens.size(); i++)
-						{
-							dataLibrary::multiStationFilePath.push_back(tokens[i]);
-						}
-						std::stringstream ss_stdDev(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1]);
-						ss_stdDev >> dataLibrary::msPara.stdDev;
-						std::stringstream ss_leaf(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[2]);
-						ss_leaf >> dataLibrary::msPara.leaf;
+					multiStationworker.setWorkFlowMode(true);
+					multiStationworker.prepare();
+					connect(&multiStationworker, SIGNAL(show(int)), this, SLOT(ShowPCD(int)));
+					connect(&multiStationworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
+					connect(&multiStationworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
+					connect(&multiStationworker, SIGNAL(GoWorkFlow()), this, SLOT(command_parser()));
 
-						multiStationworker.setWorkFlowMode(true);
-						multiStationworker.setUnmute();
-						multiStationworker.setWriteLog();
-						for(int i=1; i<=2; i++)
-						{
-							if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>para_index)
-							{
-								if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[para_index] == "mute")
-								{
-									multiStationworker.setMute();
-								}
-								else if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[para_index] == "nolog")
-								{
-									multiStationworker.setUnWriteLog();
-								}
-								para_index++;
-							}
-							else
-							{
-								break;
-							}
-						}
-						connect(&multiStationworker, SIGNAL(show(int)), this, SLOT(ShowPCD(int)));
-						connect(&multiStationworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
-						connect(&multiStationworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
-						connect(&multiStationworker, SIGNAL(GoWorkFlow()), this, SLOT(command_parser()));
-
-						multiStationworker.multiStation();
-						dataLibrary::have_called_read_file = true;
-					}
-					else
-					{
-						std::string commands = "";
-						for(int i=dataLibrary::current_workline_index; i<dataLibrary::Workflow.size(); i++)
-						{
-							if(dataLibrary::Workflow[i].parameters.size()>0)
-							{
-								commands += dataLibrary::Workflow[i].command;
-								commands += ",";
-								for(int j=0; j<dataLibrary::Workflow[i].parameters.size()-1; j++)
-								{
-									commands += dataLibrary::Workflow[i].parameters[j];
-									commands += ",";
-								}
-								commands += dataLibrary::Workflow[i].parameters[dataLibrary::Workflow[i].parameters.size()-1];
-								commands += ";";
-							}
-							else
-							{
-								commands += dataLibrary::Workflow[i].command;
-								commands += ";";
-							}
-						}
-
-						#if defined(_WIN32)||defined(_WIN64)
-							size_t f = commands.find("\\");
-							commands.replace(f, std::string("\\").length(), "\\\\");
-						#endif
-
-						QProcess *myProcess = new QProcess;
-						QStringList commandsList;
-						commandsList << "-c"<<commands.c_str();
-						myProcess->setWorkingDirectory(QApplication::applicationDirPath());
-						#if !defined(_WIN32)&&(defined(__unix__)||defined(__unix)||(defined(__APPLE__)&&defined(__MACH__)))
-							myProcess->start("./structrock",commandsList);
-						#elif defined(_WIN32)||defined(_WIN64)
-							myProcess->start("structrock",commandsList);
-						#endif
-					}
+					multiStationworker.multiStation();
+					dataLibrary::have_called_read_file = true;
 				}
 				else
 				{
-					Show_Errors(QString("multistation: None MultiStation Point Cloud File Path provided."));
+					this->NewWindow_current_command();
 				}
 			}
 			else
 			{
-				Show_Errors(QString("multistation: MultiStation Point Cloud File Paths and/or Remove Outliers 'stdDev' and/or Downsample 'Leaf' not provided."));
+				Show_Errors(error_msg);
 			}
 		}
 		else if(command_string == "savepcdascii")
@@ -905,778 +836,244 @@ void structrock::command_parser()
 		}
 		else if(command_string == "savenormals")
 		{
-			if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>0)
+			if(savenormalsworker.is_para_satisfying(error_msg))
 			{
 				savenormalsworker.setWorkFlowMode(true);
+				savenormalsworker.prepare();
 				connect(&savenormalsworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
 				connect(&savenormalsworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
 				connect(&savenormalsworker, SIGNAL(GoWorkFlow()), this, SLOT(command_parser()));
 
-				savenormalsworker.savenormals(QString::fromUtf8(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[0].c_str()));
+				savenormalsworker.savenormals();
 			}
 			else
 			{
-				Show_Errors(QString("Savenormals: Path not provided."));
+				Show_Errors(error_msg);
 			}
 		}
 		else if(command_string == "saveclusters")
 		{
-			if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>0)
+			if(saveclustersworker.is_para_satisfying(error_msg))
 			{
 				saveclustersworker.setWorkFlowMode(true);
-				saveclustersworker.setUnmute();
-				saveclustersworker.setWriteLog();
-				saveclustersworker.setTrimTraceEdgesMode(true);
-				int para_index = 1;
-				if((dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>para_index)&&(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[para_index] == "notrimedges"))
-				{
-					saveclustersworker.setTrimTraceEdgesMode(false);
-					para_index++;
-				}
-				for(int i=1; i<=2; i++)
-				{
-					if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>para_index)
-					{
-						if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[para_index] == "mute")
-						{
-							saveclustersworker.setMute();
-						}
-						else if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[para_index] == "nolog")
-						{
-							saveclustersworker.setUnWriteLog();
-						}
-						para_index++;
-					}
-					else
-					{
-						break;
-					}
-				}
+				saveclustersworker.prepare();
 				connect(&saveclustersworker, SIGNAL(SaveClustersReady(QString)), this, SLOT(ShowSavedClusters(QString)));
 				connect(&saveclustersworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
 				connect(&saveclustersworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
 				connect(&saveclustersworker, SIGNAL(GoWorkFlow()), this, SLOT(command_parser()));
-            
-				saveclustersworker.saveclusters(QString::fromUtf8(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[0].c_str()));
+
+				saveclustersworker.saveclusters();
 			}
 			else
 			{
-				Show_Errors(QString("Saveclusters: Path not provided."));
+				Show_Errors(error_msg);
 			}
 		}
 		else if(command_string == "downsample")
 		{
-			if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>0)
+			if(downsampleworker.is_para_satisfying(error_msg))
 			{
-				double leaf;
-				std::stringstream ss(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[0]);
-				ss >> leaf;
-
 				downsampleworker.setWorkFlowMode(true);
-				downsampleworker.setUnmute();
-				downsampleworker.setWriteLog();
-                if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>1)
-                {
-                    if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1] == "mute")
-                    {
-                        downsampleworker.setMute();
-                    }
-                    else if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1] == "nolog")
-                    {
-                        downsampleworker.setUnWriteLog();
-                    }
-                    if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>2)
-                    {
-                    	if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[2] == "mute")
-                        {
-                            downsampleworker.setMute();
-                        }
-                        else if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[2] == "nolog")
-	                    {
-	                        downsampleworker.setUnWriteLog();
-	                    }
-                    }
-                }
+				downsampleworker.prepare();
 				connect(&downsampleworker, SIGNAL(show()), this, SLOT(ShowDownsample()));
 				connect(&downsampleworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
 				connect(&downsampleworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
 				connect(&downsampleworker, SIGNAL(GoWorkFlow()), this, SLOT(command_parser()));
 				
-				downsampleworker.downsample(leaf);
+				downsampleworker.downsample();
 			}
 			else
 			{
-				Show_Errors(QString("Downsample: Minimum point distance not given."));
+				Show_Errors(error_msg);
 			}
 		}
 		else if(command_string == "resample")
 		{
-			if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>0)
+			if(resampleworker.is_para_satisfying(error_msg))
 			{
-				double radius;
-				std::stringstream ss(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[0]);
-				ss >> radius;
-
 				resampleworker.setWorkFlowMode(true);
-				resampleworker.setUnmute();
-				resampleworker.setWriteLog();
-                if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>1)
-                {
-                    if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1] == "mute")
-                    {
-                        resampleworker.setMute();
-                    }
-                    else if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1] == "nolog")
-                    {
-                        resampleworker.setUnWriteLog();
-                    }
-                    if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>2)
-                    {
-                    	if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[2] == "mute")
-                        {
-                            resampleworker.setMute();
-                        }
-                        else if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[2] == "nolog")
-	                    {
-	                        resampleworker.setUnWriteLog();
-	                    }
-                    }
-                }
+				resampleworker.prepare();
 				connect(&resampleworker, SIGNAL(show()), this, SLOT(ShowResample()));
 				connect(&resampleworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
 				connect(&resampleworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
 				connect(&resampleworker, SIGNAL(GoWorkFlow()), this, SLOT(command_parser()));
             
-				resampleworker.resample(radius);
+				resampleworker.resample();
 			}
 			else
 			{
-				Show_Errors(QString("Resample: Search radius not given."));
+				Show_Errors(error_msg);
 			}
 		}
 		else if(command_string == "knnormal")
 		{
-			if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>0)
+			if(knnormalworker.is_para_satisfying(error_msg))
 			{
-				int k;
-				std::stringstream ss(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[0]);
-				ss >> k;
-
 				knnormalworker.setWorkFlowMode(true);
-				knnormalworker.setShowCurvature(false);
-				knnormalworker.setUnmute();
-				knnormalworker.setWriteLog();
-                if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>1)
-                {
-					if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1] == "showcurvature")
-					{
-						knnormalworker.setShowCurvature(true);
-						if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>2)
-						{
-							if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[2] == "mute")
-							{
-								knnormalworker.setMute();
-							}
-							else if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[2] == "nolog")
-							{
-								knnormalworker.setUnWriteLog();
-							}
-							if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>3)
-							{
-                    			if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[3] == "mute")
-								{
-									knnormalworker.setMute();
-								}
-								else if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[3] == "nolog")
-								{
-									knnormalworker.setUnWriteLog();
-								}
-							}
-						}
-					}
-					else
-					{
-						if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1] == "mute")
-						{
-							knnormalworker.setMute();
-						}
-						else if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1] == "nolog")
-						{
-							knnormalworker.setUnWriteLog();
-						}
-						if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>2)
-						{
-                    		if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[2] == "mute")
-							{
-								knnormalworker.setMute();
-							}
-							else if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[2] == "nolog")
-							{
-								knnormalworker.setUnWriteLog();
-							}
-						}
-					}
-                }
-				connect(&knnormalworker, SIGNAL(show(bool)), this, SLOT(ShowknNormal(bool)));
+				knnormalworker.prepare();
+				connect(&knnormalworker, SIGNAL(show(bool)), this, SLOT(ShowNormal(bool)));
 				connect(&knnormalworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
 				connect(&knnormalworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
 				connect(&knnormalworker, SIGNAL(GoWorkFlow()), this, SLOT(command_parser()));
 
-				knnormalworker.knnormal(k);
+				knnormalworker.knnormal();
 			}
 			else
 			{
-				Show_Errors(QString("Knnormal: Number of neoghbor points not given."));
+				Show_Errors(error_msg);
 			}
 		}
 		else if(command_string == "ranormal")
 		{
-			if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>0)
+			if(ranormalworker.is_para_satisfying(error_msg))
 			{
-				double radius;
-				std::stringstream ss(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[0]);
-				ss >> radius;
-
 				ranormalworker.setWorkFlowMode(true);
-				ranormalworker.setShowCurvature(false);
-				ranormalworker.setUnmute();
-				ranormalworker.setWriteLog();
-                if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>1)
-                {
-					if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1] == "showcurvature")
-					{
-						ranormalworker.setShowCurvature(true);
-						if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>2)
-						{
-							if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[2] == "mute")
-							{
-								ranormalworker.setMute();
-							}
-							else if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[2] == "nolog")
-							{
-								ranormalworker.setUnWriteLog();
-							}
-							if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>3)
-							{
-                    			if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[3] == "mute")
-								{
-									ranormalworker.setMute();
-								}
-								else if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[3] == "nolog")
-								{
-									ranormalworker.setUnWriteLog();
-								}
-							}
-						}
-					}
-					else
-					{
-						if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1] == "mute")
-						{
-							ranormalworker.setMute();
-						}
-						else if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1] == "nolog")
-						{
-							ranormalworker.setUnWriteLog();
-						}
-						if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>2)
-						{
-                    		if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[2] == "mute")
-							{
-								ranormalworker.setMute();
-							}
-							else if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[2] == "nolog")
-							{
-								ranormalworker.setUnWriteLog();
-							}
-						}
-					}
-                }
-				connect(&ranormalworker, SIGNAL(show(bool)), this, SLOT(ShowraNormal(bool)));
+				ranormalworker.prepare();
+				connect(&ranormalworker, SIGNAL(show(bool)), this, SLOT(ShowNormal(bool)));
 				connect(&ranormalworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
 				connect(&ranormalworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
 				connect(&ranormalworker, SIGNAL(GoWorkFlow()), this, SLOT(command_parser()));
 				
-				ranormalworker.ranormal(radius);
+				ranormalworker.ranormal();
 			}
 			else
 			{
-				Show_Errors(QString("Ranormal: Search radius not given."));
+				Show_Errors(error_msg);
 			}
 		}
 		else if(command_string == "rostatic")
 		{
-			if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>0)
+			if(staticroworker.is_para_satisfying(error_msg))
 			{
-				double stdDev;
-				std::stringstream ss(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[0]);
-				ss >> stdDev;
-
 				staticroworker.setWorkFlowMode(true);
-				staticroworker.setUnmute();
-				staticroworker.setWriteLog();
-                if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>1)
-                {
-                    if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1] == "mute")
-                    {
-                        staticroworker.setMute();
-                    }
-                    else if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1] == "nolog")
-                    {
-                        staticroworker.setUnWriteLog();
-                    }
-                    if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>2)
-                    {
-                    	if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[2] == "mute")
-                        {
-                            staticroworker.setMute();
-                        }
-                        else if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[2] == "nolog")
-	                    {
-	                        staticroworker.setUnWriteLog();
-	                    }
-                    }
-                }
+				staticroworker.prepare();
 				connect(&staticroworker, SIGNAL(show()), this, SLOT(ShowSRO()));
 				connect(&staticroworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
 				connect(&staticroworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
 				connect(&staticroworker, SIGNAL(GoWorkFlow()), this, SLOT(command_parser()));
             
-				staticroworker.rostatic(stdDev);
+				staticroworker.rostatic();
 			}
 			else
 			{
-				Show_Errors(QString("Standard deviation not given."));
+				Show_Errors(error_msg);
 			}
 		}
 		else if(command_string == "rgsegmentation")
 		{
-			if(dataLibrary::haveBaseData())
+			if(rgsworker.is_para_satisfying(error_msg))
     		{
-				if(!dataLibrary::pointnormals->empty())
-				{
-					if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>5)
-					{
-						double smoothness;
-						std::stringstream ss_smoothness(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[0]);
-						ss_smoothness >> smoothness;
-						dataLibrary::RGSparameter.smoothness = smoothness;
-						double curvature;
-						std::stringstream ss_curvature(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1]);
-						ss_curvature >> curvature;
-						dataLibrary::RGSparameter.curvature = curvature;
-						double residual;
-						std::stringstream ss_residual(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[2]);
-						ss_residual >> residual;
-						dataLibrary::RGSparameter.residual = residual;
-						int min_number_of_Points;
-						std::stringstream ss_min_number_of_Points(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[3]);
-						ss_min_number_of_Points >> min_number_of_Points;
-						dataLibrary::RGSparameter.min_number_of_Points = min_number_of_Points;
-						int number_of_neighbors;
-						std::stringstream ss_number_of_neighbors(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[4]);
-						ss_number_of_neighbors >> number_of_neighbors;
-						dataLibrary::RGSparameter.number_of_neighbors = number_of_neighbors;
-						std::string IsSmoothMode_string = dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[5];
-						std::transform(IsSmoothMode_string.begin(), IsSmoothMode_string.end(), IsSmoothMode_string.begin(), ::tolower);
-						if((IsSmoothMode_string == "true")||(IsSmoothMode_string == "false"))
-						{
-							if(IsSmoothMode_string == "true")
-							{
-								dataLibrary::RGSparameter.IsSmoothMode=true;
-							}
-							else if(IsSmoothMode_string == "false")
-							{
-								dataLibrary::RGSparameter.IsSmoothMode=false;
-							}
-							rgsworker.setWorkFlowMode(true);
-							rgsworker.setUnmute();
-							rgsworker.setWriteLog();
-							if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>6)
-							{
-								if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[6] == "mute")
-								{
-									rgsworker.setMute();
-								}
-								else if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[6] == "nolog")
-								{
-									rgsworker.setUnWriteLog();
-								}
-								if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>7)
-								{
-									if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[7] == "mute")
-									{
-										rgsworker.setMute();
-									}
-									else if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[7] == "nolog")
-									{
-										rgsworker.setUnWriteLog();
-									}
-								}
-							}
-							connect(&rgsworker, SIGNAL(show()), this, SLOT(ShowRGS()));
-							connect(&rgsworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
-							connect(&rgsworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
-							connect(&rgsworker, SIGNAL(GoWorkFlow()), this, SLOT(command_parser()));
+				rgsworker.setWorkFlowMode(true);
+				rgsworker.prepare();
+				connect(&rgsworker, SIGNAL(show()), this, SLOT(ShowRGS()));
+				connect(&rgsworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
+				connect(&rgsworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
+				connect(&rgsworker, SIGNAL(GoWorkFlow()), this, SLOT(command_parser()));
 
-							rgsworker.rgs();
-						}
-						else
-						{
-							Show_Errors(QString("Rgsegmentation: IsSmoothMode not set correctly, set with \"true\" or \"false\"."));
-						}
-					}
-					else
-					{
-						Show_Errors(QString("Rgsegmentation: No (or not enough) parameter given."));
-					}
-				}
-				else
-				{
-					Show_Errors(QString("You Haven't Extracted Any Normals Yet! Please Extract Normals First."));
-				}
+				rgsworker.rgs();
 			}
     		else
     		{
-				Show_Errors(QString("You Do Not Have Any Point Cloud Data in Memery!"));
+				Show_Errors(error_msg);
     		}
 		}
 		else if(command_string == "showprocess")
 		{
-			if(dataLibrary::clusters.size() == 0)
+			if(showprocessworker.is_para_satisfying(error_msg))
 			{
-				Show_Errors(QString("ShowProcess: You Haven't Performed Any Segmentation Yet!"));
+				showprocessworker.setWorkFlowMode(true);
+				showprocessworker.prepare();
+				connect(&showprocessworker, SIGNAL(show(std::vector<std::string>)), this, SLOT(Show_Process(std::vector<std::string>)));
+				connect(&showprocessworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
+				connect(&showprocessworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
+				connect(&showprocessworker, SIGNAL(GoWorkFlow()), this, SLOT(command_parser()));
+
+				showprocessworker.showProcess();
 			}
 			else
 			{
-				if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>0)
-				{
-					for(int i=0; i<dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size(); i++)
-					{
-						dataLibrary::contents.push_back(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[i]);
-					}
-
-					showprocessworker.setWorkFlowMode(true);
-					showprocessworker.setUnmute();
-					showprocessworker.setWriteLog();
-					connect(&showprocessworker, SIGNAL(show()), this, SLOT(Show_Process()));
-					connect(&showprocessworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
-					connect(&showprocessworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
-					connect(&showprocessworker, SIGNAL(GoWorkFlow()), this, SLOT(command_parser()));
-
-					showprocessworker.showProcess();
-				}
-				else
-				{
-					Show_Errors(QString("Showprocess: No parameters given."));
-				}
+				Show_Errors(error_msg);
 			}
 		}
 		else if(command_string == "ftriangulation")
 		{
-			if((dataLibrary::clusters.size()>0)||(dataLibrary::cluster_patches.size()>0))
-    		{
-				if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>7)
-				{
-					int knNeighbors;
-					std::stringstream ss_knNeighbors(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[0]);
-					ss_knNeighbors >> knNeighbors;
-					dataLibrary::TriangulationParameter.knNeighbors = knNeighbors;
-					double searchRadius;
-					std::stringstream ss_searchRadius(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1]);
-					ss_searchRadius >> searchRadius;
-					dataLibrary::TriangulationParameter.searchRadius = searchRadius;
-					double Mu;
-					std::stringstream ss_Mu(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[2]);
-					ss_Mu >> Mu;
-					dataLibrary::TriangulationParameter.Mu = Mu;
-					int maxNearestNeighbors;
-					std::stringstream ss_maxNearestNeighbors(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[3]);
-					ss_maxNearestNeighbors >> maxNearestNeighbors;
-					dataLibrary::TriangulationParameter.maxNearestNeighbors = maxNearestNeighbors;
-					double maxSurfaceAngle;
-					std::stringstream ss_maxSurfaceAngle(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[4]);
-					ss_maxSurfaceAngle >> maxSurfaceAngle;
-					dataLibrary::TriangulationParameter.maxSurfaceAngle = maxSurfaceAngle;
-					double minAngle;
-					std::stringstream ss_minAngle(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[5]);
-					ss_minAngle >> minAngle;
-					dataLibrary::TriangulationParameter.minAngle = minAngle;
-					double maxAngle;
-					std::stringstream ss_maxAngle(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[6]);
-					ss_maxAngle >> maxAngle;
-					dataLibrary::TriangulationParameter.maxAngle = maxAngle;
-					std::string normalConsistancy_string = dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[7];
-					if((normalConsistancy_string == "true")||(normalConsistancy_string == "false"))
-					{
-						if(normalConsistancy_string == "true")
-						{
-							dataLibrary::TriangulationParameter.normalConsistancy=true;
-						}
-						else if(normalConsistancy_string == "false")
-						{
-							dataLibrary::TriangulationParameter.normalConsistancy=false;
-						}
-						triangulationworker.setWorkFlowMode(true);
-						triangulationworker.setUnmute();
-						triangulationworker.setWriteLog();
-						if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>8)
-						{
-							if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[8] == "mute")
-							{
-								triangulationworker.setMute();
-							}
-							else if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[8] == "nolog")
-							{
-								triangulationworker.setUnWriteLog();
-							}
-							if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>9)
-							{
-								if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[9] == "mute")
-								{
-									triangulationworker.setMute();
-								}
-								else if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[9] == "nolog")
-								{
-									triangulationworker.setUnWriteLog();
-								}
-							}
-						}
-						connect(&triangulationworker, SIGNAL(show()), this, SLOT(ShowTriangulation()));
-						connect(&triangulationworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
-						connect(&triangulationworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
-						connect(&triangulationworker, SIGNAL(GoWorkFlow()), this, SLOT(command_parser()));
+			if(triangulationworker.is_para_satisfying(error_msg))
+			{
+				triangulationworker.setWorkFlowMode(true);
+				triangulationworker.prepare();
+				connect(&triangulationworker, SIGNAL(show()), this, SLOT(ShowTriangulation()));
+				connect(&triangulationworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
+				connect(&triangulationworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
+				connect(&triangulationworker, SIGNAL(GoWorkFlow()), this, SLOT(command_parser()));
 
-						triangulationworker.triangulation();
-					}
-					else
-					{
-						Show_Errors(QString("ftriangulation: normalConsistancy not set correctly, set with \"true\" or \"false\"."));
-					}
-				}
-				else
-				{
-					Show_Errors(QString("ftriangulation: No (or not enough) parameter given."));
-				}
+				triangulationworker.triangulation();
 			}
 			else
 			{
-				Show_Errors(QString("ftriangulation: Fracture data was not opened or extracted."));
+				Show_Errors(error_msg);
 			}
 		}
 		else if(command_string == "shearpara")
 		{
-			if(dataLibrary::Fracture_Triangles.size() == 0)
+			if(shearparaworker.is_para_satisfying(error_msg))
 			{
-				Show_Errors(QString("shearpara: You Haven't Performed Fracture Triangulation Yet!"));
-			}
-			else if(dataLibrary::cloudxyz->empty()&&dataLibrary::cloudxyzrgb->empty())
-			{
-				Show_Errors(QString("shearpara: Please Read Point Cloud Data First (to show each fracture)!"));
+				shearparaworker.setWorkFlowMode(true);
+				shearparaworker.prepare();
+				connect(&shearparaworker, SIGNAL(show()), this, SLOT(ShowShearPara()));
+				connect(&shearparaworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
+				connect(&shearparaworker, SIGNAL(prepare_2_s_f()), this, SLOT(Prepare_2_s_f()));
+				connect(&shearparaworker, SIGNAL(show_f_save_screen(const QString &)), this, SLOT(Show_f_n_SaveScreen(const QString &)));
+				connect(&shearparaworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
+				connect(&shearparaworker, SIGNAL(GoWorkFlow()), this, SLOT(command_parser()));
+				
+				shearparaworker.shearpara();
 			}
 			else
 			{
-				if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>0)
-				{
-					shearparaworker.setWorkFlowMode(true);
-					shearparaworker.setUnmute();
-					shearparaworker.setWriteLog();
-					if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>1)
-					{
-						if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1] == "mute")
-						{
-							shearparaworker.setMute();
-						}
-						else if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1] == "nolog")
-						{
-							shearparaworker.setUnWriteLog();
-						}
-						if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>2)
-						{
-							if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[2] == "mute")
-							{
-								shearparaworker.setMute();
-							}
-							else if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[2] == "nolog")
-							{
-								shearparaworker.setUnWriteLog();
-							}
-						}
-					}
-					connect(&shearparaworker, SIGNAL(show()), this, SLOT(ShowShearPara()));
-					connect(&shearparaworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
-					connect(&shearparaworker, SIGNAL(prepare()), this, SLOT(Prepare_2_s_f()));
-					connect(&shearparaworker, SIGNAL(show_f_save_screen(const QString &)), this, SLOT(Show_f_n_SaveScreen(const QString &)));
-					connect(&shearparaworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
-					connect(&shearparaworker, SIGNAL(GoWorkFlow()), this, SLOT(command_parser()));
-				
-					shearparaworker.shearpara(QString::fromUtf8(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[0].c_str()));
-				}
-				else
-				{
-					Show_Errors(QString("shearpara: No Parameter given."));
-				}
+				Show_Errors(error_msg);
 			}
 		}
 		else if(command_string == "readnshowfracturetypes")
 		{
-			if(dataLibrary::Fracture_Triangles.size() == 0)
+			if(readnShowClassesworker.is_para_satisfying(error_msg))
 			{
-				Show_Errors(QString("readnshowfracturetypes: Please Performed Fracture Triangulation or Read Triangulation PolygonMesh Data First!"));
-			}
-			else if(dataLibrary::cloudxyz->empty()&&dataLibrary::cloudxyzrgb->empty())
-			{
-				Show_Errors(QString("readnshowfracturetypes: Please Read Point Cloud Data First (to show fracture types)!"));
-			}
-			else if(dataLibrary::fracture_classes.size()>0)
-			{
-				Show_Errors(QString("readnshowfracturetypes: Fracture Types Data Already Loaded!"));
+				readnShowClassesworker.setWorkFlowMode(true);
+				readnShowClassesworker.prepare();
+				connect(&readnShowClassesworker, SIGNAL(show()), this, SLOT(ShowFractureClasses()));
+				connect(&readnShowClassesworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
+				connect(&readnShowClassesworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
+				connect(&readnShowClassesworker, SIGNAL(GoWorkFlow()), this, SLOT(command_parser()));
+
+				readnShowClassesworker.readnshowclasses();
 			}
 			else
 			{
-				if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>0)
-				{
-					readnShowClassesworker.setWorkFlowMode(true);
-					connect(&readnShowClassesworker, SIGNAL(show()), this, SLOT(ShowFractureClasses()));
-					connect(&readnShowClassesworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
-					connect(&readnShowClassesworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
-					connect(&readnShowClassesworker, SIGNAL(GoWorkFlow()), this, SLOT(command_parser()));
-
-					readnShowClassesworker.readnshowclasses(QString::fromUtf8(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[0].c_str()));
-				}
-				else
-				{
-					Show_Errors(QString("readnshowfracturetypes: Path not provided."));
-				}
+				Show_Errors(error_msg);
 			}
 		}
 		else if(command_string == "showsfeature")
 		{
-			if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>0)
+			if(showsfeatureworker.is_para_satisfying(error_msg))
 			{
 				showsfeatureworker.setWorkFlowMode(true);
-				showsfeatureworker.setUnmute();
-				showsfeatureworker.setWriteLog();
+				showsfeatureworker.prepare();
 				connect(&showsfeatureworker, SIGNAL(show()), this, SLOT(Show_SFeature()));
 				connect(&showsfeatureworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
 				connect(&showsfeatureworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
 				connect(&showsfeatureworker, SIGNAL(GoWorkFlow()), this, SLOT(command_parser()));
 
-				std::string feature_str = dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[0];
-				if(feature_str == "roughness")
-				{
-					dataLibrary::FeatureParameter.feature_type = FEATURE_ROUGHNESS;
-					if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>1)
-					{
-						float percent_out;
-						std::stringstream ss(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1]);
-						ss >> percent_out;
-						dataLibrary::FeatureParameter.percent_out = percent_out;
-					}
-					else
-					{
-						dataLibrary::FeatureParameter.percent_out = 0.0f;
-					}
-					showsfeatureworker.showSFeature();
-				}
-				else if(feature_str == "area")
-				{
-					dataLibrary::FeatureParameter.feature_type = FEATURE_AREA;
-					if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>1)
-					{
-						float percent_out;
-						std::stringstream ss(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1]);
-						ss >> percent_out;
-						dataLibrary::FeatureParameter.percent_out = percent_out;
-					}
-					else
-					{
-						dataLibrary::FeatureParameter.percent_out = 0.0f;
-					}
-					showsfeatureworker.showSFeature();
-				}
-				else if(feature_str == "curvature")
-				{
-					dataLibrary::FeatureParameter.feature_type = FEATURE_CURVATURE;
-					if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>1)
-					{
-						float percent_out;
-						std::stringstream ss(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1]);
-						ss >> percent_out;
-						dataLibrary::FeatureParameter.percent_out = percent_out;
-					}
-					else
-					{
-						dataLibrary::FeatureParameter.percent_out = 0.0f;
-					}
-					showsfeatureworker.showSFeature();
-				}
-				else if(feature_str == "fracture_curvature")
-				{
-					dataLibrary::FeatureParameter.feature_type = FEATURE_FRACTURE_CURVATURE;
-					if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>1)
-					{
-						float percent_out;
-						std::stringstream ss(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1]);
-						ss >> percent_out;
-						dataLibrary::FeatureParameter.percent_out = percent_out;
-					}
-					else
-					{
-						dataLibrary::FeatureParameter.percent_out = 0.0f;
-					}
-					showsfeatureworker.showSFeature();
-				}
-				else
-				{
-					Show_Errors(QString("ShowSFeatures: the name of the surface feature not correctly provided."));
-				}
+				showsfeatureworker.showSFeature();
 			}
 			else
 			{
-				Show_Errors(QString("ShowSFeature: No parameters given."));
+				Show_Errors(error_msg);
 			}
 		}
 		else if(command_string == "quitsession")
 		{
 			if(dataLibrary::current_workline_index+1<dataLibrary::Workflow.size())
 			{
-				std::string commands = "";
-				for(int i=dataLibrary::current_workline_index+1; i<dataLibrary::Workflow.size(); i++)
-				{
-					if(dataLibrary::Workflow[i].parameters.size()>0)
-					{
-						commands += dataLibrary::Workflow[i].command;
-						commands += ",";
-						for(int j=0; j<dataLibrary::Workflow[i].parameters.size()-1; j++)
-						{
-							commands += dataLibrary::Workflow[i].parameters[j];
-							commands += ",";
-						}
-						commands += dataLibrary::Workflow[i].parameters[dataLibrary::Workflow[i].parameters.size()-1];
-						commands += ";";
-					}
-					else
-					{
-						commands += dataLibrary::Workflow[i].command;
-						commands += ";";
-					}
-				}
-				
-				#if defined(_WIN32)||defined(_WIN64)
-					size_t f = commands.find("\\");
-					commands.replace(f, std::string("\\").length(), "\\\\");
-				#endif
-
-				QProcess *myProcess = new QProcess;
-				QStringList commandsList;
-				commandsList << "-c"<<commands.c_str();
-				myProcess->setWorkingDirectory(QApplication::applicationDirPath());
-				#if !defined(_WIN32)&&(defined(__unix__)||defined(__unix)||(defined(__APPLE__)&&defined(__MACH__)))
-					myProcess->start("./structrock",commandsList);
-				#elif defined(_WIN32)||defined(_WIN64)
-					myProcess->start("structrock",commandsList);
-				#endif
+				this->NewWindow_next_command();
 			}
 			TimingShutdown *shutdown(new TimingShutdown);
 			connect(shutdown, SIGNAL(shutdown()), this, SLOT(exit()));
@@ -1700,27 +1097,20 @@ void structrock::command_parser()
 		}
 		else if(command_string == "test")
 		{
-			if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>0)
+			if(testworker.is_para_satisfying(error_msg))
 			{
 				testworker.setWorkFlowMode(true);
-                testworker.setSplitMode(false);
-                if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>1)
-                {
-                    if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1] == "split")
-                    {
-                        testworker.setSplitMode(true);
-                    }
-                }
+                testworker.prepare();
 				connect(&testworker, SIGNAL(ReadFileReady(int)), this, SLOT(ShowPCD(int)));
 				connect(&testworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
 				connect(&testworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
 				connect(&testworker, SIGNAL(GoWorkFlow()), this, SLOT(command_parser()));
                 
-				testworker.testing(QString::fromUtf8(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[0].c_str()));
+				testworker.testing();
 			}
 			else
 			{
-				Show_Errors(QString("Test: Path not provided."));
+				Show_Errors(error_msg);
 			}
 		}
 		else
@@ -1826,8 +1216,8 @@ void structrock::saveasascii()
 	QString filename = QFileDialog::getSaveFileName(this,tr("Save PCD data as ASCII"),QDir::currentPath(),tr("Point Cloud Data (*.pcd)"));
 	if(!filename.isNull())
 	{
-		savepcdASCIIworker.setWorkFlowMode(false);
 		savepcdASCIIworker.setFileName(filename);
+		savepcdASCIIworker.setWorkFlowMode(false);
 		savepcdASCIIworker.setSaveRGBMode(false);
 		connect(&savepcdASCIIworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
 		connect(&savepcdASCIIworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
@@ -1841,8 +1231,8 @@ void structrock::saveasbinary()
 	QString filename = QFileDialog::getSaveFileName(this,tr("Save PCD data as Binary"),QDir::currentPath(),tr("Point Cloud Data (*.pcd)"));
 	if(!filename.isNull())
 	{
-		savepcdBinaryworker.setWorkFlowMode(false);
 		savepcdBinaryworker.setFileName(filename);
+		savepcdBinaryworker.setWorkFlowMode(false);
 		savepcdBinaryworker.setSaveRGBMode(false);
 		connect(&savepcdBinaryworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
 		connect(&savepcdBinaryworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
@@ -1866,18 +1256,20 @@ void structrock::resampling()
         double radius = QInputDialog::getDouble(NULL, "Search Radius", "Please Set The Search Radius", 0.01, 0, 100, 3, &ok);
         if(ok)
         {
+			resampleworker.setRadius(radius);
 			resampleworker.setWorkFlowMode(false);
 			resampleworker.setUnmute();
+			resampleworker.setWriteLog();
             connect(&resampleworker, SIGNAL(show()), this, SLOT(ShowResample()));
 			connect(&resampleworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
             connect(&resampleworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
             
-            resampleworker.resample(radius);
+            resampleworker.resample();
         }
     }
     else
     {
-		Show_Errors(QString("You Do Not Have Any Point Cloud Data in Memery!"));
+		Show_Errors(QString("resample: You Do Not Have Any Point Cloud Data in Memery!"));
     }
 }
 
@@ -1901,18 +1293,20 @@ void structrock::downsampling()
         double leaf = QInputDialog::getDouble(NULL, "Minimum Point Distance", "Please Set The Minimum Point Distance (Meter)", 0.01, 0, 100, 3, &ok);
         if(ok)
         {
+			downsampleworker.setLeaf(leaf);
 			downsampleworker.setWorkFlowMode(false);
 			downsampleworker.setUnmute();
+			downsampleworker.setWriteLog();
             connect(&downsampleworker, SIGNAL(show()), this, SLOT(ShowDownsample()));
 			connect(&downsampleworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
             connect(&downsampleworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
             
-            downsampleworker.downsample(leaf);
+            downsampleworker.downsample();
         }
     }
     else
     {
-		Show_Errors(QString("You Do Not Have Any Point Cloud Data in Memery!"));
+		Show_Errors(QString("downsample: You Do Not Have Any Point Cloud Data in Memery!"));
     }
 }
 
@@ -1936,22 +1330,25 @@ void structrock::k_neighbor()
         int k = QInputDialog::getInt(NULL, "Number of Neighbor Points", "Please Set The Number of Neighbor Points", 20, 0, 200, 1, &ok);
         if(ok)
         {
+			knnormalworker.setK(k);
             knnormalworker.setWorkFlowMode(false);
+			knnormalworker.setShowCurvature(false);
 			knnormalworker.setUnmute();
-			connect(&knnormalworker, SIGNAL(show()), this, SLOT(ShowknNormal()));
+			knnormalworker.setWriteLog();
+			connect(&knnormalworker, SIGNAL(show(bool)), this, SLOT(ShowNormal(bool)));
 			connect(&knnormalworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
 			connect(&knnormalworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
 
-			knnormalworker.knnormal(k);
+			knnormalworker.knnormal();
         }
     }
     else
     {
-		Show_Errors(QString("You Do Not Have Any Point Cloud Data in Memery!"));
+		Show_Errors(QString("knnormal: You Do Not Have Any Point Cloud Data in Memery!"));
     }
 }
 
-void structrock::ShowknNormal(bool showCurvature)
+void structrock::ShowNormal(bool showCurvature)
 {
 	if(!showCurvature)
 	{
@@ -1981,41 +1378,22 @@ void structrock::radius()
         double radius = QInputDialog::getDouble(NULL, "Search Radius", "Please Set The Search Radius", 0.01, 0, 100, 3, &ok);
         if(ok)
         {
+			ranormalworker.setRadius(radius);
             ranormalworker.setWorkFlowMode(false);
+			ranormalworker.setShowCurvature(false);
 			ranormalworker.setUnmute();
-			connect(&ranormalworker, SIGNAL(show()), this, SLOT(ShowraNormal()));
+			ranormalworker.setWriteLog();
+			connect(&ranormalworker, SIGNAL(show(bool)), this, SLOT(ShowNormal(bool)));
 			connect(&ranormalworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
 			connect(&ranormalworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
 			
-			ranormalworker.ranormal(radius);
+			ranormalworker.ranormal();
         }
     }
     else
     {
-		Show_Errors(QString("You Do Not Have Any Point Cloud Data in Memery!"));
+		Show_Errors(QString("ranormal: You Do Not Have Any Point Cloud Data in Memery!"));
     }
-}
-
-void structrock::ShowraNormal(bool showCurvature)
-{
-	if(!showCurvature)
-	{
-		viewer->removeAllPointClouds(v1);
-		viewer->addPointCloud(dataLibrary::cloudxyz, dataLibrary::cloudID, v1);
-		viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 0.0, 0.7, 0.0, dataLibrary::cloudID, v1);
-	}
-	else
-	{
-		viewer->removeAllPointClouds(v1);
-		pcl::visualization::PointCloudColorHandlerGenericField<pcl::PointNormal> handler_k(dataLibrary::pointnormals, "curvature");
-		viewer->addPointCloud(dataLibrary::pointnormals, handler_k, "curvature", v1);
-	}
-
-	viewer->removeAllPointClouds(v2);
-	viewer->addPointCloudNormals<pcl::PointXYZ, pcl::Normal>(dataLibrary::cloudxyz, dataLibrary::normal, 50, 0.02, "normals", v2);
-	viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 0.0, 0.0, 1.0, "normals", v2);
-	viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_LINE_WIDTH, 2, "normals", v2);
-	ui.qvtkWidget->update();
 }
 
 void structrock::saveScreen()
@@ -2039,18 +1417,20 @@ void structrock::StaticRemoveOutlier()
         double stdDev = QInputDialog::getDouble(NULL, "Standard Deviation", "Please Set The Standard Deviation", 1, 0, 100, 2, &ok);
         if(ok)
         {
+			staticroworker.setStdDev(stdDev);
             staticroworker.setWorkFlowMode(false);
 			staticroworker.setUnmute();
+			staticroworker.setWriteLog();
 			connect(&staticroworker, SIGNAL(show()), this, SLOT(ShowSRO()));
 			connect(&staticroworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
 			connect(&staticroworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
             
-			staticroworker.rostatic(stdDev);
+			staticroworker.rostatic();
         }
     }
     else
     {
-		Show_Errors(QString("You Do Not Have Any Point Cloud Data in Memery!"));
+		Show_Errors(QString("rostatic: You Do Not Have Any Point Cloud Data in Memery!"));
     }
 }
 
@@ -2088,11 +1468,12 @@ void structrock::SaveNormals()
 	QString filename = QFileDialog::getSaveFileName(this,tr("Save normals data as Binary"),QDir::currentPath(),tr("Point Cloud Data (*.pcd)"));
 	if(!filename.isNull())
 	{
+		savenormalsworker.setFileName(filename);
 		savenormalsworker.setWorkFlowMode(false);
 		connect(&savenormalsworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
 		connect(&savenormalsworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
 
-		savenormalsworker.savenormals(filename);
+		savenormalsworker.savenormals();
 	}
 }
 
@@ -2110,15 +1491,17 @@ void structrock::RegionGrowingSegmentation()
             
             if(multi_input.exec())
             {
-                dataLibrary::RGSparameter.curvature = multi_input.getCurvatureThreshold();
-                dataLibrary::RGSparameter.smoothness = multi_input.getSmoothnessThreshold();
-                dataLibrary::RGSparameter.residual = multi_input.getResidualThreshold();
-                dataLibrary::RGSparameter.number_of_neighbors = multi_input.getNumberOfNeighbors();
-                dataLibrary::RGSparameter.min_number_of_Points = multi_input.getMinNumberOfPoints();
-                dataLibrary::RGSparameter.IsSmoothMode = multi_input.IsSmoothMode();
-                
+				RGSpara temp_para;
+                temp_para.curvature = multi_input.getCurvatureThreshold();
+                temp_para.smoothness = multi_input.getSmoothnessThreshold();
+                temp_para.residual = multi_input.getResidualThreshold();
+                temp_para.number_of_neighbors = multi_input.getNumberOfNeighbors();
+                temp_para.min_number_of_Points = multi_input.getMinNumberOfPoints();
+                temp_para.IsSmoothMode = multi_input.IsSmoothMode();
+                rgsworker.setRGSpara(temp_para);
                 rgsworker.setWorkFlowMode(false);
 				rgsworker.setUnmute();
+				rgsworker.setWriteLog();
 				connect(&rgsworker, SIGNAL(show()), this, SLOT(ShowRGS()));
 				connect(&rgsworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
 				connect(&rgsworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
@@ -2129,7 +1512,7 @@ void structrock::RegionGrowingSegmentation()
     }
     else
     {
-		Show_Errors(QString("You Do Not Have Any Point Cloud Data in Memery!"));
+		Show_Errors(QString("rgsegmentation: You Do Not Have Any Point Cloud Data in Memery!"));
     }
 }
 
@@ -2251,21 +1634,23 @@ void structrock::SaveClusters()
 {
 	if(dataLibrary::clusters.size() == 0)
 	{
-		Show_Errors(QString("You Haven't Performed Any Segmentation Yet!"));
+		Show_Errors(QString("saveclusters: You Haven't Performed Any Segmentation Yet!"));
 	}
 	else
 	{
         QString filename = QFileDialog::getSaveFileName(this,tr("Save Clusters"),QDir::currentPath(),tr("(*.bin)"));
 
         if(!filename.isNull())
-        {   
+        {
+			saveclustersworker.setFileName(filename);
 			saveclustersworker.setWorkFlowMode(false);
 			saveclustersworker.setUnmute();
+			saveclustersworker.setWriteLog();
             connect(&saveclustersworker, SIGNAL(SaveClustersReady(QString)), this, SLOT(ShowSavedClusters(QString)));
 			connect(&saveclustersworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
             connect(&saveclustersworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
             
-            saveclustersworker.saveclusters(filename);
+            saveclustersworker.saveclusters();
         }
 	}
 }
@@ -2430,13 +1815,13 @@ void structrock::Show_SaveTraceMap(QString filename)
 	plotWin.ui.plotWidget->savePdf(filename,true, 1000, 1000);
 }
 
-void structrock::Show_Process()
+void structrock::Show_Process(std::vector<std::string> contents)
 {
 	viewer->removeAllPointClouds(v2);
 	viewer->removeAllShapes(v1);
 	viewer->removeAllShapes(v2);
 
-	if(dataLibrary::checkContents(dataLibrary::contents, "point_cloud"))
+	if(dataLibrary::checkContents(contents, "point_cloud"))
 	{
 		if(!dataLibrary::cloudxyzrgb->empty())
 		{
@@ -2448,7 +1833,7 @@ void structrock::Show_Process()
 		}
 	}
 
-	if(dataLibrary::checkContents(dataLibrary::contents, "suppositional_plane"))
+	if(dataLibrary::checkContents(contents, "suppositional_plane"))
 	{
 		viewer->addPolygon<pcl::PointXYZ>(dataLibrary::cloud_hull_all, 0, 1, 1, "outcrop_polygon_v1", v1);
 		viewer->setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_REPRESENTATION, pcl::visualization::PCL_VISUALIZER_REPRESENTATION_SURFACE, "outcrop_polygon_v1", v1);
@@ -2459,20 +1844,20 @@ void structrock::Show_Process()
 		viewer->setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, 0.5, "outcrop_polygon_v2", v2);
 	}
 
-	if(dataLibrary::checkContents(dataLibrary::contents, "fracture_faces"))
+	if(dataLibrary::checkContents(contents, "fracture_faces"))
 	{
 		bool show_rem = false;
-		if(dataLibrary::checkContents(dataLibrary::contents, "rgs_remanent"))
+		if(dataLibrary::checkContents(contents, "rgs_remanent"))
 		{
 			show_rem = true;
 		}
 		bool show_fracture_traces = false;
 		bool show_extension_line = false;
-		if(dataLibrary::checkContents(dataLibrary::contents, "suppositional_plane")&&dataLibrary::checkContents(dataLibrary::contents, "fracture_traces"))
+		if(dataLibrary::checkContents(contents, "suppositional_plane")&&dataLibrary::checkContents(contents, "fracture_traces"))
 		{
 			show_fracture_traces = true;
 		}
-		if(dataLibrary::checkContents(dataLibrary::contents, "suppositional_plane")&&dataLibrary::checkContents(dataLibrary::contents, "extension_line"))
+		if(dataLibrary::checkContents(contents, "suppositional_plane")&&dataLibrary::checkContents(contents, "extension_line"))
 		{
 			show_extension_line = true;
 		}
@@ -2559,9 +1944,10 @@ void structrock::OpenClusters()
 	
 	if(!filename.isNull())
     {
+		openclustersworker.setFileName(filename);
 		openclustersworker.setWorkFlowMode(false);
 		openclustersworker.setUnmute();
-		openclustersworker.setFileName(filename);
+		openclustersworker.setWriteLog();
         connect(&openclustersworker, SIGNAL(show()), this, SLOT(ShowClusters()));
 		connect(&openclustersworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
         connect(&openclustersworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));

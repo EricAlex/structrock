@@ -67,11 +67,48 @@
 
 using namespace std;
 
-void SaveClustersWorker::doWork(const QString &filename)
+bool SaveClustersWorker::is_para_satisfying(QString message)
+{
+	if(dataLibrary::clusters.size() == 0)
+	{
+		message = QString("saveclusters: You Haven't Performed Any Segmentation Yet!");
+		return false;
+	}
+	else
+	{
+		this->setParaSize(1);
+		if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>0)
+		{
+			this->setFileName(QString::fromUtf8(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[0].c_str()));
+			this->setParaIndex(this->getParaSize());
+			return true;
+		}
+		else
+		{
+			message = QString("saveclusters: Path Not Provided.");
+			return false;
+		}
+	}
+}
+
+void SaveClustersWorker::prepare()
+{
+	this->setTrimTraceEdgesMode(true);
+	if((dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>this->getParaIndex())&&(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[this->getParaIndex()] == "notrimedges"))
+	{
+		this->setTrimTraceEdgesMode(false);
+		this->setParaIndex(this->getParaIndex()+1);
+	}
+	this->setUnmute();
+	this->setWriteLog();
+	this->check_mute_nolog();
+}
+
+void SaveClustersWorker::doWork()
 {
 	bool is_success(false);
 
-    QByteArray ba = filename.toLocal8Bit();
+    QByteArray ba = this->getFileName().toLocal8Bit();
     string* strfilename = new string(ba.data());
     
     dataLibrary::Status = STATUS_SAVECLUSTERS;
@@ -453,7 +490,7 @@ void SaveClustersWorker::doWork(const QString &filename)
     
     if(!this->getMuteMode()&&is_success)
     {
-        emit SaveClustersReady(filename);
+        emit SaveClustersReady(this->getFileName());
     }
 
     dataLibrary::Status = STATUS_READY;

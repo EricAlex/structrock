@@ -63,6 +63,37 @@
 #include "globaldef.h"
 #include "dataLibrary.h"
 
+bool ShowProcessWorker::is_para_satisfying(QString message)
+{
+	if(dataLibrary::clusters.size() == 0)
+	{
+		message = QString("showprocess: You Haven't Performed Any Segmentation Yet!");
+		return false;
+	}
+	else
+	{
+		if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>0)
+		{
+			for(this->setParaIndex(0); this->getParaIndex()<dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size(); this->setParaIndex(this->getParaIndex()+1))
+			{
+				this->contents.push_back(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[this->getParaIndex()]);
+			}
+			return true;
+		}
+		else
+		{
+			message = QString("showprocess: No Parameters Given.");
+			return false;
+		}
+	}
+}
+
+void ShowProcessWorker::prepare()
+{
+	this->setUnmute();
+	this->setWriteLog();
+}
+
 void ShowProcessWorker::doWork()
 {
 	bool is_success(false);
@@ -102,7 +133,7 @@ void ShowProcessWorker::doWork()
 	centroid_all(1)=xyz_centroid_all(1);
 	centroid_all(2)=xyz_centroid_all(2);
 
-	if(dataLibrary::checkContents(dataLibrary::contents, "suppositional_plane"))
+	if(dataLibrary::checkContents(this->contents, "suppositional_plane"))
 	{
 		//project all points
 		pcl::ModelCoefficients::Ptr coefficients_all (new pcl::ModelCoefficients());
@@ -125,22 +156,22 @@ void ShowProcessWorker::doWork()
 		chull_all.reconstruct(*dataLibrary::cloud_hull_all);
 	}
 
-	if(dataLibrary::checkContents(dataLibrary::contents, "fracture_faces"))
+	if(dataLibrary::checkContents(this->contents, "fracture_faces"))
 	{
 		bool show_rem = false;
 		pcl::PointIndices::Ptr indices_all(new pcl::PointIndices);
 		indices_all->header=dataLibrary::clusters[0].header;
-		if(dataLibrary::checkContents(dataLibrary::contents, "rgs_remanent"))
+		if(dataLibrary::checkContents(this->contents, "rgs_remanent"))
 		{
 			show_rem = true;
 		}
 		bool show_fracture_traces = false;
 		bool show_extension_line = false;
-		if(dataLibrary::checkContents(dataLibrary::contents, "suppositional_plane")&&dataLibrary::checkContents(dataLibrary::contents, "fracture_traces"))
+		if(dataLibrary::checkContents(this->contents, "suppositional_plane")&&dataLibrary::checkContents(this->contents, "fracture_traces"))
 		{
 			show_fracture_traces = true;
 		}
-		if(dataLibrary::checkContents(dataLibrary::contents, "suppositional_plane")&&dataLibrary::checkContents(dataLibrary::contents, "extension_line"))
+		if(dataLibrary::checkContents(this->contents, "suppositional_plane")&&dataLibrary::checkContents(this->contents, "extension_line"))
 		{
 			show_extension_line = true;
 		}
@@ -233,9 +264,9 @@ void ShowProcessWorker::doWork()
     {
         std::string log_text_head = "\tShowProcess (";
 		std::string log_text_body = "";
-		for(int i=0; i<dataLibrary::contents.size(); i++)
+		for(int i=0; i<this->contents.size(); i++)
 		{
-			log_text_body += (dataLibrary::contents[i]+" ");
+			log_text_body += (this->contents[i]+" ");
 		}
 		std::string log_text_tail = ") Costs: ";
 		std::string log_text = log_text_head + log_text_body + log_text_tail;
@@ -247,7 +278,7 @@ void ShowProcessWorker::doWork()
 
 	if(!this->getMuteMode()&&is_success)
     {
-        emit show();
+        emit show(this->contents);
     }
 
 	dataLibrary::Status = STATUS_READY;

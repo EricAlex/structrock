@@ -44,15 +44,18 @@ class knnormalWorker :
 {
 Q_OBJECT
 
+private:
+	int _k;
+
 public:
 	knnormalWorker() : Worker()
     {
         _show_curvature = false;
     }
 
-	void knnormal(const int &k)
+	void knnormal()
 	{
-		QMetaObject::invokeMethod(this, "doWork", Q_ARG(const int &, k));
+		QMetaObject::invokeMethod(this, "doWork");
 	}
 
 	void setShowCurvature(bool mode)
@@ -63,9 +66,19 @@ public:
     {
         return _show_curvature;
     }
+	void setK(int k)
+	{
+		_k = k;
+	}
+	int getK()
+	{
+		return _k;
+	}
+	virtual bool is_para_satisfying(QString message);
+	virtual void prepare();
 
 private slots:
-    void doWork(const int &k);
+    void doWork();
 
 signals:
 	void show(bool _show_curvature);

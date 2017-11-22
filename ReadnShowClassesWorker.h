@@ -43,14 +43,27 @@ class ReadnShowClassesWorker : public Worker
 {
 	Q_OBJECT
 
+private:
+	QString _filename;
+
 public:
-	void readnshowclasses(const QString &filename)
+	void readnshowclasses()
 	{
-		QMetaObject::invokeMethod(this, "doWork", Q_ARG(const QString &, filename));
+		QMetaObject::invokeMethod(this, "doWork");
 	}
+	void setFileName(QString name)
+	{
+		_filename = name;
+	}
+	QString getFileName()
+	{
+		return _filename;
+	}
+	virtual bool is_para_satisfying(QString message);
+	virtual void prepare();
 
 public slots:
-	void doWork(const QString &filename);
+	void doWork();
 
 signals:
 	void show();

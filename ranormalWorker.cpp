@@ -42,13 +42,55 @@
 #include <sstream>
 #include <pcl/features/normal_3d.h>
 #include <pcl/features/normal_3d_omp.h>
-#include <qinputdialog.h>
-#include <qmessagebox.h>
 #include "ranormalWorker.h"
 #include "dataLibrary.h"
 #include "globaldef.h"
 
-void ranormalWorker::doWork(const double &radius)
+bool ranormalWorker::is_para_satisfying(QString message)
+{
+	if(dataLibrary::haveBaseData())
+    {
+		this->setParaSize(1);
+		if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>0)
+		{
+			double radius;
+			std::stringstream ss(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[0]);
+			ss >> radius;
+			this->setRadius(radius);
+
+			this->setParaIndex(this->getParaSize());
+			return true;
+		}
+		else
+		{
+			message = QString("ranormal: Search Radius Not Given.");
+			return false;
+		}
+	}
+	else
+	{
+		message = QString("ranormal: You Do Not Have Any Point Cloud Data in Memery!");
+		return false;
+	}
+}
+
+void ranormalWorker::prepare()
+{
+	this->setShowCurvature(false);
+	if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>this->getParaIndex())
+	{
+		if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[this->getParaIndex()] == "showcurvature")
+		{
+			this->setShowCurvature(true);
+			this->setParaIndex(this->getParaIndex()+1);
+		}
+	}
+	this->setUnmute();
+	this->setWriteLog();
+	this->check_mute_nolog();
+}
+
+void ranormalWorker::doWork()
 {
 	bool is_success(false);
 
@@ -63,7 +105,7 @@ void ranormalWorker::doWork(const double &radius)
     ne.setInputCloud(dataLibrary::cloudxyz);
     pcl::search::KdTree<pcl::PointXYZ>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZ>());
     ne.setSearchMethod(tree);
-    ne.setRadiusSearch(radius);
+    ne.setRadiusSearch(this->getRadius());
 	if(!dataLibrary::normal->empty())
 	{
 		dataLibrary::normal->clear();

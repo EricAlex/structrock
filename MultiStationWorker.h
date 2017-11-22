@@ -38,6 +38,10 @@
  */
 
 #pragma once
+#include <vector>
+#include <pcl/io/io.h>
+#include <pcl/io/pcd_io.h>
+#include <pcl/point_types.h>
 #include "Worker.h"
 
 class MultiStationWorker :
@@ -45,11 +49,35 @@ class MultiStationWorker :
 {
 	Q_OBJECT
 
+private:
+	std::vector<std::string> multiStationFilePath;
+	std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> multiStationPointClouds;
+	double _stdDev;
+    double _leaf;
+
 public:
 	void multiStation()
 	{
 		QMetaObject::invokeMethod(this, "doWork");
 	}
+	void setStdDev(double stdDev)
+	{
+		_stdDev = stdDev;
+	}
+	double getStdDev()
+	{
+		return _stdDev;
+	}
+	void setLeaf(double leaf)
+	{
+		_leaf = leaf;
+	}
+	double getLeaf()
+	{
+		return _leaf;
+	}
+	virtual bool is_para_satisfying(QString message);
+	virtual void prepare();
 
 private slots:
     void doWork();

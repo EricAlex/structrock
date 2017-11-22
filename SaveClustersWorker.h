@@ -45,12 +45,13 @@ class SaveClustersWorker : public Worker
 	Q_OBJECT
     
 public:
-	void saveclusters(const QString &filename)
+	void saveclusters()
 	{
-		QMetaObject::invokeMethod(this, "doWork", Q_ARG(const QString &, filename));
+		QMetaObject::invokeMethod(this, "doWork");
 	}
 private:
 	bool _trim_trace_edges;
+	QString _filename;
 public:
 	void setTrimTraceEdgesMode(bool mode)
 	{
@@ -60,8 +61,19 @@ public:
 	{
 		return _trim_trace_edges;
 	}
+	void setFileName(QString name)
+	{
+		_filename = name;
+	}
+	QString getFileName()
+	{
+		return _filename;
+	}
+	virtual bool is_para_satisfying(QString message);
+	virtual void prepare();
+
 private slots:
-    void doWork(const QString &filename);
+    void doWork();
 signals:
     void SaveClustersReady(const QString &filename);
 };

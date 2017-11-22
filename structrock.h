@@ -101,9 +101,8 @@ private slots:
 	void resampling();
 	void ShowResample();
 	void k_neighbor();
-	void ShowknNormal(bool showCurvature);
+	void ShowNormal(bool showCurvature);
 	void radius();
-	void ShowraNormal(bool showCurvature);
 	void StaticRemoveOutlier();
 	void ShowSRO();
 	void ConditionalRemoveOutlier();
@@ -133,7 +132,7 @@ private slots:
 	void ShowStatus(int i);
 	void command_parser();
 	void Show_Errors(const QString &errors);
-	void Show_Process();
+	void Show_Process(std::vector<std::string> contents);
 	void Show_SFeature();
 	void slotReboot()
 	{
@@ -191,6 +190,9 @@ public:
 	int v2;
 
 private:
+	void NewWindow_current_command();
+	void NewWindow_next_command();
+	void Reboot_with_commands(std::string commands);
 	void updatePatch();
 	void DrawLine(const Eigen::Vector3f begin, const Eigen::Vector3f end, float r, float g, float b, std::string id, int viewpot);
 	void DrawLine(const Eigen::Vector3f begin, const Eigen::Vector3f end, float r, float g, float b, double lineWidth, std::string id, int viewpot);

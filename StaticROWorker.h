@@ -44,14 +44,27 @@ class StaticROWorker :
 {
 Q_OBJECT
 
+private:
+	double _stdDev;
+
 public:
-	void rostatic(const double &stdDev)
+	void rostatic()
 	{
-		QMetaObject::invokeMethod(this, "doWork", Q_ARG(const double &, stdDev));
+		QMetaObject::invokeMethod(this, "doWork");
 	}
+	void setStdDev(double stdDev)
+	{
+		_stdDev = stdDev;
+	}
+	double getStdDev()
+	{
+		return _stdDev;
+	}
+	virtual bool is_para_satisfying(QString message);
+	virtual void prepare();
 
 private slots:
-    void doWork(const double &stdDev);
+    void doWork();
 
 signals:
 	void show();

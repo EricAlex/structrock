@@ -47,7 +47,6 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr dataLibrary::cloudxyzrgb(new pcl::PointCl
 pcl::PointCloud<pcl::PointXYZI>::Ptr dataLibrary::cloudxyzi(new pcl::PointCloud<pcl::PointXYZI>);
 pcl::PointCloud<pcl::PointXYZRGB>::Ptr dataLibrary::cloudxyzrgb_clusters(new pcl::PointCloud<pcl::PointXYZRGB>);
 pcl::PointCloud<pcl::PointXYZRGB>::Ptr dataLibrary::cloudxyzrgb_features(new pcl::PointCloud<pcl::PointXYZRGB>);
-sensor_msgs::PointCloud2::Ptr dataLibrary::cloud_blob(new sensor_msgs::PointCloud2);
 pcl::PointCloud<pcl::Normal>::Ptr dataLibrary::normal (new pcl::PointCloud<pcl::Normal>);
 pcl::PointCloud<pcl::PointNormal>::Ptr dataLibrary::pointnormals(new pcl::PointCloud<pcl::PointNormal>);
 pcl::PointCloud<pcl::PointXYZ>::Ptr dataLibrary::mls_points(new pcl::PointCloud<pcl::PointXYZ>);
@@ -70,11 +69,7 @@ int dataLibrary::currentPatch(0);
 std::vector<int> dataLibrary::selectedPatches;
 std::string dataLibrary::cloudID("");
 int dataLibrary::Status(STATUS_READY);
-RGSpara dataLibrary::RGSparameter;
-TriangulationPara dataLibrary::TriangulationParameter;
 std::vector<pcl::PolygonMesh::Ptr> dataLibrary::Fracture_Triangles;
-FeaturePara dataLibrary::FeatureParameter;
-std::vector<std::string> dataLibrary::contents;
 pcl::PointCloud<pcl::PointXYZ>::Ptr dataLibrary::cloud_hull_all (new pcl::PointCloud<pcl::PointXYZ>);
 std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> dataLibrary::fracture_patches;
 std::vector<int> dataLibrary::fracture_classes;
@@ -84,9 +79,6 @@ std::vector<Line> dataLibrary::Lines;
 std::vector<Line> dataLibrary::Lines_max;
 std::vector<Line> dataLibrary::Lines_min;
 std::vector<WorkLine> dataLibrary::Workflow;
-std::vector<std::string> dataLibrary::multiStationFilePath;
-std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> dataLibrary::multiStationPointClouds;
-MultiStationPara dataLibrary::msPara;
 int dataLibrary::current_workline_index = 0;
 bool dataLibrary::have_called_read_file = false;
 clock_t dataLibrary::start;
@@ -114,16 +106,6 @@ void dataLibrary::clearall()
 		cloudxyzrgb->clear();
 	if(!cloudxyzrgb_clusters->empty())
 		cloudxyzrgb_clusters->clear();
-	if(cloud_blob->data.size()>0)
-	{
-		cloud_blob->data.clear();
-	}
-	if(cloud_blob->fields.size()>0)
-	{
-		cloud_blob->fields.clear();
-	}
-	cloud_blob->height=0;
-	cloud_blob->width=0;
 	if(!normal->empty())
 		normal->clear();
 	if(!pointnormals->empty())
@@ -153,7 +135,6 @@ void dataLibrary::clearall()
 	std::vector<int>().swap(selectedPatches);
     if(!cloud_hull_all->empty())
         cloud_hull_all->clear();
-	std::vector<std::string>().swap(contents);
 	std::vector<Line>().swap(Lines);
 	std::vector<Line>().swap(Lines_max);
 	std::vector<Line>().swap(Lines_min);

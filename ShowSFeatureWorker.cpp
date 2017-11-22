@@ -47,6 +47,68 @@
 #include "globaldef.h"
 #include "dataLibrary.h"
 
+bool ShowSFeatureWorker::is_para_satisfying(QString message)
+{
+	this->setParaSize(1);
+	if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>0)
+	{
+		FeaturePara temp_para;
+		temp_para.percent_out = 0.0f;
+		bool is_feature_defined(false);
+		std::string feature_str = dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[0];
+		if(feature_str == "roughness")
+		{
+			temp_para.feature_type = FEATURE_ROUGHNESS;
+			is_feature_defined = true;
+		}
+		else if(feature_str == "area")
+		{
+			temp_para.feature_type = FEATURE_AREA;
+			is_feature_defined = true;
+		}
+		else if(feature_str == "curvature")
+		{
+			temp_para.feature_type = FEATURE_CURVATURE;
+			is_feature_defined = true;
+		}
+		else if(feature_str == "fracture_curvature")
+		{
+			temp_para.feature_type = FEATURE_FRACTURE_CURVATURE;
+			is_feature_defined = true;
+		}
+
+		if(is_feature_defined)
+		{
+			this->setParaIndex(this->getParaSize());
+			if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>this->getParaIndex())
+			{
+				float percent_out;
+				std::stringstream ss(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[this->getParaIndex()]);
+				ss >> percent_out;
+				temp_para.percent_out = percent_out;
+				this->setParaIndex(this->getParaIndex()+1);
+			}
+			this->setFPara(temp_para);
+			return true;
+		}
+		else
+		{
+			message = QString("showsfeatures: The Name of The Surface Feature Not Correctly Provided.");
+			return false;
+		}
+	}
+	else
+	{
+		message = QString("showsfeature: No Feature Name Given.");
+		return false;
+	}
+}
+void ShowSFeatureWorker::prepare()
+{
+	this->setUnmute();
+	this->setWriteLog();
+}
+
 void ShowSFeatureWorker::doWork()
 {
 	bool is_success(false);
@@ -55,13 +117,13 @@ void ShowSFeatureWorker::doWork()
 
 	dataLibrary::start = clock();
 
-	if(dataLibrary::FeatureParameter.feature_type == FEATURE_ROUGHNESS)
+	if(this->getFPara().feature_type == FEATURE_ROUGHNESS)
 	{
 		if(dataLibrary::roughnesses.size() == 0)
 		{
 			emit showErrors(QString("ShowSFeatures (roughness): Please save the clusters first."));
 		}
-		else if(dataLibrary::FeatureParameter.percent_out<0.0 || dataLibrary::FeatureParameter.percent_out>0.5)
+		else if(this->getFPara().percent_out<0.0 || this->getFPara().percent_out>0.5)
 		{
 			emit showErrors(QString("ShowSFeatures (roughness): Percentage Out was not correctly provided (0.0<Percentage Out<0.5)."));
 		}
@@ -82,8 +144,8 @@ void ShowSFeatureWorker::doWork()
 
 			std::vector<float> temp_roughness(dataLibrary::roughnesses);
 			std::sort(temp_roughness.begin(), temp_roughness.end());
-			float max_val = temp_roughness[(int)(temp_roughness.size()*(1.0-dataLibrary::FeatureParameter.percent_out))];
-			float min_val = temp_roughness[(int)(temp_roughness.size()*dataLibrary::FeatureParameter.percent_out)];
+			float max_val = temp_roughness[(int)(temp_roughness.size()*(1.0-this->getFPara().percent_out))];
+			float min_val = temp_roughness[(int)(temp_roughness.size()*this->getFPara().percent_out)];
 			
 			for(int cluster_index = 0; cluster_index < dataLibrary::clusters.size(); cluster_index++)
 			{
@@ -122,13 +184,13 @@ void ShowSFeatureWorker::doWork()
 			//end of processing
 		}
 	}
-	else if(dataLibrary::FeatureParameter.feature_type == FEATURE_AREA)
+	else if(this->getFPara().feature_type == FEATURE_AREA)
 	{
 		if(dataLibrary::areas.size() == 0)
 		{
 			emit showErrors(QString("ShowSFeatures (area): Please save the clusters first."));
 		}
-		else if(dataLibrary::FeatureParameter.percent_out<0.0 || dataLibrary::FeatureParameter.percent_out>0.5)
+		else if(this->getFPara().percent_out<0.0 || this->getFPara().percent_out>0.5)
 		{
 			emit showErrors(QString("ShowSFeatures (area): Percentage Out was not correctly provided (0.0<Percentage Out<0.5)."));
 		}
@@ -149,8 +211,8 @@ void ShowSFeatureWorker::doWork()
 
 			std::vector<float> temp_area(dataLibrary::areas);
 			std::sort(temp_area.begin(), temp_area.end());
-			float max_val = temp_area[(int)(temp_area.size()*(1.0-dataLibrary::FeatureParameter.percent_out))];
-			float min_val = temp_area[(int)(temp_area.size()*dataLibrary::FeatureParameter.percent_out)];
+			float max_val = temp_area[(int)(temp_area.size()*(1.0-this->getFPara().percent_out))];
+			float min_val = temp_area[(int)(temp_area.size()*this->getFPara().percent_out)];
 			
 			for(int cluster_index = 0; cluster_index < dataLibrary::clusters.size(); cluster_index++)
 			{
@@ -189,13 +251,13 @@ void ShowSFeatureWorker::doWork()
 			//end of processing
 		}
 	}
-	else if(dataLibrary::FeatureParameter.feature_type == FEATURE_CURVATURE)
+	else if(this->getFPara().feature_type == FEATURE_CURVATURE)
 	{
 		if(dataLibrary::pointnormals->empty())
 		{
 			emit showErrors(QString("ShowSFeatures (curvature): You Haven't Extracted Any Normals Yet! Please Extract Normals First."));
 		}
-		else if(dataLibrary::FeatureParameter.percent_out<0.0 || dataLibrary::FeatureParameter.percent_out>0.5)
+		else if(this->getFPara().percent_out<0.0 || this->getFPara().percent_out>0.5)
 		{
 			emit showErrors(QString("ShowSFeatures (curvature): Percentage Out was not correctly provided (0.0<Percentage Out<0.5)."));
 		}
@@ -213,8 +275,8 @@ void ShowSFeatureWorker::doWork()
 				temp_curvature.push_back(dataLibrary::pointnormals->points[i].curvature);
 			}
 			std::sort(temp_curvature.begin(), temp_curvature.end());
-			float max_val = temp_curvature[(int)(temp_curvature.size()*(1.0-dataLibrary::FeatureParameter.percent_out))];
-			float min_val = temp_curvature[(int)(temp_curvature.size()*dataLibrary::FeatureParameter.percent_out)];
+			float max_val = temp_curvature[(int)(temp_curvature.size()*(1.0-this->getFPara().percent_out))];
+			float min_val = temp_curvature[(int)(temp_curvature.size()*this->getFPara().percent_out)];
 			
 			for(int j=0; j<dataLibrary::cloudxyzrgb_features->points.size(); j++)
 			{
@@ -250,7 +312,7 @@ void ShowSFeatureWorker::doWork()
 			//end of processing
 		}
 	}
-	else if(dataLibrary::FeatureParameter.feature_type == FEATURE_FRACTURE_CURVATURE)
+	else if(this->getFPara().feature_type == FEATURE_FRACTURE_CURVATURE)
 	{
 		if(dataLibrary::pointnormals->empty())
 		{
@@ -260,7 +322,7 @@ void ShowSFeatureWorker::doWork()
 		{
 			emit showErrors(QString("ShowSFeatures (fracture_curvature): Please perform the region growing segmentation first."));
 		}
-		else if(dataLibrary::FeatureParameter.percent_out<0.0 || dataLibrary::FeatureParameter.percent_out>0.5)
+		else if(this->getFPara().percent_out<0.0 || this->getFPara().percent_out>0.5)
 		{
 			emit showErrors(QString("ShowSFeatures (fracture_curvature): Percentage Out was not correctly provided (0.0<Percentage Out<0.5)."));
 		}
@@ -288,8 +350,8 @@ void ShowSFeatureWorker::doWork()
 				}
 			}
 			std::sort(temp_curvature.begin(), temp_curvature.end());
-			float max_val = temp_curvature[(int)(temp_curvature.size()*(1.0-dataLibrary::FeatureParameter.percent_out))];
-			float min_val = temp_curvature[(int)(temp_curvature.size()*dataLibrary::FeatureParameter.percent_out)];
+			float max_val = temp_curvature[(int)(temp_curvature.size()*(1.0-this->getFPara().percent_out))];
+			float min_val = temp_curvature[(int)(temp_curvature.size()*this->getFPara().percent_out)];
 
 			for(int cluster_index = 0; cluster_index < dataLibrary::clusters.size(); cluster_index++)
 			{

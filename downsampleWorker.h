@@ -44,14 +44,27 @@ class downsampleWorker :
 {
 	Q_OBJECT
 
+private:
+	double _leaf;
+
 public:
-	void downsample(const double &leaf)
+	void downsample()
 	{
-		QMetaObject::invokeMethod(this, "doWork", Q_ARG(const double &, leaf));
+		QMetaObject::invokeMethod(this, "doWork");
 	}
+	void setLeaf(double leaf)
+	{
+		_leaf = leaf;
+	}
+	double getLeaf()
+	{
+		return _leaf;
+	}
+	virtual bool is_para_satisfying(QString message);
+	virtual void prepare();
 
 private slots:
-    void doWork(const double &leaf);
+    void doWork();
 
 signals:
 	void show();

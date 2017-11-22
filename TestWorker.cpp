@@ -49,6 +49,37 @@
 
 using namespace std;
 
+bool TestWorker::is_para_satisfying(QString message)
+{
+	this->setParaSize(1);
+	if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>0)
+	{
+		this->setFileName(QString::fromUtf8(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[0].c_str()));
+		this->setParaIndex(this->getParaSize());
+		return true;
+	}
+	else
+	{
+		message = QString("test: File Path Not Provided.");
+		return false;
+	}
+}
+
+void TestWorker::prepare()
+{
+	this->setSplitMode(false);
+	if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>this->getParaIndex())
+	{
+		if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[this->getParaIndex()] == "split")
+		{
+			this->setSplitMode(true);
+			this->setParaIndex(this->getParaIndex()+1);
+		}
+	}
+	this->setUnmute();
+	this->setWriteLog();
+}
+
 bool transData (const string &filename, const string &savefilename)
 {
     ifstream fs;
@@ -135,11 +166,11 @@ bool splitData (const string &filename, const string &lsavefilename, const strin
 	}
 }*/
 
-void TestWorker::doWork(const QString &filename)
+void TestWorker::doWork()
 {
 	bool is_success(false);
 
-    QByteArray ba = filename.toLocal8Bit();
+    QByteArray ba = this->getFileName().toLocal8Bit();
 	string* strfilename = new std::string(ba.data());
     
     dataLibrary::Status = STATUS_TESTING;

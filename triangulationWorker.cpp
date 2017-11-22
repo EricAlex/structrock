@@ -51,6 +51,80 @@
 #include "dataLibrary.h"
 #include "triangulationWorker.h"
 
+bool triangulationWorker::is_para_satisfying(QString message)
+{
+	if((dataLibrary::clusters.size()>0)||(dataLibrary::cluster_patches.size()>0))
+    {
+		this->setParaSize(8);
+		if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>7)
+		{
+			int knNeighbors, maxNearestNeighbors;
+			double searchRadius, Mu, maxSurfaceAngle, minAngle, maxAngle;
+			std::stringstream ss_knNeighbors(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[0]);
+			ss_knNeighbors >> knNeighbors;
+			std::stringstream ss_searchRadius(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1]);
+			ss_searchRadius >> searchRadius;
+			std::stringstream ss_Mu(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[2]);
+			ss_Mu >> Mu;
+			std::stringstream ss_maxNearestNeighbors(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[3]);
+			ss_maxNearestNeighbors >> maxNearestNeighbors;
+			std::stringstream ss_maxSurfaceAngle(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[4]);
+			ss_maxSurfaceAngle >> maxSurfaceAngle;
+			std::stringstream ss_minAngle(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[5]);
+			ss_minAngle >> minAngle;
+			std::stringstream ss_maxAngle(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[6]);
+			ss_maxAngle >> maxAngle;
+			std::string normalConsistancy_string = dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[7];
+			std::transform(normalConsistancy_string.begin(), normalConsistancy_string.end(), normalConsistancy_string.begin(), ::tolower);
+			if((normalConsistancy_string == "true")||(normalConsistancy_string == "false"))
+			{
+				TriangulationPara temp_para;
+				if(normalConsistancy_string == "true")
+				{
+					temp_para.normalConsistancy=true;
+				}
+				else if(normalConsistancy_string == "false")
+				{
+					temp_para.normalConsistancy=false;
+				}
+				temp_para.knNeighbors = knNeighbors;
+				temp_para.maxAngle = maxAngle;
+				temp_para.maxNearestNeighbors = maxNearestNeighbors;
+				temp_para.maxSurfaceAngle = maxSurfaceAngle;
+				temp_para.minAngle = minAngle;
+				temp_para.Mu = Mu;
+				temp_para.searchRadius = searchRadius;
+				this->setTriPara(temp_para);
+
+				this->setParaIndex(this->getParaSize());
+				return true;
+			}
+			else
+			{
+				message = QString("ftriangulation: normalConsistancy Not Set Correctly, Please Set It With \"true\" or \"false\".");
+				return false;
+			}
+		}
+		else
+		{
+			message = QString("ftriangulation: No (or not enough) Parameter Given.");
+			return false;
+		}
+	}
+	else
+	{
+		message = QString("ftriangulation: Fracture Data Was Not Opened or Extracted.");
+		return false;
+	}
+}
+
+void triangulationWorker::prepare()
+{
+	this->setUnmute();
+	this->setWriteLog();
+	this->check_mute_nolog();
+}
+
 void triangulationWorker::doWork()
 {
 	bool is_success(false);
@@ -73,7 +147,7 @@ void triangulationWorker::doWork()
             tree->setInputCloud (cloud);
             ne.setInputCloud (cloud);
             ne.setSearchMethod (tree);
-            ne.setKSearch (dataLibrary::TriangulationParameter.knNeighbors);
+            ne.setKSearch (this->getTriPara().knNeighbors);
             ne.compute (*normals);
             // normals should not contain the point normals + surface curvatures
 
@@ -91,15 +165,15 @@ void triangulationWorker::doWork()
             pcl::PolygonMesh::Ptr triangles (new pcl::PolygonMesh);
 
             // Set the maximum distance between connected points (maximum edge length)
-            gp3.setSearchRadius (dataLibrary::TriangulationParameter.searchRadius);
+            gp3.setSearchRadius (this->getTriPara().searchRadius);
 
             // Set typical values for the parameters
-            gp3.setMu (dataLibrary::TriangulationParameter.Mu);
-            gp3.setMaximumNearestNeighbors (dataLibrary::TriangulationParameter.maxNearestNeighbors);
-            gp3.setMaximumSurfaceAngle(dataLibrary::TriangulationParameter.maxSurfaceAngle); // 45 degrees
-            gp3.setMinimumAngle(dataLibrary::TriangulationParameter.minAngle); // 10 degrees
-            gp3.setMaximumAngle(dataLibrary::TriangulationParameter.maxAngle); // 120 degrees
-            gp3.setNormalConsistency(dataLibrary::TriangulationParameter.normalConsistancy);
+            gp3.setMu (this->getTriPara().Mu);
+            gp3.setMaximumNearestNeighbors (this->getTriPara().maxNearestNeighbors);
+            gp3.setMaximumSurfaceAngle(this->getTriPara().maxSurfaceAngle); // 45 degrees
+            gp3.setMinimumAngle(this->getTriPara().minAngle); // 10 degrees
+            gp3.setMaximumAngle(this->getTriPara().maxAngle); // 120 degrees
+            gp3.setNormalConsistency(this->getTriPara().normalConsistancy);
 
             // Get result
             gp3.setInputCloud (cloud_with_normals);
@@ -125,7 +199,7 @@ void triangulationWorker::doWork()
             tree->setInputCloud (cloud);
             ne.setInputCloud (cloud);
             ne.setSearchMethod (tree);
-            ne.setKSearch (dataLibrary::TriangulationParameter.knNeighbors);
+            ne.setKSearch (this->getTriPara().knNeighbors);
             ne.compute (*normals);
             // normals should not contain the point normals + surface curvatures
 
@@ -143,15 +217,15 @@ void triangulationWorker::doWork()
             pcl::PolygonMesh::Ptr triangles (new pcl::PolygonMesh);
 
             // Set the maximum distance between connected points (maximum edge length)
-            gp3.setSearchRadius (dataLibrary::TriangulationParameter.searchRadius);
+            gp3.setSearchRadius (this->getTriPara().searchRadius);
 
             // Set typical values for the parameters
-            gp3.setMu (dataLibrary::TriangulationParameter.Mu);
-            gp3.setMaximumNearestNeighbors (dataLibrary::TriangulationParameter.maxNearestNeighbors);
-            gp3.setMaximumSurfaceAngle(dataLibrary::TriangulationParameter.maxSurfaceAngle); // 45 degrees
-            gp3.setMinimumAngle(dataLibrary::TriangulationParameter.minAngle); // 10 degrees
-            gp3.setMaximumAngle(dataLibrary::TriangulationParameter.maxAngle); // 120 degrees
-            gp3.setNormalConsistency(dataLibrary::TriangulationParameter.normalConsistancy);
+            gp3.setMu (this->getTriPara().Mu);
+            gp3.setMaximumNearestNeighbors (this->getTriPara().maxNearestNeighbors);
+            gp3.setMaximumSurfaceAngle(this->getTriPara().maxSurfaceAngle); // 45 degrees
+            gp3.setMinimumAngle(this->getTriPara().minAngle); // 10 degrees
+            gp3.setMaximumAngle(this->getTriPara().maxAngle); // 120 degrees
+            gp3.setNormalConsistency(this->getTriPara().normalConsistancy);
 
             // Get result
             gp3.setInputCloud (cloud_with_normals);

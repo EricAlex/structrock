@@ -43,13 +43,28 @@ class resampleWorker :
 	public Worker
 {
 Q_OBJECT
+
+private:
+	double _radius;
+
 public:
-	void resample(const double &radius)
+	void resample()
 	{
-		QMetaObject::invokeMethod(this, "doWork", Q_ARG(const double &, radius));
+		QMetaObject::invokeMethod(this, "doWork");
 	}
+	void setRadius(double radius)
+	{
+		_radius = radius;
+	}
+	double getRadius()
+	{
+		return _radius;
+	}
+	virtual bool is_para_satisfying(QString message);
+	virtual void prepare();
+
 private slots:
-    void doWork(const double &radius);
+    void doWork();
 
 signals:
 	void show();

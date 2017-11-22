@@ -40,15 +40,37 @@
 #pragma once
 
 #include "Worker.h"
+#include "globaldef.h"
 class triangulationWorker : public Worker
 {
     Q_OBJECT
     
+private:
+	TriangulationPara _para;
+
 public:
 	void triangulation()
 	{
         QMetaObject::invokeMethod(this, "doWork");
 	}
+	void setTriPara(TriangulationPara para)
+	{
+		_para.knNeighbors = para.knNeighbors;
+		_para.maxAngle = para.maxAngle;
+		_para.maxNearestNeighbors = para.maxNearestNeighbors;
+		_para.maxSurfaceAngle = para.maxSurfaceAngle;
+		_para.minAngle = para.minAngle;
+		_para.Mu = para.Mu;
+		_para.normalConsistancy = para.normalConsistancy;
+		_para.searchRadius = para.searchRadius;
+	}
+	TriangulationPara getTriPara()
+	{
+		return _para;
+	}
+	virtual bool is_para_satisfying(QString message);
+	virtual void prepare();
+
 private slots:
     void doWork();
 signals:

@@ -48,6 +48,82 @@
 #include "MultiInputDialog.h"
 #include "geo_region_growing.h"
 
+bool RGSWorker::is_para_satisfying(QString message)
+{
+	if(dataLibrary::haveBaseData())
+    {
+		if(!dataLibrary::pointnormals->empty())
+		{
+			this->setParaSize(6);
+			if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>5)
+			{
+				double smoothness, curvature, residual;
+				std::stringstream ss_smoothness(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[0]);
+				ss_smoothness >> smoothness;
+				std::stringstream ss_curvature(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1]);
+				ss_curvature >> curvature;
+				std::stringstream ss_residual(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[2]);
+				ss_residual >> residual;
+				int min_number_of_Points, number_of_neighbors;
+				std::stringstream ss_min_number_of_Points(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[3]);
+				ss_min_number_of_Points >> min_number_of_Points;
+				std::stringstream ss_number_of_neighbors(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[4]);
+				ss_number_of_neighbors >> number_of_neighbors;
+				std::string IsSmoothMode_string = dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[5];
+				std::transform(IsSmoothMode_string.begin(), IsSmoothMode_string.end(), IsSmoothMode_string.begin(), ::tolower);
+				if((IsSmoothMode_string == "true")||(IsSmoothMode_string == "false"))
+				{
+					RGSpara temp_para;
+					if(IsSmoothMode_string == "true")
+					{
+						temp_para.IsSmoothMode=true;
+					}
+					else if(IsSmoothMode_string == "false")
+					{
+						temp_para.IsSmoothMode=false;
+					}
+					temp_para.curvature = curvature;
+					temp_para.min_number_of_Points = min_number_of_Points;
+					temp_para.number_of_neighbors = number_of_neighbors;
+					temp_para.residual = residual;
+					temp_para.smoothness = smoothness;
+					this->setRGSpara(temp_para);
+
+					this->setParaIndex(this->getParaSize());
+					return true;
+				}
+				else
+				{
+					message = QString("rgsegmentation: IsSmoothMode Not Set Correctly, Please Set It With \"true\" or \"false\".");
+					return false;
+				}
+			}
+			else
+			{
+				message = QString("rgsegmentation: No (or not enough) Parameter Given.\n(smoothness, curvature, residual, min_number_of_Points, number_of_neighbors and IsSmoothMode)");
+				return false;
+			}
+		}
+		else
+		{
+			message = QString("rgsegmentation: Please Estimate Normals First.");
+			return false;
+		}
+	}
+	else
+	{
+		message = QString("rgsegmentation: You Do Not Have Any Point Cloud Data in Memery!");
+		return false;
+	}
+}
+
+void RGSWorker::prepare()
+{
+	this->setUnmute();
+	this->setWriteLog();
+	this->check_mute_nolog();
+}
+
 void RGSWorker::doWork()
 {
 	bool is_success(false);
@@ -59,11 +135,11 @@ void RGSWorker::doWork()
     dataLibrary::start = clock();
 
 	//begin of processing
-    double curvature = dataLibrary::RGSparameter.curvature;
-    double smoothness = dataLibrary::RGSparameter.smoothness;
-    double residual = dataLibrary::RGSparameter.residual;
-    int number_of_neighbors = dataLibrary::RGSparameter.number_of_neighbors;
-    int min_number_of_Points = dataLibrary::RGSparameter.min_number_of_Points;
+    double curvature = this->getRGSpara().curvature;
+    double smoothness = this->getRGSpara().smoothness;
+    double residual = this->getRGSpara().residual;
+    int number_of_neighbors = this->getRGSpara().number_of_neighbors;
+    int min_number_of_Points = this->getRGSpara().min_number_of_Points;
 
 	pcl::search::Search<pcl::PointXYZ>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZ>);
 
@@ -75,7 +151,7 @@ void RGSWorker::doWork()
     reg.setInputNormals(dataLibrary::pointnormals);
     reg.setSmoothnessThreshold(smoothness/180.0*M_PI);
     reg.setCurvatureThreshold(curvature);
-    if(dataLibrary::RGSparameter.IsSmoothMode)
+    if(this->getRGSpara().IsSmoothMode)
     {
         reg.setSmoothModeFlag(true);
     }

@@ -46,11 +46,25 @@ class ShowSFeatureWorker : public Worker
 {
 	Q_OBJECT
 
+private:
+	FeaturePara _para;
+
 public:
 	void showSFeature()
 	{
 		QMetaObject::invokeMethod(this, "doWork");
 	}
+	void setFPara(FeaturePara para)
+	{
+		_para.feature_type = para.feature_type;
+		_para.percent_out = para.percent_out;
+	}
+	FeaturePara getFPara()
+	{
+		return _para;
+	}
+	virtual bool is_para_satisfying(QString message);
+	virtual void prepare();
 
 public slots:
 	void doWork();

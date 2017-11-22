@@ -47,7 +47,41 @@
 #include "downsampleWorker.h"
 #include "dataLibrary.h"
 
-void downsampleWorker::doWork(const double &leaf)
+bool downsampleWorker::is_para_satisfying(QString message)
+{
+	if(dataLibrary::haveBaseData())
+    {
+		this->setParaSize(1);
+		if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>0)
+		{
+			double leaf;
+			std::stringstream ss(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[0]);
+			ss >> leaf;
+			this->setLeaf(leaf);
+
+			this->setParaIndex(this->getParaSize());
+			return true;
+		}
+		else
+		{
+			message = QString("downsample: Minimum Point Distance Not Given.");
+			return false;
+		}
+	}
+	else
+	{
+		message = QString("downsample: You Do Not Have Any Point Cloud Data in Memery!");
+		return false;
+	}
+}
+void downsampleWorker::prepare()
+{
+	this->setUnmute();
+	this->setWriteLog();
+	this->check_mute_nolog();
+}
+
+void downsampleWorker::doWork()
 {
 	bool is_success(false);
 
@@ -61,7 +95,7 @@ void downsampleWorker::doWork(const double &leaf)
     // Create the filtering object
     pcl::VoxelGrid<pcl::PointXYZ> sor;
     sor.setInputCloud (dataLibrary::cloudxyz);
-    sor.setLeafSize (leaf, leaf, leaf);
+    sor.setLeafSize (this->getLeaf(), this->getLeaf(), this->getLeaf());
 	if(!dataLibrary::downsampledxyz->empty())
 	{
 		dataLibrary::downsampledxyz->clear();

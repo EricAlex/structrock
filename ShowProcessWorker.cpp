@@ -100,7 +100,7 @@ void ShowProcessWorker::doWork()
 
 	dataLibrary::Status = STATUS_SHOWPROCESS;
 
-	dataLibrary::start = clock();
+	this->timer_start();
 
 	//begin of processing
 	//Clear data if needed
@@ -258,7 +258,7 @@ void ShowProcessWorker::doWork()
 	is_success = true;
 	//end of processing
 
-	dataLibrary::finish = clock();
+	this->timer_stop();
 
 	if(this->getWriteLogMpde()&&is_success)
     {
@@ -271,7 +271,7 @@ void ShowProcessWorker::doWork()
 		std::string log_text_tail = ") Costs: ";
 		std::string log_text = log_text_head + log_text_body + log_text_tail;
         std::ostringstream strs;
-        strs << (double)(dataLibrary::finish-dataLibrary::start)/CLOCKS_PER_SEC;
+        strs << this->getTimer_sec();
         log_text += (strs.str() +" seconds.");
         dataLibrary::write_text_to_log_file(log_text);
     }

@@ -92,10 +92,6 @@ public:
 	static std::vector<WorkLine> Workflow;
 	static int current_workline_index;
 	static bool have_called_read_file;
-	// <-- remove
-	static clock_t start;
-	static clock_t finish;
-	// remove -->
 	static Vector3f cloud_centor;
 
 public:

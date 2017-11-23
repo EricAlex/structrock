@@ -39,6 +39,7 @@
 
 #pragma once
 
+#include <time.h>
 #include <QObject>
 #include <QThread>
 #include "MyThread.h"
@@ -73,6 +74,8 @@ private:
 	bool _write_log;
 	int _para_size;
 	int _para_index;
+	clock_t _time_start;
+	clock_t _time_finish;
 public:
 	void setWorkFlowMode(bool mode)
 	{
@@ -128,6 +131,18 @@ public:
 	int getParaIndex()
 	{
 		return _para_index;
+	}
+	void timer_start()
+	{
+		_time_start = clock();
+	}
+	void timer_stop()
+	{
+		_time_finish = clock();
+	}
+	double getTimer_sec()
+	{
+		return (double)(_time_finish-_time_start)/CLOCKS_PER_SEC;
 	}
 
 private:

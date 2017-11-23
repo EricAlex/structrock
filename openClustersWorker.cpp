@@ -39,7 +39,6 @@
 
 #include <fstream>
 #include <string>
-#include <time.h>
 #include <sstream>
 #include <pcl/common/centroid.h>
 #include <pcl/point_types.h>
@@ -81,7 +80,7 @@ void openClustersWorker::doWork()
     
     dataLibrary::Status = STATUS_OPENCLUSTERS;
 
-    dataLibrary::start = clock();
+    this->timer_start();
 
 	//begin of processing
     stringstream ss;
@@ -161,14 +160,14 @@ void openClustersWorker::doWork()
     }
 	//end of processing
 
-    dataLibrary::finish = clock();
+    this->timer_stop();
 
     if(this->getWriteLogMpde()&&is_success)
     {
 		std::string string_filename = this->getFileName().toUtf8().constData();
         std::string log_text = string_filename + "\n\tReading Clusters costs: ";
         std::ostringstream strs;
-        strs << (double)(dataLibrary::finish-dataLibrary::start)/CLOCKS_PER_SEC;
+        strs << this->getTimer_sec();
         log_text += (strs.str() +" seconds.");
         dataLibrary::write_text_to_log_file(log_text);
     }

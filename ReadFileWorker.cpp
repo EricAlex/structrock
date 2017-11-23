@@ -37,7 +37,6 @@
  *
  */
 
-#include <time.h>
 #include <string>
 #include <sstream>
 #include <pcl/io/io.h>
@@ -81,7 +80,7 @@ void ReadFileWorker::doWork()
 
 	dataLibrary::Status = STATUS_OPENPCD;
 
-	dataLibrary::start = clock();
+	this->timer_start();
 
 	//begin of processing
 	if(!pcl::io::loadPCDFile (*strfilename, *cloud_blob))
@@ -118,14 +117,14 @@ void ReadFileWorker::doWork()
 	}
 	//end of processing
 
-	dataLibrary::finish = clock();
+	this->timer_stop();
 
     if(this->getWriteLogMpde()&&is_success)
     {
 		std::string string_filename = this->getFileName().toUtf8().constData();
         std::string log_text = string_filename + "\n\tReading PCD file costs: ";
         std::ostringstream strs;
-        strs << (double)(dataLibrary::finish-dataLibrary::start)/CLOCKS_PER_SEC;
+        strs << this->getTimer_sec();
         log_text += (strs.str() +" seconds.");
         dataLibrary::write_text_to_log_file(log_text);
     }

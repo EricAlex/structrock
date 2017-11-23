@@ -37,13 +37,10 @@
  *
  */
 
-#include <time.h>
 #include <string>
 #include <sstream>
 #include <pcl/kdtree/kdtree_flann.h>
 #include <pcl/surface/mls.h>
-#include <qinputdialog.h>
-#include <qmessagebox.h>
 #include "resampleWorker.h"
 #include "globaldef.h"
 #include "dataLibrary.h"
@@ -91,7 +88,7 @@ void resampleWorker::doWork()
 
     dataLibrary::Status = STATUS_RESAMPLE;
 
-    dataLibrary::start = clock();
+    this->timer_start();
     
 	//begin of processing
     // Create a KD-Tree
@@ -121,13 +118,13 @@ void resampleWorker::doWork()
 	is_success = true;
 	//end of processing
 
-    dataLibrary::finish = clock();
+    this->timer_stop();
 
     if(this->getWriteLogMpde()&&is_success)
     {
         std::string log_text = "\tResampling costs: ";
         std::ostringstream strs;
-        strs << (double)(dataLibrary::finish-dataLibrary::start)/CLOCKS_PER_SEC;
+        strs << this->getTimer_sec();
         log_text += (strs.str() +" seconds.");
         dataLibrary::write_text_to_log_file(log_text);
     }

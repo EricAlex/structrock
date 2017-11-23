@@ -37,12 +37,9 @@
  *
  */
 
-#include <time.h>
 #include <string>
 #include <sstream>
 #include <pcl/filters/voxel_grid.h>
-#include <qinputdialog.h>
-#include <qmessagebox.h>
 #include "globaldef.h"
 #include "downsampleWorker.h"
 #include "dataLibrary.h"
@@ -89,7 +86,7 @@ void downsampleWorker::doWork()
 
     dataLibrary::Status = STATUS_DOWNSAMPLE;
 
-    dataLibrary::start = clock();
+    this->timer_start();
 
 	//begin of processing
     // Create the filtering object
@@ -108,13 +105,13 @@ void downsampleWorker::doWork()
 	is_success = true;
 	//end of processing
 
-    dataLibrary::finish = clock();
+    this->timer_stop();
 
     if(this->getWriteLogMpde()&&is_success)
     {
         std::string log_text = "\tDownsampling costs: ";
         std::ostringstream strs;
-        strs << (double)(dataLibrary::finish-dataLibrary::start)/CLOCKS_PER_SEC;
+        strs << this->getTimer_sec();
         log_text += (strs.str() +" seconds.");
         dataLibrary::write_text_to_log_file(log_text);
     }

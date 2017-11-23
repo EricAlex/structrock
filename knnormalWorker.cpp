@@ -37,7 +37,6 @@
  *
  */
 
-#include <time.h>
 #include <string>
 #include <sstream>
 #include <pcl/features/normal_3d.h>
@@ -98,7 +97,7 @@ void knnormalWorker::doWork()
 
     dataLibrary::Status = STATUS_KNNORMAL;
 
-    dataLibrary::start = clock();
+    this->timer_start();
 
 	//begin of processing
     pcl::NormalEstimationOMP<pcl::PointXYZ, pcl::Normal> ne;
@@ -121,13 +120,13 @@ void knnormalWorker::doWork()
 	is_success = true;
 	//end of processing
 
-    dataLibrary::finish = clock();
+    this->timer_stop();
 
     if(this->getWriteLogMpde()&&is_success)
     {
         std::string log_text = "\tComputing K Nearest Neighbor Normal costs: ";
         std::ostringstream strs;
-        strs << (double)(dataLibrary::finish-dataLibrary::start)/CLOCKS_PER_SEC;
+        strs << this->getTimer_sec();
         log_text += (strs.str() +" seconds.");
         dataLibrary::write_text_to_log_file(log_text);
     }

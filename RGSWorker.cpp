@@ -37,11 +37,8 @@
  *
  */
 
-#include <time.h>
 #include <string>
 #include <sstream>
-#include <qinputdialog.h>
-#include <qmessagebox.h>
 #include "RGSWorker.h"
 #include "dataLibrary.h"
 #include "globaldef.h"
@@ -132,7 +129,7 @@ void RGSWorker::doWork()
 
     dataLibrary::Status = STATUS_RGS;
 
-    dataLibrary::start = clock();
+    this->timer_start();
 
 	//begin of processing
     double curvature = this->getRGSpara().curvature;
@@ -168,13 +165,13 @@ void RGSWorker::doWork()
 	is_success = true;
 	//end of processing
 
-    dataLibrary::finish = clock();
+    this->timer_stop();
 
     if(this->getWriteLogMpde()&&is_success)
     {
         std::string log_text = "\tRegion Growing Segmentation costs: ";
         std::ostringstream strs;
-        strs << (double)(dataLibrary::finish-dataLibrary::start)/CLOCKS_PER_SEC;
+        strs << this->getTimer_sec();
         log_text += (strs.str() +" seconds.");
         dataLibrary::write_text_to_log_file(log_text);
     }

@@ -37,7 +37,6 @@
  *
  */
 
-#include <time.h>
 #include <sstream>
 #include <vector>
 #include <fstream>
@@ -113,7 +112,7 @@ void SaveClustersWorker::doWork()
     
     dataLibrary::Status = STATUS_SAVECLUSTERS;
 
-    dataLibrary::start = clock();
+    this->timer_start();
     
 	//begin of processing
     //compute centor point and normal
@@ -477,13 +476,13 @@ void SaveClustersWorker::doWork()
 	is_success = true;
 	//end of processing
 
-    dataLibrary::finish = clock();
+    this->timer_stop();
 
     if(this->getWriteLogMpde()&&is_success)
     {
         std::string log_text = "\tSaving Clusters costs: ";
         std::ostringstream strs;
-        strs << (double)(dataLibrary::finish-dataLibrary::start)/CLOCKS_PER_SEC;
+        strs << this->getTimer_sec();
         log_text += (strs.str() +" seconds.");
         dataLibrary::write_text_to_log_file(log_text);
     }

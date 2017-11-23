@@ -37,7 +37,6 @@
  *
  */
 
-#include <time.h>
 #include <string>
 #include <sstream>
 #include <pcl/kdtree/kdtree_flann.h>
@@ -108,7 +107,7 @@ void MultiStationWorker::doWork()
 
     dataLibrary::Status = STATUS_MULTISTATION;
 
-    dataLibrary::start = clock();
+    this->timer_start();
 
 	//begin of processing
 	bool is_reading_success(true);
@@ -187,13 +186,13 @@ void MultiStationWorker::doWork()
 	}
 	//end of processing
 
-    dataLibrary::finish = clock();
+    this->timer_stop();
 
     if(this->getWriteLogMpde()&&is_success)
     {
         std::string log_text = "MultiStation costs: ";
         std::ostringstream strs;
-        strs << (double)(dataLibrary::finish-dataLibrary::start)/CLOCKS_PER_SEC;
+        strs << this->getTimer_sec();
         log_text += (strs.str() +" seconds.");
         dataLibrary::write_text_to_log_file(log_text);
     }

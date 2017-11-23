@@ -41,6 +41,7 @@
 #include <algorithm>
 #include <string>
 #include <math.h>
+#include <pcl/io/io.h>
 #include <pcl/point_types.h>
 #include <Eigen/src/Core/Matrix.h>
 #include "ShowSFeatureWorker.h"
@@ -115,7 +116,7 @@ void ShowSFeatureWorker::doWork()
 
 	dataLibrary::Status = STATUS_SHOWSFEATURE;
 
-	dataLibrary::start = clock();
+	this->timer_start();
 
 	if(this->getFPara().feature_type == FEATURE_ROUGHNESS)
 	{
@@ -391,13 +392,13 @@ void ShowSFeatureWorker::doWork()
 		}
 	}
 
-	dataLibrary::finish = clock();
+	this->timer_stop();
 
 	if(this->getWriteLogMpde()&&is_success)
 	{
 		std::string log_text = "\tShowSFeature Costs: ";
 		std::ostringstream strs;
-		strs << (double)(dataLibrary::finish-dataLibrary::start)/CLOCKS_PER_SEC;
+		strs << this->getTimer_sec();
 		log_text += (strs.str() +" seconds.");
 		dataLibrary::write_text_to_log_file(log_text);
 	}

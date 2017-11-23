@@ -37,12 +37,9 @@
  *
  */
 
-#include <time.h>
 #include <string>
 #include <sstream>
 #include <pcl/filters/statistical_outlier_removal.h>
-#include <qinputdialog.h>
-#include <qmessagebox.h>
 #include "StaticROWorker.h"
 #include "dataLibrary.h"
 #include "globaldef.h"
@@ -90,7 +87,7 @@ void StaticROWorker::doWork()
 
     dataLibrary::Status = STATUS_STATICRO;
 
-    dataLibrary::start = clock();
+    this->timer_start();
 
 	//begin of processing
     pcl::StatisticalOutlierRemoval<pcl::PointXYZ> sor;
@@ -118,13 +115,13 @@ void StaticROWorker::doWork()
 	is_success = true;
 	//end of processing
 
-    dataLibrary::finish = clock();
+    this->timer_stop();
 
     if(this->getWriteLogMpde()&&is_success)
     {
         std::string log_text = "\tStatistical Outlier Removing costs: ";
         std::ostringstream strs;
-        strs << (double)(dataLibrary::finish-dataLibrary::start)/CLOCKS_PER_SEC;
+        strs << this->getTimer_sec();
         log_text += (strs.str() +" seconds.");
         dataLibrary::write_text_to_log_file(log_text);
     }

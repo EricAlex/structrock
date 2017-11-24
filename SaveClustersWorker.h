@@ -40,6 +40,8 @@
 #pragma once
 
 #include "Worker.h"
+#include "globaldef.h"
+
 class SaveClustersWorker : public Worker
 {
 	Q_OBJECT
@@ -52,6 +54,8 @@ public:
 private:
 	bool _trim_trace_edges;
 	QString _filename;
+	int _fracture_map_mode;
+	double _expand_ratio;
 public:
 	void setTrimTraceEdgesMode(bool mode)
 	{
@@ -60,6 +64,26 @@ public:
 	bool getTrimTraceEdgesMode()
 	{
 		return _trim_trace_edges;
+	}
+	void setDefaltFMAP_Mode()
+	{
+		_fracture_map_mode = FMAP_LOWER_BOUND;
+	}
+	void setFMAP_Mode(int mode)
+	{
+		_fracture_map_mode = mode;
+	}
+	int getFMAP_Mode()
+	{
+		return _fracture_map_mode;
+	}
+	void setExpandRatio(double ratio)
+	{
+		_expand_ratio = ratio;
+	}
+	double getExpandRatio()
+	{
+		return _expand_ratio;
 	}
 	void setFileName(QString name)
 	{

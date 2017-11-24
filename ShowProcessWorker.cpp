@@ -234,14 +234,7 @@ void ShowProcessWorker::doWork()
 			if(show_fracture_traces)
 			{
 				float length;
-				if(show_extension_line)
-				{
-					bool flag = dataLibrary::CheckClusters(dataLibrary::plane_normal_all, centroid_all, dataLibrary::cloud_hull_all, normal, centroid, cloud_projected, cluster_index, length, true);
-				}
-				else
-				{
-					bool flag = dataLibrary::CheckClusters(dataLibrary::plane_normal_all, centroid_all, dataLibrary::cloud_hull_all, normal, centroid, cloud_projected, cluster_index, length, false);
-				}
+				bool flag = dataLibrary::Rectangular(dataLibrary::plane_normal_all, centroid_all, dataLibrary::cloud_hull_all, normal, centroid, cloud_projected, cluster_index, length, false, show_extension_line);
 			}
 		}
 

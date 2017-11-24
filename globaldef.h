@@ -77,6 +77,10 @@
 #define FEATURE_CURVATURE   1003
 #define FEATURE_FRACTURE_CURVATURE  1004
 
+#define FMAP_LOWER_BOUND	2001
+#define FMAP_CIRCULAR	2002
+#define FMAP_RECTANGULAR	2003
+
 struct RGSpara{
     double curvature;
     double smoothness;

@@ -83,6 +83,15 @@ int dataLibrary::current_workline_index = 0;
 bool dataLibrary::have_called_read_file = false;
 Vector3f dataLibrary::cloud_centor;
 
+bool dataLibrary::isOnlyDouble(const char* str)
+{
+	char* endptr = 0;
+	strtod(str, &endptr);
+
+	if(*endptr != '\0' || endptr == str)
+		return false;
+	return true;
+}
 void dataLibrary::checkupflow()
 {
 	if(!temp_cloud->empty())
@@ -290,12 +299,256 @@ bool dataLibrary::isSegmentCrossPolygon(const Eigen::Vector2f &point_a, const Ei
     return false;
 }
 
-bool dataLibrary::CheckClusters(const Eigen::Vector3f &V, const Eigen::Vector3f &xyz_centroid, pcl::PointCloud<pcl::PointXYZ>::Ptr convex_hull, const Eigen::Vector3f &V_i, const Eigen::Vector3f &xyz_centroid_i, pcl::PointCloud<pcl::PointXYZ>::Ptr projected_i, int patchNum, float &length, bool needExLine)
+void dataLibrary::assign_left_with_right(Vector3f &left, const Eigen::Vector3f &right)
 {
-    Eigen::Vector3f on_plane_direction = V.cross(V_i);
-    float temp_length;
+	left.x = right(0);
+	left.y = right(1);
+	left.z = right(2);
+}
+
+bool dataLibrary::no_trim_edges(const Eigen::Vector3f &V, const Eigen::Vector3f &xyz_centroid, pcl::PointCloud<pcl::PointXYZ>::Ptr convex_hull, const Eigen::Vector3f &max_intersection, const Eigen::Vector3f &min_intersection, int patchNum, float &length)
+{
+	stringstream ss;
+	ss << patchNum;
+
+	Eigen::Vector3f V_x = convex_hull->at(1).getVector3fMap() - convex_hull->at(0).getVector3fMap();
+	Eigen::Vector3f V_y = V.cross(V_x);
+	std::vector<Eigen::Vector2f> convex_hull_2d;
+	
+	float temp_length = std::sqrt((max_intersection-min_intersection).dot(max_intersection-min_intersection));
+	
+	dataLibrary::projection322(V_x, V_y, convex_hull, convex_hull_2d);
+	Eigen::Vector2f test_point_2d_max, test_point_2d_min;
+	dataLibrary::projection322(V_x, V_y, max_intersection, test_point_2d_max);
+	dataLibrary::projection322(V_x, V_y, min_intersection, test_point_2d_min);
+
+	if((isInPolygon(convex_hull_2d, test_point_2d_max))||(isInPolygon(convex_hull_2d, test_point_2d_min)))
+	{
+		Line NewLine;
+		dataLibrary::assign_left_with_right(NewLine.begin, max_intersection);
+		dataLibrary::assign_left_with_right(NewLine.end, min_intersection);
+		NewLine.r = 0;
+		NewLine.g = 1;
+		NewLine.b = 0;
+		NewLine.ID = "Line_in"+ss.str();
+		dataLibrary::Lines.push_back(NewLine);
+
+		length=temp_length;
+		return true;
+	}
+	else if(isSegmentCrossPolygon(test_point_2d_max, test_point_2d_min, convex_hull_2d))
+	{
+		Line NewLine;
+		dataLibrary::assign_left_with_right(NewLine.begin, max_intersection);
+		dataLibrary::assign_left_with_right(NewLine.end, min_intersection);
+		NewLine.r = 0;
+		NewLine.g = 1;
+		NewLine.b = 0;
+		NewLine.ID = "Line_in"+ss.str();
+		dataLibrary::Lines.push_back(NewLine);
+		
+		length=temp_length;
+		return true;
+	}
+	else
+	{
+		Line NewLine;
+		dataLibrary::assign_left_with_right(NewLine.begin, max_intersection);
+		dataLibrary::assign_left_with_right(NewLine.end, min_intersection);
+		NewLine.r = 1;
+		NewLine.g = 0;
+		NewLine.b = 0;
+		NewLine.ID = "Line_out"+ss.str();
+		dataLibrary::Lines.push_back(NewLine);
+		
+		length=temp_length;
+		return false;
+	}
+}
+
+bool dataLibrary::trim_edges(const Eigen::Vector3f &V, const Eigen::Vector3f &xyz_centroid, pcl::PointCloud<pcl::PointXYZ>::Ptr convex_hull, const Eigen::Vector3f &max_intersection, const Eigen::Vector3f &min_intersection, int patchNum, float &length)
+{
+	stringstream ss;
+	ss << patchNum;
+
+	Eigen::Vector3f V_x = convex_hull->at(1).getVector3fMap() - convex_hull->at(0).getVector3fMap();
+	Eigen::Vector3f V_y = V.cross(V_x);
+	std::vector<Eigen::Vector2f> convex_hull_2d;
+
+	dataLibrary::projection322(V_x, V_y, convex_hull, convex_hull_2d);
+	Eigen::Vector2f test_point_2d_max, test_point_2d_min;
+	dataLibrary::projection322(V_x, V_y, max_intersection, test_point_2d_max);
+	dataLibrary::projection322(V_x, V_y, min_intersection, test_point_2d_min);
+	if((isInPolygon(convex_hull_2d, test_point_2d_max))&&(isInPolygon(convex_hull_2d, test_point_2d_min)))
+	{// All end points are in.
+		Line NewLine;
+		dataLibrary::assign_left_with_right(NewLine.begin, max_intersection);
+		dataLibrary::assign_left_with_right(NewLine.end, min_intersection);
+		NewLine.r = 0;
+		NewLine.g = 1;
+		NewLine.b = 0;
+		NewLine.ID = "Line_in"+ss.str();
+		dataLibrary::Lines.push_back(NewLine);
+		
+		length=std::sqrt((max_intersection-min_intersection).dot(max_intersection-min_intersection));
+		return true;
+	}
+	else if((isInPolygon(convex_hull_2d, test_point_2d_max))&&!(isInPolygon(convex_hull_2d, test_point_2d_min)))
+	{// One end point is in, the other one is out.
+		int hull_size = convex_hull->size();
+		Eigen::Vector3f P_in = max_intersection;
+		Eigen::Vector3f P_out = min_intersection;
+		Eigen::Vector3f P_edge;
+		for(int i=0; i<hull_size; i++)
+		{
+			Eigen::Vector3f N_i = convex_hull->at(i).getVector3fMap();
+			Eigen::Vector3f P_in_P_out = P_out - P_in;
+			Eigen::Vector3f P_in_N_i = N_i - P_in;
+			if(std::acos(P_in_P_out.dot(P_in_N_i)/(std::sqrt(P_in_P_out.dot(P_in_P_out))*std::sqrt(P_in_N_i.dot(P_in_N_i))))<=EPSILON)
+			{
+				P_edge = N_i;
+				break;
+			}
+			Eigen::Vector3f N_j = convex_hull->at((i+1)%hull_size).getVector3fMap();
+			Eigen::Vector3f P_in_N_j = N_j - P_in;
+			Eigen::Vector3f N_i_N_j = N_j - N_i;
+			if(P_in_N_i.cross(P_in_P_out).dot(P_in_P_out.cross(P_in_N_j))>0)
+			{
+				float angle_a = std::acos(P_in_N_i.dot(P_in_P_out)/(std::sqrt(P_in_N_i.dot(P_in_N_i))*std::sqrt(P_in_P_out.dot(P_in_P_out))));
+				float angle_b = std::acos(P_in_P_out.dot(P_in_N_j)/(std::sqrt(P_in_P_out.dot(P_in_P_out))*std::sqrt(P_in_N_j.dot(P_in_N_j))));
+				if((angle_a+angle_b)<(TWOPI/2))
+				{
+					float x = P_in_P_out.cross(P_in_N_i)(0)/N_i_N_j.cross(P_in_P_out)(0);
+					P_edge = P_in + (P_in_N_i + x*N_i_N_j);
+					break;
+				}
+			}
+		}
+		Line NewLine;
+		dataLibrary::assign_left_with_right(NewLine.begin, P_in);
+		dataLibrary::assign_left_with_right(NewLine.end, P_edge);
+		NewLine.r = 0;
+		NewLine.g = 1;
+		NewLine.b = 0;
+		NewLine.ID = "Line_in"+ss.str();
+		dataLibrary::Lines.push_back(NewLine);
+		
+		length=std::sqrt((P_edge - P_in).dot(P_edge - P_in));
+		return true;
+	}
+	else if(!(isInPolygon(convex_hull_2d, test_point_2d_max))&&(isInPolygon(convex_hull_2d, test_point_2d_min)))
+	{// One end point is in, the other one is out.
+		int hull_size = convex_hull->size();
+		Eigen::Vector3f P_in = min_intersection;
+		Eigen::Vector3f P_out = max_intersection;
+		Eigen::Vector3f P_edge;
+		for(int i=0; i<hull_size; i++)
+		{
+			Eigen::Vector3f N_i = convex_hull->at(i).getVector3fMap();
+			Eigen::Vector3f P_in_P_out = P_out - P_in;
+			Eigen::Vector3f P_in_N_i = N_i - P_in;
+			if(std::acos(P_in_P_out.dot(P_in_N_i)/(std::sqrt(P_in_P_out.dot(P_in_P_out))*std::sqrt(P_in_N_i.dot(P_in_N_i))))<=EPSILON)
+			{
+				P_edge = N_i;
+				break;
+			}
+			Eigen::Vector3f N_j = convex_hull->at((i+1)%hull_size).getVector3fMap();
+			Eigen::Vector3f P_in_N_j = N_j - P_in;
+			Eigen::Vector3f N_i_N_j = N_j - N_i;
+			if(P_in_N_i.cross(P_in_P_out).dot(P_in_P_out.cross(P_in_N_j))>0)
+			{
+				float angle_a = std::acos(P_in_N_i.dot(P_in_P_out)/(std::sqrt(P_in_N_i.dot(P_in_N_i))*std::sqrt(P_in_P_out.dot(P_in_P_out))));
+				float angle_b = std::acos(P_in_P_out.dot(P_in_N_j)/(std::sqrt(P_in_P_out.dot(P_in_P_out))*std::sqrt(P_in_N_j.dot(P_in_N_j))));
+				if((angle_a+angle_b)<(TWOPI/2))
+				{
+					float x = P_in_P_out.cross(P_in_N_i)(0)/N_i_N_j.cross(P_in_P_out)(0);
+					P_edge = P_in + (P_in_N_i + x*N_i_N_j);
+					break;
+				}
+			}
+		}
+		Line NewLine;
+		dataLibrary::assign_left_with_right(NewLine.begin, P_in);
+		dataLibrary::assign_left_with_right(NewLine.end, P_edge);
+		NewLine.r = 0;
+		NewLine.g = 1;
+		NewLine.b = 0;
+		NewLine.ID = "Line_in"+ss.str();
+		dataLibrary::Lines.push_back(NewLine);
+
+		length=std::sqrt((P_edge - P_in).dot(P_edge - P_in));
+		return true;
+	}
+	else if(isSegmentCrossPolygon(test_point_2d_max, test_point_2d_min, convex_hull_2d))
+	{// All end points are out, but still, the segment is crossing the polygon.
+		int hull_size = convex_hull->size();
+		Eigen::Vector3f P_in = min_intersection;
+		Eigen::Vector3f P_out = max_intersection;
+		Eigen::Vector3f P_in_P_out = P_out - P_in;
+		Eigen::Vector3f P_edge_in, P_edge_out;
+		for(int i=0; i<hull_size; i++)
+		{
+			Eigen::Vector3f N_i = convex_hull->at(i).getVector3fMap();
+			Eigen::Vector3f P_in_N_i = N_i - P_in;
+			Eigen::Vector3f N_j = convex_hull->at((i+1)%hull_size).getVector3fMap();
+			Eigen::Vector3f P_in_N_j = N_j - P_in;
+			Eigen::Vector3f N_i_N_j = N_j - N_i;
+			if(P_in_N_i.cross(P_in_P_out).dot(P_in_P_out.cross(P_in_N_j))>0)
+			{
+				float x = P_in_P_out.cross(P_in_N_i)(0)/N_i_N_j.cross(P_in_P_out)(0);
+				P_edge_in = P_in + (P_in_N_i + x*N_i_N_j);
+				for(int j=i+1; j<hull_size; j++)
+				{
+					Eigen::Vector3f N_k = convex_hull->at(j).getVector3fMap();
+					Eigen::Vector3f P_in_N_k = N_k - P_in;
+					Eigen::Vector3f N_l = convex_hull->at((j+1)%hull_size).getVector3fMap();
+					Eigen::Vector3f P_in_N_l = N_l - P_in;
+					Eigen::Vector3f N_k_N_l = N_l - N_k;
+					if(P_in_N_k.cross(P_in_P_out).dot(P_in_P_out.cross(P_in_N_l))>0)
+					{
+						float x = P_in_P_out.cross(P_in_N_k)(0)/N_k_N_l.cross(P_in_P_out)(0);
+						P_edge_out = P_in + (P_in_N_k + x*N_k_N_l);
+						break;
+					}
+				}
+				break;
+			}
+		}
+		Line NewLine;
+		dataLibrary::assign_left_with_right(NewLine.begin, P_edge_in);
+		dataLibrary::assign_left_with_right(NewLine.end, P_edge_out);
+		NewLine.r = 0;
+		NewLine.g = 1;
+		NewLine.b = 0;
+		NewLine.ID = "Line_in"+ss.str();
+		dataLibrary::Lines.push_back(NewLine);
+		
+		length=std::sqrt((P_edge_out - P_edge_in).dot(P_edge_out - P_edge_in));
+		return true;
+	}
+	else
+	{
+		Line NewLine;
+		dataLibrary::assign_left_with_right(NewLine.begin, max_intersection);
+		dataLibrary::assign_left_with_right(NewLine.end, min_intersection);
+		NewLine.r = 1;
+		NewLine.g = 0;
+		NewLine.b = 0;
+		NewLine.ID = "Line_out"+ss.str();
+		dataLibrary::Lines.push_back(NewLine);
+		
+		length=std::sqrt((max_intersection-min_intersection).dot(max_intersection-min_intersection));
+		return false;
+	}
+}
+
+bool dataLibrary::Rectangular(const Eigen::Vector3f &V, const Eigen::Vector3f &xyz_centroid, pcl::PointCloud<pcl::PointXYZ>::Ptr convex_hull, const Eigen::Vector3f &V_i, const Eigen::Vector3f &xyz_centroid_i, pcl::PointCloud<pcl::PointXYZ>::Ptr projected_i, int patchNum, float &length, bool is_triming_edges, bool needExLine)
+{
+	Eigen::Vector3f on_plane_direction = V.cross(V_i);
     stringstream ss;
+	ss << patchNum;
     
+	// Check if the fracture patch and the suppositional plane are parallel
     if((on_plane_direction(0) == 0)&&(on_plane_direction(1) == 0)&&(on_plane_direction(2) == 0))
     {
         length=0.0;
@@ -305,18 +558,12 @@ bool dataLibrary::CheckClusters(const Eigen::Vector3f &V, const Eigen::Vector3f 
     {
         float max_value, min_value;
         int max_index, min_index;
-        Eigen::Vector3f point;
-        point(0) = projected_i->at(0).x;
-        point(1) = projected_i->at(0).y;
-        point(2) = projected_i->at(0).z;
+        Eigen::Vector3f point = projected_i->at(0).getVector3fMap();
         max_value = min_value = on_plane_direction.dot(point - xyz_centroid_i);
         max_index = min_index = 0;
         for(int i=1; i<projected_i->size(); i++)
         {
-            Eigen::Vector3f point;
-            point(0) = projected_i->at(i).x;
-            point(1) = projected_i->at(i).y;
-            point(2) = projected_i->at(i).z;
+            Eigen::Vector3f point = projected_i->at(i).getVector3fMap();
             
             float value = on_plane_direction.dot(point - xyz_centroid_i);
             
@@ -338,392 +585,79 @@ bool dataLibrary::CheckClusters(const Eigen::Vector3f &V, const Eigen::Vector3f 
         {
             if(PlaneWithLineIntersection(V, xyz_centroid, projected_i->at(min_index).getVector3fMap(), line_direction, min_intersection))
             {
-                Eigen::Vector3f V_x = convex_hull->at(1).getVector3fMap() - convex_hull->at(0).getVector3fMap();
-                Eigen::Vector3f V_y = V.cross(V_x);
-                std::vector<Eigen::Vector2f> convex_hull_2d;
-                
-                temp_length=std::sqrt((max_intersection-min_intersection).dot(max_intersection-min_intersection));
-                
-                if(dataLibrary::projection322(V_x, V_y, convex_hull, convex_hull_2d))
-                {
-                    Eigen::Vector2f test_point_2d_max, test_point_2d_min;
-                    if((dataLibrary::projection322(V_x, V_y, max_intersection, test_point_2d_max))&&(dataLibrary::projection322(V_x, V_y, min_intersection, test_point_2d_min)))
-                    {
-						ss << patchNum;
+				if(needExLine)
+				{
+					Line NewLine_max, NewLine_min;
+					dataLibrary::assign_left_with_right(NewLine_max.begin, projected_i->at(max_index).getVector3fMap());
+					dataLibrary::assign_left_with_right(NewLine_max.end, max_intersection);
+					NewLine_max.r = 1;
+					NewLine_max.g = 1;
+					NewLine_max.b = 1;
+					NewLine_max.ID = "Line_auxiliary_max"+ss.str();
+					dataLibrary::Lines_max.push_back(NewLine_max);
 
-						if(needExLine)
-						{
-							Line NewLine_max, NewLine_min;
-
-							NewLine_max.begin.x = projected_i->at(max_index).getVector3fMap()(0);
-							NewLine_max.begin.y = projected_i->at(max_index).getVector3fMap()(1);
-							NewLine_max.begin.z = projected_i->at(max_index).getVector3fMap()(2);
-							NewLine_max.end.x = max_intersection(0);
-							NewLine_max.end.y = max_intersection(1);
-							NewLine_max.end.z = max_intersection(2);
-							NewLine_max.r = 1;
-							NewLine_max.g = 1;
-							NewLine_max.b = 1;
-							NewLine_max.ID = "Line_auxiliary_max"+ss.str();
-							dataLibrary::Lines_max.push_back(NewLine_max);
-
-							NewLine_min.begin.x = projected_i->at(min_index).getVector3fMap()(0);
-							NewLine_min.begin.y = projected_i->at(min_index).getVector3fMap()(1);
-							NewLine_min.begin.z = projected_i->at(min_index).getVector3fMap()(2);
-							NewLine_min.end.x = min_intersection(0);
-							NewLine_min.end.y = min_intersection(1);
-							NewLine_min.end.z = min_intersection(2);
-							NewLine_min.r = 1;
-							NewLine_min.g = 1;
-							NewLine_min.b = 1;
-							NewLine_min.ID = "Line_auxiliary_min"+ss.str();
-							dataLibrary::Lines_min.push_back(NewLine_min);
-						}
-
-                        if((isInPolygon(convex_hull_2d, test_point_2d_max))||(isInPolygon(convex_hull_2d, test_point_2d_min)))
-                        {
-                            ss << patchNum;
-
-                            Line NewLine;
-                            NewLine.begin.x = max_intersection(0);
-                            NewLine.begin.y = max_intersection(1);
-                            NewLine.begin.z = max_intersection(2);
-                            NewLine.end.x = min_intersection(0);
-                            NewLine.end.y = min_intersection(1);
-                            NewLine.end.z = min_intersection(2);
-                            NewLine.r = 0;
-                            NewLine.g = 1;
-                            NewLine.b = 0;
-                            NewLine.ID = "Line_in"+ss.str();
-                            dataLibrary::Lines.push_back(NewLine);
-
-                            length=temp_length;
-                            return true;
-                        }
-                        else if(isSegmentCrossPolygon(test_point_2d_max, test_point_2d_min, convex_hull_2d))
-                        {
-                            ss << patchNum;
-
-                            Line NewLine;
-                            NewLine.begin.x = max_intersection(0);
-                            NewLine.begin.y = max_intersection(1);
-                            NewLine.begin.z = max_intersection(2);
-                            NewLine.end.x = min_intersection(0);
-                            NewLine.end.y = min_intersection(1);
-                            NewLine.end.z = min_intersection(2);
-                            NewLine.r = 0;
-                            NewLine.g = 1;
-                            NewLine.b = 0;
-                            NewLine.ID = "Line_in"+ss.str();
-                            dataLibrary::Lines.push_back(NewLine);
-
-                            length=temp_length;
-                            return true;
-                        }
-                        else
-                        {
-                            ss << patchNum;
-
-                            Line NewLine;
-                            NewLine.begin.x = max_intersection(0);
-                            NewLine.begin.y = max_intersection(1);
-                            NewLine.begin.z = max_intersection(2);
-                            NewLine.end.x = min_intersection(0);
-                            NewLine.end.y = min_intersection(1);
-                            NewLine.end.z = min_intersection(2);
-                            NewLine.r = 1;
-                            NewLine.g = 0;
-                            NewLine.b = 0;
-                            NewLine.ID = "Line_out"+ss.str();
-                            dataLibrary::Lines.push_back(NewLine);
-
-                            length=temp_length;
-                            return false;
-                        }
-                    }
-                }
+					dataLibrary::assign_left_with_right(NewLine_min.begin, projected_i->at(min_index).getVector3fMap());
+					dataLibrary::assign_left_with_right(NewLine_min.end, min_intersection);
+					NewLine_min.r = 1;
+					NewLine_min.g = 1;
+					NewLine_min.b = 1;
+					NewLine_min.ID = "Line_auxiliary_min"+ss.str();
+					dataLibrary::Lines_min.push_back(NewLine_min);
+				}
+				if(is_triming_edges)
+					return dataLibrary::trim_edges(V, xyz_centroid, convex_hull, max_intersection, min_intersection, patchNum, length);
+				else
+					return dataLibrary::no_trim_edges(V, xyz_centroid, convex_hull, max_intersection, min_intersection, patchNum, length);
             }
             else
             {
-                length=temp_length;
-                return false;
+                length=0.0;
+				return false;
             }
         }
         else
         {
-            length=temp_length;
-            return false;
+            length=0.0;
+			return false;
         }
-        return false;
     }
 }
 
-bool dataLibrary::CheckClusters_trim_edges(const Eigen::Vector3f &V, const Eigen::Vector3f &xyz_centroid, pcl::PointCloud<pcl::PointXYZ>::Ptr convex_hull, const Eigen::Vector3f &V_i, const Eigen::Vector3f &xyz_centroid_i, pcl::PointCloud<pcl::PointXYZ>::Ptr projected_i, int patchNum, float &length)
+bool dataLibrary::LowerBound(const Eigen::Vector3f &V, const Eigen::Vector3f &xyz_centroid, pcl::PointCloud<pcl::PointXYZ>::Ptr convex_hull, const Eigen::Vector3f &V_i, const Eigen::Vector3f &xyz_centroid_i, pcl::PointCloud<pcl::PointXYZ>::Ptr convex_hull_i, int patchNum, float &length, bool is_triming_edges, bool needExLine)
 {
-    Eigen::Vector3f on_plane_direction = V.cross(V_i);
-    float temp_length;
-    stringstream ss;
-    
-    if((on_plane_direction(0) == 0)&&(on_plane_direction(1) == 0)&&(on_plane_direction(2) == 0))
-    {
-        length=0.0;
-        return false;
-    }
-    else
-    {
-        float max_value, min_value;
-        int max_index, min_index;
-        Eigen::Vector3f point;
-        point(0) = projected_i->at(0).x;
-        point(1) = projected_i->at(0).y;
-        point(2) = projected_i->at(0).z;
-        max_value = min_value = on_plane_direction.dot(point - xyz_centroid_i);
-        max_index = min_index = 0;
-        for(int i=1; i<projected_i->size(); i++)
-        {
-            Eigen::Vector3f point;
-            point(0) = projected_i->at(i).x;
-            point(1) = projected_i->at(i).y;
-            point(2) = projected_i->at(i).z;
-            
-            float value = on_plane_direction.dot(point - xyz_centroid_i);
-            
-            if(max_value<value)
-            {
-                max_value = value;
-                max_index = i;
-            }
-            if(min_value>value)
-            {
-                min_value = value;
-                min_index = i;
-            }
-        }
-        Eigen::Vector3f line_direction = V_i.cross(on_plane_direction);
-        
-        Eigen::Vector3f max_intersection, min_intersection;
-        if(PlaneWithLineIntersection(V, xyz_centroid, projected_i->at(max_index).getVector3fMap(), line_direction, max_intersection))
-        {
-            if(PlaneWithLineIntersection(V, xyz_centroid, projected_i->at(min_index).getVector3fMap(), line_direction, min_intersection))
-            {
-                Eigen::Vector3f V_x = convex_hull->at(1).getVector3fMap() - convex_hull->at(0).getVector3fMap();
-                Eigen::Vector3f V_y = V.cross(V_x);
-                std::vector<Eigen::Vector2f> convex_hull_2d;
-                
-                temp_length=std::sqrt((max_intersection-min_intersection).dot(max_intersection-min_intersection));
-                
-                if(dataLibrary::projection322(V_x, V_y, convex_hull, convex_hull_2d))
-                {
-                    Eigen::Vector2f test_point_2d_max, test_point_2d_min;
-                    if((dataLibrary::projection322(V_x, V_y, max_intersection, test_point_2d_max))&&(dataLibrary::projection322(V_x, V_y, min_intersection, test_point_2d_min)))
-                    {
-						if((isInPolygon(convex_hull_2d, test_point_2d_max))&&(isInPolygon(convex_hull_2d, test_point_2d_min)))
-                        {
-                            ss << patchNum;
-
-                            Line NewLine;
-                            NewLine.begin.x = max_intersection(0);
-                            NewLine.begin.y = max_intersection(1);
-                            NewLine.begin.z = max_intersection(2);
-                            NewLine.end.x = min_intersection(0);
-                            NewLine.end.y = min_intersection(1);
-                            NewLine.end.z = min_intersection(2);
-                            NewLine.r = 0;
-                            NewLine.g = 1;
-                            NewLine.b = 0;
-                            NewLine.ID = "Line_in"+ss.str();
-                            dataLibrary::Lines.push_back(NewLine);
-
-                            length=temp_length;
-                            return true;
-                        }
-                        else if((isInPolygon(convex_hull_2d, test_point_2d_max))&&!(isInPolygon(convex_hull_2d, test_point_2d_min)))
-                        {
-                            int hull_size = convex_hull->size();
-                            Eigen::Vector3f P_in = max_intersection;
-                            Eigen::Vector3f P_out = min_intersection;
-                            Eigen::Vector3f P_edge;
-                            for(int i=0; i<hull_size; i++)
-                            {
-                                Eigen::Vector3f N_i = convex_hull->at(i).getVector3fMap();
-                                Eigen::Vector3f P_in_P_out = P_out - P_in;
-                                Eigen::Vector3f P_in_N_i = N_i - P_in;
-                                if(std::acos(P_in_P_out.dot(P_in_N_i)/(std::sqrt(P_in_P_out.dot(P_in_P_out))*std::sqrt(P_in_N_i.dot(P_in_N_i))))<=EPSILON)
-                                {
-                                    P_edge = N_i;
-                                    break;
-                                }
-                                Eigen::Vector3f N_j = convex_hull->at((i+1)%hull_size).getVector3fMap();
-                                Eigen::Vector3f P_in_N_j = N_j - P_in;
-                                Eigen::Vector3f N_i_N_j = N_j - N_i;
-                                if(P_in_N_i.cross(P_in_P_out).dot(P_in_P_out.cross(P_in_N_j))>0)
-                                {
-                                    float angle_a = std::acos(P_in_N_i.dot(P_in_P_out)/(std::sqrt(P_in_N_i.dot(P_in_N_i))*std::sqrt(P_in_P_out.dot(P_in_P_out))));
-									float angle_b = std::acos(P_in_P_out.dot(P_in_N_j)/(std::sqrt(P_in_P_out.dot(P_in_P_out))*std::sqrt(P_in_N_j.dot(P_in_N_j))));
-									if((angle_a+angle_b)<(TWOPI/2))
-									{
-										float x = P_in_P_out.cross(P_in_N_i)(0)/N_i_N_j.cross(P_in_P_out)(0);
-										P_edge = P_in + (P_in_N_i + x*N_i_N_j);
-										break;
-									}
-                                }
-                            }
-                            ss << patchNum;
-
-                            Line NewLine;
-                            NewLine.begin.x = P_in(0);
-                            NewLine.begin.y = P_in(1);
-                            NewLine.begin.z = P_in(2);
-                            NewLine.end.x = P_edge(0);
-                            NewLine.end.y = P_edge(1);
-                            NewLine.end.z = P_edge(2);
-                            NewLine.r = 0;
-                            NewLine.g = 1;
-                            NewLine.b = 0;
-                            NewLine.ID = "Line_in"+ss.str();
-                            dataLibrary::Lines.push_back(NewLine);
-
-                            length=std::sqrt((P_edge - P_in).dot(P_edge - P_in));
-                            return true;
-                        }
-                        else if(!(isInPolygon(convex_hull_2d, test_point_2d_max))&&(isInPolygon(convex_hull_2d, test_point_2d_min)))
-                        {
-                            int hull_size = convex_hull->size();
-                            Eigen::Vector3f P_in = min_intersection;
-                            Eigen::Vector3f P_out = max_intersection;
-                            Eigen::Vector3f P_edge;
-                            for(int i=0; i<hull_size; i++)
-                            {
-                                Eigen::Vector3f N_i = convex_hull->at(i).getVector3fMap();
-                                Eigen::Vector3f P_in_P_out = P_out - P_in;
-                                Eigen::Vector3f P_in_N_i = N_i - P_in;
-                                if(std::acos(P_in_P_out.dot(P_in_N_i)/(std::sqrt(P_in_P_out.dot(P_in_P_out))*std::sqrt(P_in_N_i.dot(P_in_N_i))))<=EPSILON)
-                                {
-                                    P_edge = N_i;
-                                    break;
-                                }
-                                Eigen::Vector3f N_j = convex_hull->at((i+1)%hull_size).getVector3fMap();
-                                Eigen::Vector3f P_in_N_j = N_j - P_in;
-                                Eigen::Vector3f N_i_N_j = N_j - N_i;
-                                if(P_in_N_i.cross(P_in_P_out).dot(P_in_P_out.cross(P_in_N_j))>0)
-                                {
-									float angle_a = std::acos(P_in_N_i.dot(P_in_P_out)/(std::sqrt(P_in_N_i.dot(P_in_N_i))*std::sqrt(P_in_P_out.dot(P_in_P_out))));
-									float angle_b = std::acos(P_in_P_out.dot(P_in_N_j)/(std::sqrt(P_in_P_out.dot(P_in_P_out))*std::sqrt(P_in_N_j.dot(P_in_N_j))));
-									if((angle_a+angle_b)<(TWOPI/2))
-									{
-										float x = P_in_P_out.cross(P_in_N_i)(0)/N_i_N_j.cross(P_in_P_out)(0);
-										P_edge = P_in + (P_in_N_i + x*N_i_N_j);
-										break;
-									}
-                                }
-                            }
-                            ss << patchNum;
-
-                            Line NewLine;
-                            NewLine.begin.x = P_in(0);
-                            NewLine.begin.y = P_in(1);
-                            NewLine.begin.z = P_in(2);
-                            NewLine.end.x = P_edge(0);
-                            NewLine.end.y = P_edge(1);
-                            NewLine.end.z = P_edge(2);
-                            NewLine.r = 0;
-                            NewLine.g = 1;
-                            NewLine.b = 0;
-                            NewLine.ID = "Line_in"+ss.str();
-                            dataLibrary::Lines.push_back(NewLine);
-
-                            length=std::sqrt((P_edge - P_in).dot(P_edge - P_in));
-                            return true;
-                        }
-                        else if(isSegmentCrossPolygon(test_point_2d_max, test_point_2d_min, convex_hull_2d))
-                        {
-							int hull_size = convex_hull->size();
-                            Eigen::Vector3f P_in = min_intersection;
-                            Eigen::Vector3f P_out = max_intersection;
-							Eigen::Vector3f P_in_P_out = P_out - P_in;
-                            Eigen::Vector3f P_edge_in, P_edge_out;
-                            for(int i=0; i<hull_size; i++)
-                            {
-                                Eigen::Vector3f N_i = convex_hull->at(i).getVector3fMap();
-                                Eigen::Vector3f P_in_N_i = N_i - P_in;
-                                Eigen::Vector3f N_j = convex_hull->at((i+1)%hull_size).getVector3fMap();
-                                Eigen::Vector3f P_in_N_j = N_j - P_in;
-								Eigen::Vector3f N_i_N_j = N_j - N_i;
-                                if(P_in_N_i.cross(P_in_P_out).dot(P_in_P_out.cross(P_in_N_j))>0)
-                                {
-									float x = P_in_P_out.cross(P_in_N_i)(0)/N_i_N_j.cross(P_in_P_out)(0);
-									P_edge_in = P_in + (P_in_N_i + x*N_i_N_j);
-									for(int j=i+1; j<hull_size; j++)
-									{
-										Eigen::Vector3f N_k = convex_hull->at(j).getVector3fMap();
-										Eigen::Vector3f P_in_N_k = N_k - P_in;
-										Eigen::Vector3f N_l = convex_hull->at((j+1)%hull_size).getVector3fMap();
-										Eigen::Vector3f P_in_N_l = N_l - P_in;
-										Eigen::Vector3f N_k_N_l = N_l - N_k;
-										if(P_in_N_k.cross(P_in_P_out).dot(P_in_P_out.cross(P_in_N_l))>0)
-										{
-											float x = P_in_P_out.cross(P_in_N_k)(0)/N_k_N_l.cross(P_in_P_out)(0);
-											P_edge_out = P_in + (P_in_N_k + x*N_k_N_l);
-											break;
-										}
-									}
-									break;
-                                }
-                            }
-                            ss << patchNum;
-
-                            Line NewLine;
-                            NewLine.begin.x = P_edge_in(0);
-                            NewLine.begin.y = P_edge_in(1);
-                            NewLine.begin.z = P_edge_in(2);
-                            NewLine.end.x = P_edge_out(0);
-                            NewLine.end.y = P_edge_out(1);
-                            NewLine.end.z = P_edge_out(2);
-                            NewLine.r = 0;
-                            NewLine.g = 1;
-                            NewLine.b = 0;
-                            NewLine.ID = "Line_in"+ss.str();
-                            dataLibrary::Lines.push_back(NewLine);
-
-                            length=std::sqrt((P_edge_out - P_edge_in).dot(P_edge_out - P_edge_in));
-                            return true;
-                        }
-                        else
-                        {
-                            ss << patchNum;
-
-                            Line NewLine;
-                            NewLine.begin.x = max_intersection(0);
-                            NewLine.begin.y = max_intersection(1);
-                            NewLine.begin.z = max_intersection(2);
-                            NewLine.end.x = min_intersection(0);
-                            NewLine.end.y = min_intersection(1);
-                            NewLine.end.z = min_intersection(2);
-                            NewLine.r = 1;
-                            NewLine.g = 0;
-                            NewLine.b = 0;
-                            NewLine.ID = "Line_out"+ss.str();
-                            dataLibrary::Lines.push_back(NewLine);
-
-                            length=temp_length;
-                            return false;
-                        }
-                    }
-                }
-            }
-            else
-            {
-                length=temp_length;
-                return false;
-            }
-        }
-        else
-        {
-            length=temp_length;
-            return false;
-        }
-        return false;
-    }
+	if(needExLine)
+	{
+		dataLibrary::fracture_faces_hull.push_back(convex_hull_i);
+	}
+	int hull_size_i = convex_hull_i->size();
+	std::vector<Eigen::Vector3f> intersections;
+	for(int i=0; i<hull_size_i; i++)
+	{
+		Eigen::Vector3f N_i = convex_hull_i->at(i).getVector3fMap();
+		Eigen::Vector3f N_j = convex_hull_i->at((i+1)%hull_size_i).getVector3fMap();
+		double side_i = V.dot(N_i - xyz_centroid);
+		double side_j = V.dot(N_j - xyz_centroid);
+		if((side_i*side_j<=0.0f)&&((side_i*side_i+side_j*side_j)>0.0f))
+		{
+			Eigen::Vector3f temp_intersec;
+			if(dataLibrary::PlaneWithLineIntersection(V, xyz_centroid, N_i, N_j-N_i, temp_intersec))
+			{
+				intersections.push_back(temp_intersec);
+			}
+		}
+	}
+	if(intersections.size()>=2)
+	{
+		if(is_triming_edges)
+			return dataLibrary::trim_edges(V, xyz_centroid, convex_hull, intersections[0], intersections[1], patchNum, length);
+		else
+			return dataLibrary::no_trim_edges(V, xyz_centroid, convex_hull, intersections[0], intersections[1], patchNum, length);
+	}
+	else
+	{
+		length = 0.0;
+		return false;
+	}
 }
 
 bool dataLibrary::checkContents(std::vector<std::string> contents, std::string query)

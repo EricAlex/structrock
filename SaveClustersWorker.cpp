@@ -80,6 +80,36 @@ bool SaveClustersWorker::is_para_satisfying(QString message)
 		{
 			this->setFileName(QString::fromUtf8(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[0].c_str()));
 			this->setParaIndex(this->getParaSize());
+			this->setDefaltFMAP_Mode();
+			bool need_expand_ratio(false);
+			if((dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>this->getParaIndex())&&(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[this->getParaIndex()] == "circular"))
+			{
+				this->setFMAP_Mode(FMAP_CIRCULAR);
+				need_expand_ratio = true;
+				this->setParaIndex(this->getParaIndex()+1);
+			}
+			else if((dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>this->getParaIndex())&&(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[this->getParaIndex()] == "rectangular"))
+			{
+				this->setFMAP_Mode(FMAP_RECTANGULAR);
+				need_expand_ratio = true;
+				this->setParaIndex(this->getParaIndex()+1);
+			}
+			if(need_expand_ratio)
+			{
+				if((dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>this->getParaIndex())&&(dataLibrary::isOnlyDouble(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[this->getParaIndex()].c_str())))
+				{
+					double ratio;
+					std::stringstream ss(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[this->getParaIndex()]);
+					ss >> ratio;
+					this->setExpandRatio(ratio);
+					this->setParaIndex(this->getParaIndex()+1);
+				}
+				else
+				{
+					message = QString("saveclusters: The Expand Ratio (double) Is Needed For the 'circular' and 'rectangular' Options.");
+					return false;
+				}
+			}
 			return true;
 		}
 		else
@@ -338,14 +368,10 @@ void SaveClustersWorker::doWork()
 
 		float length;
         bool flag;
-		if(this->getTrimTraceEdgesMode())
-		{
-			flag = dataLibrary::CheckClusters_trim_edges(dataLibrary::plane_normal_all, centroid_all, dataLibrary::cloud_hull_all, normal, centroid, cloud_projected, cluster_index, length);
-		}
-		else
-		{
-			flag = dataLibrary::CheckClusters(dataLibrary::plane_normal_all, centroid_all, dataLibrary::cloud_hull_all, normal, centroid, cloud_projected, cluster_index, length, false);
-		}
+		if(this->getFMAP_Mode() == FMAP_LOWER_BOUND)
+			flag = dataLibrary::LowerBound(dataLibrary::plane_normal_all, centroid_all, dataLibrary::cloud_hull_all, normal, centroid, cloud_hull, cluster_index, length, this->getTrimTraceEdgesMode(), false);
+		else if(this->getFMAP_Mode() == FMAP_RECTANGULAR)
+			flag = dataLibrary::Rectangular(dataLibrary::plane_normal_all, centroid_all, dataLibrary::cloud_hull_all, normal, centroid, cloud_projected, cluster_index, length, this->getTrimTraceEdgesMode(), false);
         fout<<flag<<"\t"<<cluster_index+1<<"\t"<<dataLibrary::clusters[cluster_index].indices.size()<<"\t"<<dip_direction<<"\t"<<dip<<"\t"<<area<<"\t"<<length<<"\t"<<fracture_roughness<<"\n";
 
 		//calculate displacement

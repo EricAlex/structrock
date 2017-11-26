@@ -372,6 +372,8 @@ void SaveClustersWorker::doWork()
 			flag = dataLibrary::LowerBound(dataLibrary::plane_normal_all, centroid_all, dataLibrary::cloud_hull_all, normal, centroid, cloud_hull, cluster_index, length, this->getTrimTraceEdgesMode(), false);
 		else if(this->getFMAP_Mode() == FMAP_RECTANGULAR)
 			flag = dataLibrary::Rectangular(dataLibrary::plane_normal_all, centroid_all, dataLibrary::cloud_hull_all, normal, centroid, cloud_projected, cluster_index, length, this->getTrimTraceEdgesMode(), false);
+		else if(this->getFMAP_Mode() == FMAP_CIRCULAR)
+			flag = dataLibrary::Circular(dataLibrary::plane_normal_all, centroid_all, dataLibrary::cloud_hull_all, normal, centroid, cloud_hull, cluster_index, length, this->getExpandRatio(), this->getTrimTraceEdgesMode(), false);
         fout<<flag<<"\t"<<cluster_index+1<<"\t"<<dataLibrary::clusters[cluster_index].indices.size()<<"\t"<<dip_direction<<"\t"<<dip<<"\t"<<area<<"\t"<<length<<"\t"<<fracture_roughness<<"\n";
 
 		//calculate displacement

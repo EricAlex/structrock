@@ -38,6 +38,7 @@
  */
 
 #include "dataLibrary.h"
+#include "Miniball.hpp"
 #include "globaldef.h"
 
 using namespace std;
@@ -306,6 +307,14 @@ void dataLibrary::assign_left_with_right(Vector3f &left, const Eigen::Vector3f &
 	left.z = right(2);
 }
 
+void dataLibrary::assign_left_with_right(Eigen::Vector3f &left, const float* right)
+{
+	for(int i=0; i<3; i++)
+	{
+		left(i) = right[i];
+	}
+}
+
 bool dataLibrary::no_trim_edges(const Eigen::Vector3f &V, const Eigen::Vector3f &xyz_centroid, pcl::PointCloud<pcl::PointXYZ>::Ptr convex_hull, const Eigen::Vector3f &max_intersection, const Eigen::Vector3f &min_intersection, int patchNum, float &length)
 {
 	stringstream ss;
@@ -538,6 +547,70 @@ bool dataLibrary::trim_edges(const Eigen::Vector3f &V, const Eigen::Vector3f &xy
 		dataLibrary::Lines.push_back(NewLine);
 		
 		length=std::sqrt((max_intersection-min_intersection).dot(max_intersection-min_intersection));
+		return false;
+	}
+}
+
+bool dataLibrary::Circular(const Eigen::Vector3f &V, const Eigen::Vector3f &xyz_centroid, pcl::PointCloud<pcl::PointXYZ>::Ptr convex_hull, const Eigen::Vector3f &V_i, const Eigen::Vector3f &xyz_centroid_i, pcl::PointCloud<pcl::PointXYZ>::Ptr convex_hull_i, int patchNum, float &length, const float &expand_ratio, bool is_triming_edges, bool needExLine)
+{
+	typedef float mytype;			// coordinate type
+	int d = 3;						// dimension
+	int n = convex_hull_i->size();	// number of points
+	mytype** ap = new mytype*[n];
+	for (int i=0; i<n; ++i) {
+		mytype* p = new mytype[d];
+		for (int j=0; j<d; ++j) {
+			p[j] = convex_hull_i->at(i).getVector3fMap()(j);
+		}
+		ap[i]=p;
+	}
+	// define the types of iterators through the points and their coordinates
+	typedef mytype* const* PointIterator;
+	typedef const mytype* CoordIterator;
+	// create an instance of Miniball
+	typedef Miniball::Miniball <Miniball::CoordAccessor<PointIterator, CoordIterator> > MB;
+	MB mb (d, ap, ap+n);
+	const mytype* center = mb.center();
+	Eigen::Vector3f C_0, W, U_axis, V_axis;
+	dataLibrary::assign_left_with_right(C_0, center);
+	mytype radius = std::sqrt(mb.squared_radius());
+	U_axis = (2*radius*expand_ratio+radius)*(V.cross(V_i)/(std::sqrt(V.cross(V_i).dot(V.cross(V_i)))));
+	V_axis = U_axis.cross(V_i);
+	float a = V_axis.dot(V);
+	float b = U_axis.dot(V);
+	float c = (xyz_centroid - C_0).dot(V);
+	float right = c/std::sqrt(a*a+b*b);
+	float beta = std::acos(a/std::sqrt(a*a+b*b));
+	if(std::abs(right)<1)
+	{
+		float t_p_beta = std::asin(right);
+		float temp_ans1, temp_ans2, ans1, ans2;
+		if(t_p_beta>=0)
+		{
+			temp_ans1 = t_p_beta;
+			temp_ans2 = TWOPI/2 - temp_ans1;
+		}
+		else
+		{
+			temp_ans1 = TWOPI + t_p_beta;
+			temp_ans2 = 3*TWOPI/2 - temp_ans1;
+		}
+		ans1 = temp_ans1 - beta;
+		ans2 = temp_ans2 - beta;
+		Eigen::Vector3f max_intersection = C_0 + std::cos(ans1)*U_axis + std::sin(ans1)*V_axis;
+		Eigen::Vector3f min_intersection = C_0 + std::cos(ans2)*U_axis + std::sin(ans2)*V_axis;
+		if(is_triming_edges)
+		{
+			return dataLibrary::trim_edges(V, xyz_centroid, convex_hull, max_intersection, min_intersection, patchNum, length);
+		}
+		else
+		{
+			return dataLibrary::no_trim_edges(V, xyz_centroid, convex_hull, max_intersection, min_intersection, patchNum, length);
+		}
+	}
+	else
+	{
+		length = 0.0;
 		return false;
 	}
 }

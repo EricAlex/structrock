@@ -34,7 +34,7 @@ add_definitions(${PCL_DEFINITIONS})
 
 file(GLOB project_SOURCES . *.cpp)
 
-file(GLOB project_HEADERS . *.h)
+file(GLOB project_HEADERS . *.h *.hpp)
 
 file(GLOB project_FORMS . *.ui)
 

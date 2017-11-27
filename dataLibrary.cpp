@@ -615,9 +615,10 @@ bool dataLibrary::Circular(const Eigen::Vector3f &V, const Eigen::Vector3f &xyz_
 	}
 }
 
-bool dataLibrary::Rectangular(const Eigen::Vector3f &V, const Eigen::Vector3f &xyz_centroid, pcl::PointCloud<pcl::PointXYZ>::Ptr convex_hull, const Eigen::Vector3f &V_i, const Eigen::Vector3f &xyz_centroid_i, pcl::PointCloud<pcl::PointXYZ>::Ptr projected_i, int patchNum, float &length, bool is_triming_edges, bool needExLine)
+bool dataLibrary::Rectangular(const Eigen::Vector3f &V, const Eigen::Vector3f &xyz_centroid, pcl::PointCloud<pcl::PointXYZ>::Ptr convex_hull, const Eigen::Vector3f &V_i, const Eigen::Vector3f &xyz_centroid_i, pcl::PointCloud<pcl::PointXYZ>::Ptr convex_hull_i, int patchNum, float &length, const float &expand_ratio, bool is_triming_edges, bool needExLine)
 {
 	Eigen::Vector3f on_plane_direction = V.cross(V_i);
+	on_plane_direction = on_plane_direction/std::sqrt(on_plane_direction.dot(on_plane_direction));
     stringstream ss;
 	ss << patchNum;
     
@@ -631,12 +632,12 @@ bool dataLibrary::Rectangular(const Eigen::Vector3f &V, const Eigen::Vector3f &x
     {
         float max_value, min_value;
         int max_index, min_index;
-        Eigen::Vector3f point = projected_i->at(0).getVector3fMap();
+        Eigen::Vector3f point = convex_hull_i->at(0).getVector3fMap();
         max_value = min_value = on_plane_direction.dot(point - xyz_centroid_i);
         max_index = min_index = 0;
-        for(int i=1; i<projected_i->size(); i++)
+        for(int i=1; i<convex_hull_i->size(); i++)
         {
-            Eigen::Vector3f point = projected_i->at(i).getVector3fMap();
+            Eigen::Vector3f point = convex_hull_i->at(i).getVector3fMap();
             
             float value = on_plane_direction.dot(point - xyz_centroid_i);
             
@@ -652,35 +653,115 @@ bool dataLibrary::Rectangular(const Eigen::Vector3f &V, const Eigen::Vector3f &x
             }
         }
         Eigen::Vector3f line_direction = V_i.cross(on_plane_direction);
+		float D = on_plane_direction.dot(convex_hull_i->at(max_index).getVector3fMap() - convex_hull_i->at(min_index).getVector3fMap());
+		float E = D*expand_ratio;
         
         Eigen::Vector3f max_intersection, min_intersection;
-        if(PlaneWithLineIntersection(V, xyz_centroid, projected_i->at(max_index).getVector3fMap(), line_direction, max_intersection))
+        if(PlaneWithLineIntersection(V, xyz_centroid, convex_hull_i->at(max_index).getVector3fMap(), line_direction, max_intersection))
         {
-            if(PlaneWithLineIntersection(V, xyz_centroid, projected_i->at(min_index).getVector3fMap(), line_direction, min_intersection))
+            if(PlaneWithLineIntersection(V, xyz_centroid, convex_hull_i->at(min_index).getVector3fMap(), line_direction, min_intersection))
             {
+				Eigen::Vector3f real_max_intersection;
+				Eigen::Vector3f max_direction = max_intersection - convex_hull_i->at(max_index).getVector3fMap();
+				max_direction = max_direction/std::sqrt(max_direction.dot(max_direction));
+				Eigen::Vector3f N_i = convex_hull_i->at(max_index).getVector3fMap();
+				Eigen::Vector3f N_j = convex_hull_i->at(max_index).getVector3fMap() + E*max_direction;
+				double side_i = V.dot(N_i - xyz_centroid);
+				double side_j = V.dot(N_j - xyz_centroid);
+				if((side_i*side_j<=0.0f)&&((side_i*side_i+side_j*side_j)>0.0f))
+				{
+					dataLibrary::PlaneWithLineIntersection(V, xyz_centroid, N_i, N_j-N_i, real_max_intersection);
+				}
+				else
+				{
+					Eigen::Vector3f max_p = convex_hull_i->at(max_index).getVector3fMap();
+					Eigen::Vector3f max_p_p = convex_hull_i->at((max_index+1)%convex_hull_i->size()).getVector3fMap();
+					if(max_direction.cross(max_p_p - max_p).dot((max_p_p - max_p).cross(convex_hull_i->at(min_index).getVector3fMap() - convex_hull_i->at(max_index).getVector3fMap()))>0)
+					{
+						for(int i=max_index; i!=min_index; i=(i+1)%convex_hull_i->size())
+						{
+							N_i = convex_hull_i->at(i).getVector3fMap() + E*max_direction;
+							N_j = convex_hull_i->at((i+1)%convex_hull_i->size()).getVector3fMap() + E*max_direction;
+							double side_i = V.dot(N_i - xyz_centroid);
+							double side_j = V.dot(N_j - xyz_centroid);
+							if((side_i*side_j<=0.0f)&&((side_i*side_i+side_j*side_j)>0.0f))
+							{
+								dataLibrary::PlaneWithLineIntersection(V, xyz_centroid, N_i, N_j-N_i, real_max_intersection);
+								break;
+							}
+						}
+					}
+					else
+					{
+						for(int i=max_index; i!=min_index; i = (i==0 ? (convex_hull_i->size()-1) : (i - 1)))
+						{
+							N_i = convex_hull_i->at(i).getVector3fMap() + E*max_direction;
+							N_j = convex_hull_i->at(i==0 ? (convex_hull_i->size()-1) : (i - 1)).getVector3fMap() + E*max_direction;
+							double side_i = V.dot(N_i - xyz_centroid);
+							double side_j = V.dot(N_j - xyz_centroid);
+							if((side_i*side_j<=0.0f)&&((side_i*side_i+side_j*side_j)>0.0f))
+							{
+								dataLibrary::PlaneWithLineIntersection(V, xyz_centroid, N_i, N_j-N_i, real_max_intersection);
+								break;
+							}
+						}
+					}
+				}
+
+				Eigen::Vector3f real_min_intersection;
+				Eigen::Vector3f min_direction = min_intersection - convex_hull_i->at(min_index).getVector3fMap();
+				min_direction = min_direction/std::sqrt(min_direction.dot(min_direction));
+				N_i = convex_hull_i->at(min_index).getVector3fMap();
+				N_j = convex_hull_i->at(min_index).getVector3fMap() + E*min_direction;
+				side_i = V.dot(N_i - xyz_centroid);
+				side_j = V.dot(N_j - xyz_centroid);
+				if((side_i*side_j<=0.0f)&&((side_i*side_i+side_j*side_j)>0.0f))
+				{
+					dataLibrary::PlaneWithLineIntersection(V, xyz_centroid, N_i, N_j-N_i, real_min_intersection);
+				}
+				else
+				{
+					Eigen::Vector3f min_p = convex_hull_i->at(min_index).getVector3fMap();
+					Eigen::Vector3f min_p_p = convex_hull_i->at((min_index+1)%convex_hull_i->size()).getVector3fMap();
+					if(min_direction.cross(min_p_p - min_p).dot((min_p_p - min_p).cross(convex_hull_i->at(max_index).getVector3fMap() - convex_hull_i->at(min_index).getVector3fMap()))>0)
+					{
+						for(int i=min_index; i!=max_index; i=(i+1)%convex_hull_i->size())
+						{
+							N_i = convex_hull_i->at(i).getVector3fMap() + E*min_direction;
+							N_j = convex_hull_i->at((i+1)%convex_hull_i->size()).getVector3fMap() + E*min_direction;
+							double side_i = V.dot(N_i - xyz_centroid);
+							double side_j = V.dot(N_j - xyz_centroid);
+							if((side_i*side_j<=0.0f)&&((side_i*side_i+side_j*side_j)>0.0f))
+							{
+								dataLibrary::PlaneWithLineIntersection(V, xyz_centroid, N_i, N_j-N_i, real_min_intersection);
+								break;
+							}
+						}
+					}
+					else
+					{
+						for(int i=min_index; i!=max_index; i = (i==0 ? (convex_hull_i->size()-1) : (i - 1)))
+						{
+							N_i = convex_hull_i->at(i).getVector3fMap() + E*min_direction;
+							N_j = convex_hull_i->at(i==0 ? (convex_hull_i->size()-1) : (i - 1)).getVector3fMap() + E*min_direction;
+							double side_i = V.dot(N_i - xyz_centroid);
+							double side_j = V.dot(N_j - xyz_centroid);
+							if((side_i*side_j<=0.0f)&&((side_i*side_i+side_j*side_j)>0.0f))
+							{
+								dataLibrary::PlaneWithLineIntersection(V, xyz_centroid, N_i, N_j-N_i, real_min_intersection);
+								break;
+							}
+						}
+					}
+				}
 				if(needExLine)
 				{
-					Line NewLine_max, NewLine_min;
-					dataLibrary::assign_left_with_right(NewLine_max.begin, projected_i->at(max_index).getVector3fMap());
-					dataLibrary::assign_left_with_right(NewLine_max.end, max_intersection);
-					NewLine_max.r = 1;
-					NewLine_max.g = 1;
-					NewLine_max.b = 1;
-					NewLine_max.ID = "Line_auxiliary_max"+ss.str();
-					dataLibrary::Lines_max.push_back(NewLine_max);
-
-					dataLibrary::assign_left_with_right(NewLine_min.begin, projected_i->at(min_index).getVector3fMap());
-					dataLibrary::assign_left_with_right(NewLine_min.end, min_intersection);
-					NewLine_min.r = 1;
-					NewLine_min.g = 1;
-					NewLine_min.b = 1;
-					NewLine_min.ID = "Line_auxiliary_min"+ss.str();
-					dataLibrary::Lines_min.push_back(NewLine_min);
+					
 				}
 				if(is_triming_edges)
-					return dataLibrary::trim_edges(V, xyz_centroid, convex_hull, max_intersection, min_intersection, patchNum, length);
+					return dataLibrary::trim_edges(V, xyz_centroid, convex_hull, real_max_intersection, real_min_intersection, patchNum, length);
 				else
-					return dataLibrary::no_trim_edges(V, xyz_centroid, convex_hull, max_intersection, min_intersection, patchNum, length);
+					return dataLibrary::no_trim_edges(V, xyz_centroid, convex_hull, real_max_intersection, real_min_intersection, patchNum, length);
             }
             else
             {

@@ -120,4 +120,5 @@ public:
 	static bool isOnlyDouble(const char* str);
 	static void assign_left_with_right(Vector3f &left, const Eigen::Vector3f &right);
 	static void assign_left_with_right(Eigen::Vector3f &left, const float* right);
+	static void assign_left_with_right(pcl::PointXYZ &left, const Eigen::Vector3f &right);
 };

@@ -983,7 +983,7 @@ void structrock::command_parser()
 			{
 				showprocessworker.setWorkFlowMode(true);
 				showprocessworker.prepare();
-				connect(&showprocessworker, SIGNAL(show(std::vector<std::string>)), this, SLOT(Show_Process(std::vector<std::string>)));
+				connect(&showprocessworker, SIGNAL(show(QStringList)), this, SLOT(Show_Process(QStringList)));
 				connect(&showprocessworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
 				connect(&showprocessworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
 				connect(&showprocessworker, SIGNAL(GoWorkFlow()), this, SLOT(command_parser()));
@@ -1815,8 +1815,13 @@ void structrock::Show_SaveTraceMap(QString filename)
 	plotWin.ui.plotWidget->savePdf(filename,true, 1000, 1000);
 }
 
-void structrock::Show_Process(std::vector<std::string> contents)
+void structrock::Show_Process(QStringList Qcontents)
 {
+	std::vector<std::string> contents;
+	for(int i=0; i<Qcontents.size(); i++)
+	{
+		contents.push_back(Qcontents[i].toStdString());
+	}
 	viewer->removeAllPointClouds(v2);
 	viewer->removeAllShapes(v1);
 	viewer->removeAllShapes(v2);
@@ -1873,38 +1878,49 @@ void structrock::Show_Process(std::vector<std::string> contents)
 			b=point.b/255.0;
 			viewer->addPolygon<pcl::PointXYZ>(dataLibrary::fracture_faces_hull[cluster_index], r, g, b, "polygon_"+ss.str(), v2);
 			viewer->setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_REPRESENTATION, pcl::visualization::PCL_VISUALIZER_REPRESENTATION_SURFACE, "polygon_"+ss.str(), v2);
+		}
 
-			if(show_fracture_traces)
+		if(show_fracture_traces)
+		{
+			for(int i=0; i<dataLibrary::Lines.size(); i++)
 			{
-				if(show_extension_line)
-				{
-					Eigen::Vector3f begin_max, end_max;
-					begin_max(0) = dataLibrary::Lines_max[cluster_index].begin.x;
-					begin_max(1) = dataLibrary::Lines_max[cluster_index].begin.y;
-					begin_max(2) = dataLibrary::Lines_max[cluster_index].begin.z;
-					end_max(0) = dataLibrary::Lines_max[cluster_index].end.x;
-					end_max(1) = dataLibrary::Lines_max[cluster_index].end.y;
-					end_max(2) = dataLibrary::Lines_max[cluster_index].end.z;
-					DrawLine(begin_max, end_max, dataLibrary::Lines_max[cluster_index].r, dataLibrary::Lines_max[cluster_index].g, dataLibrary::Lines_max[cluster_index].b, dataLibrary::Lines_max[cluster_index].ID, v2);
-
-					Eigen::Vector3f begin_min, end_min;
-					begin_min(0) = dataLibrary::Lines_min[cluster_index].begin.x;
-					begin_min(1) = dataLibrary::Lines_min[cluster_index].begin.y;
-					begin_min(2) = dataLibrary::Lines_min[cluster_index].begin.z;
-					end_min(0) = dataLibrary::Lines_min[cluster_index].end.x;
-					end_min(1) = dataLibrary::Lines_min[cluster_index].end.y;
-					end_min(2) = dataLibrary::Lines_min[cluster_index].end.z;
-					DrawLine(begin_min, end_min, dataLibrary::Lines_min[cluster_index].r, dataLibrary::Lines_min[cluster_index].g, dataLibrary::Lines_min[cluster_index].b, dataLibrary::Lines_min[cluster_index].ID, v2);
-				}
-
 				Eigen::Vector3f begin, end;
-				begin(0) = dataLibrary::Lines[cluster_index].begin.x;
-				begin(1) = dataLibrary::Lines[cluster_index].begin.y;
-				begin(2) = dataLibrary::Lines[cluster_index].begin.z;
-				end(0) = dataLibrary::Lines[cluster_index].end.x;
-				end(1) = dataLibrary::Lines[cluster_index].end.y;
-				end(2) = dataLibrary::Lines[cluster_index].end.z;
-				DrawLine(begin, end, dataLibrary::Lines[cluster_index].r, dataLibrary::Lines[cluster_index].g, dataLibrary::Lines[cluster_index].b, 3, dataLibrary::Lines[cluster_index].ID, v2);
+				begin(0) = dataLibrary::Lines[i].begin.x;
+				begin(1) = dataLibrary::Lines[i].begin.y;
+				begin(2) = dataLibrary::Lines[i].begin.z;
+				end(0) = dataLibrary::Lines[i].end.x;
+				end(1) = dataLibrary::Lines[i].end.y;
+				end(2) = dataLibrary::Lines[i].end.z;
+				DrawLine(begin, end, dataLibrary::Lines[i].r, dataLibrary::Lines[i].g, dataLibrary::Lines[i].b, 3, dataLibrary::Lines[i].ID, v2);
+			}
+			if(show_extension_line)
+			{
+				if((dataLibrary::checkContents(contents, QString::number(FMAP_RECTANGULAR).toStdString()))||(dataLibrary::checkContents(contents, QString::number(FMAP_CIRCULAR).toStdString())))
+				{
+					for(int i=0; i<dataLibrary::fracture_faces_expanded.size(); i++)
+					{
+						stringstream ss;
+						ss << i;
+						viewer->addPolygon<pcl::PointXYZ>(dataLibrary::fracture_faces_expanded[i], 1.0, 1.0, 1.0, "polygon_expanded_"+ss.str(), v2);
+						viewer->setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_REPRESENTATION, pcl::visualization::PCL_VISUALIZER_REPRESENTATION_SURFACE, "polygon_expanded_"+ss.str(), v2);
+						viewer->setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, 0.6, "polygon_expanded_"+ss.str(), v2);
+					}
+
+					for(int cluster_index = 0; cluster_index < dataLibrary::clusters.size(); cluster_index++)
+					{
+						stringstream ss;
+						ss << cluster_index;
+						float r, g, b;
+						pcl::PointXYZRGB point = dataLibrary::cloudxyzrgb_clusters->at(dataLibrary::clusters[cluster_index].indices[0]);
+						r=point.r/255.0;
+						g=point.g/255.0;
+						b=point.b/255.0;
+						viewer->addPolygon<pcl::PointXYZ>(dataLibrary::fracture_faces_hull_up[cluster_index], r, g, b, "polygon_replot_up_"+ss.str(), v2);
+						viewer->setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_REPRESENTATION, pcl::visualization::PCL_VISUALIZER_REPRESENTATION_SURFACE, "polygon_replot_up_"+ss.str(), v2);
+						viewer->addPolygon<pcl::PointXYZ>(dataLibrary::fracture_faces_hull_down[cluster_index], r, g, b, "polygon_replot_down_"+ss.str(), v2);
+						viewer->setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_REPRESENTATION, pcl::visualization::PCL_VISUALIZER_REPRESENTATION_SURFACE, "polygon_replot_down_"+ss.str(), v2);
+					}
+				}
 			}
 		}
 

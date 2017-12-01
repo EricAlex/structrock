@@ -59,6 +59,9 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr dataLibrary::segmentation_rem(new pcl::Point
 std::vector<pcl::PointIndices> dataLibrary::clusters;
 std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> dataLibrary::cluster_patches;
 std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> dataLibrary::fracture_faces_hull;
+std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> dataLibrary::fracture_faces_hull_up;
+std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> dataLibrary::fracture_faces_hull_down;
+std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> dataLibrary::fracture_faces_expanded;
 std::vector<float> dataLibrary::dips;
 std::vector<float> dataLibrary::dip_directions;
 std::vector<float> dataLibrary::out_dips;
@@ -588,6 +591,30 @@ bool dataLibrary::Circular(const Eigen::Vector3f &V, const Eigen::Vector3f &xyz_
 	float c = (xyz_centroid - C_0).dot(V);
 	float right = c/std::sqrt(a*a+b*b);
 	float beta = std::acos(a/std::sqrt(a*a+b*b));
+	if(needExLine)
+	{
+		pcl::PointCloud<pcl::PointXYZ>::Ptr N_hull(new pcl::PointCloud<pcl::PointXYZ>);
+		for(int i=0; i<359; i=i+3)
+		{
+			pcl::PointXYZ point;
+			dataLibrary::assign_left_with_right(point, C_0 + std::cos(i*TWOPI/360.0)*U_axis + std::sin(i*TWOPI/360.0)*V_axis);
+			N_hull->push_back(point);
+		}
+		Eigen::Vector3f offset = 0.0004*V_i/std::sqrt(V_i.dot(V_i));
+		pcl::PointCloud<pcl::PointXYZ>::Ptr N_hull_up(new pcl::PointCloud<pcl::PointXYZ>);
+		pcl::PointCloud<pcl::PointXYZ>::Ptr N_hull_down(new pcl::PointCloud<pcl::PointXYZ>);
+		for(int i=0; i<convex_hull_i->size(); i++)
+		{
+			pcl::PointXYZ point_up, point_down;
+			dataLibrary::assign_left_with_right(point_up, convex_hull_i->at(i).getVector3fMap()+offset);
+			dataLibrary::assign_left_with_right(point_down, convex_hull_i->at(i).getVector3fMap()-offset);
+			N_hull_up->push_back(point_up);
+			N_hull_down->push_back(point_down);
+		}
+		dataLibrary::fracture_faces_hull_up.push_back(N_hull_up);
+		dataLibrary::fracture_faces_hull_down.push_back(N_hull_down);
+		dataLibrary::fracture_faces_expanded.push_back(N_hull);
+	}
 	if(std::abs(right)<1)
 	{
 		float t_p_beta = std::asin(right);
@@ -663,84 +690,63 @@ bool dataLibrary::Rectangular(const Eigen::Vector3f &V, const Eigen::Vector3f &x
 		line_direction = line_direction/std::sqrt(line_direction.dot(line_direction));
 		float D = on_plane_direction.dot(convex_hull_i->at(max_index).getVector3fMap() - convex_hull_i->at(min_index).getVector3fMap());
 		float E = D*expand_ratio;
-        
-        Eigen::Vector3f max_intersection;
-        if(PlaneWithLineIntersection(V, xyz_centroid, convex_hull_i->at(max_index).getVector3fMap(), line_direction, max_intersection))
-        {
-			pcl::PointCloud<pcl::PointXYZ>::Ptr N_hull(new pcl::PointCloud<pcl::PointXYZ>);
-			Eigen::Vector3f max_p = convex_hull_i->at(max_index).getVector3fMap();
-			Eigen::Vector3f expand_dir = max_intersection - max_p;
-			expand_dir = expand_dir/std::sqrt(expand_dir.dot(expand_dir));
-			Eigen::Vector3f max_p_p = convex_hull_i->at((max_index+1)%convex_hull_i->size()).getVector3fMap();
-			Eigen::Vector3f max_p_m;
-			if(max_index==0)
+
+		pcl::PointCloud<pcl::PointXYZ>::Ptr N_hull(new pcl::PointCloud<pcl::PointXYZ>);
+		Eigen::Vector3f norm_max_min = V_i.cross(convex_hull_i->at(max_index).getVector3fMap() - convex_hull_i->at(min_index).getVector3fMap());
+		Eigen::Vector3f test_p = convex_hull_i->at(max_index).getVector3fMap() + line_direction;
+		Eigen::Vector3f mid_max_min = (convex_hull_i->at(max_index).getVector3fMap() + convex_hull_i->at(min_index).getVector3fMap())/2;
+		float side_p = (test_p - mid_max_min).dot(norm_max_min);
+		Eigen::Vector3f dir_mem;
+		for(int i=0; i<convex_hull_i->size(); i++)
+		{
+			float side_i = (convex_hull_i->at(i).getVector3fMap() - mid_max_min).dot(norm_max_min);
+			if(std::abs(side_i*side_p)<100*std::numeric_limits<float>::epsilon())
 			{
-				max_p_m = convex_hull_i->at(convex_hull_i->size()-1).getVector3fMap();
+				pcl::PointXYZ point_o, point_n;
+				dataLibrary::assign_left_with_right(point_o, convex_hull_i->at(i).getVector3fMap() + E*dir_mem);
+				N_hull->push_back(point_o);
+				dataLibrary::assign_left_with_right(point_n, convex_hull_i->at(i).getVector3fMap() - E*dir_mem);
+				N_hull->push_back(point_n);
+				dir_mem = -dir_mem;
+			}
+			else if(side_i*side_p>0.0f)
+			{
+				pcl::PointXYZ point;
+				dataLibrary::assign_left_with_right(point, convex_hull_i->at(i).getVector3fMap() + E*line_direction);
+				N_hull->push_back(point);
+				dir_mem = line_direction;
 			}
 			else
 			{
-				convex_hull_i->at(max_index-1).getVector3fMap();
+				pcl::PointXYZ point;
+				dataLibrary::assign_left_with_right(point, convex_hull_i->at(i).getVector3fMap() - E*line_direction);
+				N_hull->push_back(point);
+				dir_mem = -line_direction;
 			}
-			float angle_p = std::acos(expand_dir.dot(max_p_p));
-			float angle_m = std::acos(expand_dir.dot(max_p_m));
-			if(angle_p<angle_m)
+		}
+		if(needExLine)
+		{
+			Eigen::Vector3f offset = 0.0004*V_i/std::sqrt(V_i.dot(V_i));
+			pcl::PointCloud<pcl::PointXYZ>::Ptr N_hull_up(new pcl::PointCloud<pcl::PointXYZ>);
+			pcl::PointCloud<pcl::PointXYZ>::Ptr N_hull_down(new pcl::PointCloud<pcl::PointXYZ>);
+			for(int i=0; i<convex_hull_i->size(); i++)
 			{
-				for(int i=max_index; i!=min_index; i=(i+1)%convex_hull_i->size())
-				{
-					pcl::PointXYZ point;
-					dataLibrary::assign_left_with_right(point, convex_hull_i->at(i).getVector3fMap()+E*expand_dir);
-					N_hull->push_back(point);
-				}
-				pcl::PointXYZ min_point;
-				dataLibrary::assign_left_with_right(min_point, convex_hull_i->at(min_index).getVector3fMap()+E*expand_dir);
-				N_hull->push_back(min_point);
-				for(int i=min_index; i!=max_index; i=(i+1)%convex_hull_i->size())
-				{
-					pcl::PointXYZ point;
-					dataLibrary::assign_left_with_right(point, convex_hull_i->at(i).getVector3fMap()-E*expand_dir);
-					N_hull->push_back(point);
-				}
-				pcl::PointXYZ max_point;
-				dataLibrary::assign_left_with_right(max_point, convex_hull_i->at(max_index).getVector3fMap()-E*expand_dir);
-				N_hull->push_back(max_point);
+				pcl::PointXYZ point_up, point_down;
+				dataLibrary::assign_left_with_right(point_up, convex_hull_i->at(i).getVector3fMap()+offset);
+				dataLibrary::assign_left_with_right(point_down, convex_hull_i->at(i).getVector3fMap()-offset);
+				N_hull_up->push_back(point_up);
+				N_hull_down->push_back(point_down);
 			}
-			else
-			{
-				for(int i=min_index; i!=max_index; i=(i+1)%convex_hull_i->size())
-				{
-					pcl::PointXYZ point;
-					dataLibrary::assign_left_with_right(point, convex_hull_i->at(i).getVector3fMap()+E*expand_dir);
-					N_hull->push_back(point);
-				}
-				pcl::PointXYZ max_point;
-				dataLibrary::assign_left_with_right(max_point, convex_hull_i->at(max_index).getVector3fMap()+E*expand_dir);
-				N_hull->push_back(max_point);
-				for(int i=max_index; i!=min_index; i=(i+1)%convex_hull_i->size())
-				{
-					pcl::PointXYZ point;
-					dataLibrary::assign_left_with_right(point, convex_hull_i->at(i).getVector3fMap()-E*expand_dir);
-					N_hull->push_back(point);
-				}
-				pcl::PointXYZ min_point;
-				dataLibrary::assign_left_with_right(min_point, convex_hull_i->at(min_index).getVector3fMap()-E*expand_dir);
-				N_hull->push_back(min_point);
-			}
-			return dataLibrary::LowerBound(V, xyz_centroid, convex_hull, V_i, xyz_centroid_i, N_hull, patchNum, length, is_triming_edges, false);
-        }
-        else
-        {
-            length=0.0;
-			return false;
-        }
+			dataLibrary::fracture_faces_hull_up.push_back(N_hull_up);
+			dataLibrary::fracture_faces_hull_down.push_back(N_hull_down);
+			dataLibrary::fracture_faces_expanded.push_back(N_hull);
+		}
+		return dataLibrary::LowerBound(V, xyz_centroid, convex_hull, V_i, xyz_centroid_i, N_hull, patchNum, length, is_triming_edges, false);
     }
 }
 
 bool dataLibrary::LowerBound(const Eigen::Vector3f &V, const Eigen::Vector3f &xyz_centroid, pcl::PointCloud<pcl::PointXYZ>::Ptr convex_hull, const Eigen::Vector3f &V_i, const Eigen::Vector3f &xyz_centroid_i, pcl::PointCloud<pcl::PointXYZ>::Ptr convex_hull_i, int patchNum, float &length, bool is_triming_edges, bool needExLine)
 {
-	if(needExLine)
-	{
-		dataLibrary::fracture_faces_hull.push_back(convex_hull_i);
-	}
 	int hull_size_i = convex_hull_i->size();
 	std::vector<Eigen::Vector3f> intersections;
 	for(int i=0; i<hull_size_i; i++)

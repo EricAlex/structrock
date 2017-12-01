@@ -38,20 +38,44 @@
  */
 
 #pragma once
+#include <QStringList>
 #include <vector>
 #include <string>
 #include "Worker.h"
+#include "globaldef.h"
 class ShowProcessWorker : public Worker
 {
 	Q_OBJECT
 
 private:
 	std::vector<std::string> contents;
+	int _fracture_map_mode;
+	double _expand_ratio;
 
 public:
 	void showProcess()
 	{
 		QMetaObject::invokeMethod(this, "doWork");
+	}
+	void setDefaltFMAP_Mode()
+	{
+		_fracture_map_mode = FMAP_LOWER_BOUND;
+	}
+	void setFMAP_Mode(int mode)
+	{
+		_fracture_map_mode = mode;
+	}
+	int getFMAP_Mode()
+	{
+		return _fracture_map_mode;
+	}
+	void setExpandRatio(double ratio)
+	{
+		_expand_ratio = ratio;
+	}
+	double getExpandRatio()
+	{
+		return _expand_ratio;
 	}
 	virtual bool is_para_satisfying(QString message);
 	virtual void prepare();
@@ -60,5 +84,5 @@ public slots:
 	void doWork();
 
 signals:
-	void show(std::vector<std::string> contents);
+	void show(QStringList Qcontents);
 };

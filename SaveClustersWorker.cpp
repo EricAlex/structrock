@@ -50,7 +50,6 @@
 #include <pcl/point_types.h>
 #include <pcl/kdtree/kdtree_flann.h>
 #include <pcl/surface/mls.h>
-#include <pcl/surface/concave_hull.h>
 #include <pcl/surface/convex_hull.h>
 #include <pcl/features/normal_3d.h>
 #include <pcl/features/normal_3d_omp.h>
@@ -191,6 +190,7 @@ void SaveClustersWorker::doWork()
     //compute convex hull
     pcl::ConvexHull<pcl::PointXYZ> chull_all;
     chull_all.setInputCloud(cloud_projected_all);
+	chull_all.setDimension(2);
     chull_all.reconstruct(*dataLibrary::cloud_hull_all);
 
 	/*//compute concave hull
@@ -272,35 +272,28 @@ void SaveClustersWorker::doWork()
         centroid(0)=xyz_centroid(0);
         centroid(1)=xyz_centroid(1);
         centroid(2)=xyz_centroid(2);
-        
-        //project data onto plane
-        //set plane parameter
-        pcl::ModelCoefficients::Ptr coefficients (new pcl::ModelCoefficients());
-        coefficients->values.resize(4);
-        coefficients->values[0] = nx;
-        coefficients->values[1] = ny;
-        coefficients->values[2] = nz;
-        coefficients->values[3] = - (nx*xyz_centroid[0] + ny*xyz_centroid[1] + nz*xyz_centroid[2]);
-        //projecting
-        pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_projected (new pcl::PointCloud<pcl::PointXYZ>);
-        pcl::ProjectInliers<pcl::PointXYZ> proj;
-        proj.setModelType(pcl::SACMODEL_PLANE);
-        proj.setInputCloud(plane_cloud);
-        proj.setModelCoefficients(coefficients);
-        proj.filter(*cloud_projected);
+		Eigen::Vector3f normal;
+        normal(0) = nx;
+        normal(1) = ny;
+        normal(2) = nz;
+
+		Eigen::Vector3f V1 = normal.cross(dataLibrary::plane_normal_all);
+		V1 = V1/std::sqrt(V1.dot(V1));
+		Eigen::Vector3f V2 = normal.cross(V1);
+		V2 = V2/std::sqrt(V2.dot(V2));
+		pcl::PointCloud<pcl::PointXY>::Ptr cloud_projected_2d (new pcl::PointCloud<pcl::PointXY>);
+		dataLibrary::projection322(centroid, V1, V2, plane_cloud, cloud_projected_2d);
+		pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_projected_3d (new pcl::PointCloud<pcl::PointXYZ>);
+		dataLibrary::projection223(centroid, V1, V2, cloud_projected_2d, cloud_projected_3d);
         
         //generate a concave or convex
         pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_hull (new pcl::PointCloud<pcl::PointXYZ>);
         pcl::ConvexHull<pcl::PointXYZ> chull;
-        chull.setInputCloud(cloud_projected);
+        chull.setInputCloud(cloud_projected_3d);
+		chull.setDimension(2);
         chull.reconstruct(*cloud_hull);
         
         //calculate polygon area
-        Eigen::Vector3f normal;
-        normal(0) = nx;
-        normal(1) = ny;
-        normal(2) = nz;
-        
         float area = 0.0f;
         int num_points = cloud_hull->size();
         int j = 0;
@@ -389,18 +382,18 @@ void SaveClustersWorker::doWork()
 				float max_value, min_value;
 				int max_index, min_index;
 				Eigen::Vector3f point;
-				point(0) = cloud_projected->at(0).x;
-				point(1) = cloud_projected->at(0).y;
-				point(2) = cloud_projected->at(0).z;
+				point(0) = cloud_projected_3d->at(0).x;
+				point(1) = cloud_projected_3d->at(0).y;
+				point(2) = cloud_projected_3d->at(0).z;
 				float mod_line_direction = std::sqrt(line_direction.dot(line_direction));
 				max_value = min_value = line_direction.dot(point - centroid)/mod_line_direction;
 				max_index = min_index = 0;
-				for(int i=1; i<cloud_projected->size(); i++)
+				for(int i=1; i<cloud_projected_3d->size(); i++)
 				{
 					Eigen::Vector3f point;
-					point(0) = cloud_projected->at(i).x;
-					point(1) = cloud_projected->at(i).y;
-					point(2) = cloud_projected->at(i).z;
+					point(0) = cloud_projected_3d->at(i).x;
+					point(1) = cloud_projected_3d->at(i).y;
+					point(2) = cloud_projected_3d->at(i).z;
 					
 					float value = line_direction.dot(point - centroid)/mod_line_direction;
 					
@@ -419,8 +412,8 @@ void SaveClustersWorker::doWork()
 				total_dip2plane+=alpha*360.0/TWOPI;
 				inside_num+=1;
 				float tangent_alpha = std::tan(alpha);
-				float height_max = std::abs(dataLibrary::plane_normal_all.dot(cloud_projected->at(max_index).getVector3fMap()-centroid_all)/std::sqrt(dataLibrary::plane_normal_all.dot(dataLibrary::plane_normal_all)));
-				float height_min = std::abs(dataLibrary::plane_normal_all.dot(cloud_projected->at(min_index).getVector3fMap()-centroid_all)/std::sqrt(dataLibrary::plane_normal_all.dot(dataLibrary::plane_normal_all)));
+				float height_max = std::abs(dataLibrary::plane_normal_all.dot(cloud_projected_3d->at(max_index).getVector3fMap()-centroid_all)/std::sqrt(dataLibrary::plane_normal_all.dot(dataLibrary::plane_normal_all)));
+				float height_min = std::abs(dataLibrary::plane_normal_all.dot(cloud_projected_3d->at(min_index).getVector3fMap()-centroid_all)/std::sqrt(dataLibrary::plane_normal_all.dot(dataLibrary::plane_normal_all)));
 				float displacement_max = height_max/tangent_alpha;
 				float displacement_min = height_min/tangent_alpha;
 				total_displacement += (displacement_max+displacement_min)/2.0;

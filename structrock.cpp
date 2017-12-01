@@ -1867,7 +1867,7 @@ void structrock::Show_Process(QStringList Qcontents)
 			show_extension_line = true;
 		}
 
-		for(int cluster_index = 0; cluster_index < dataLibrary::clusters.size(); cluster_index++)
+		for(int cluster_index = 0; cluster_index < dataLibrary::fracture_faces_hull.size(); cluster_index++)
 		{
 			stringstream ss;
 			ss << cluster_index;
@@ -1903,7 +1903,14 @@ void structrock::Show_Process(QStringList Qcontents)
 						ss << i;
 						viewer->addPolygon<pcl::PointXYZ>(dataLibrary::fracture_faces_expanded[i], 1.0, 1.0, 1.0, "polygon_expanded_"+ss.str(), v2);
 						viewer->setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_REPRESENTATION, pcl::visualization::PCL_VISUALIZER_REPRESENTATION_SURFACE, "polygon_expanded_"+ss.str(), v2);
-						viewer->setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, 0.6, "polygon_expanded_"+ss.str(), v2);
+						viewer->setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, 0.5, "polygon_expanded_"+ss.str(), v2);
+					}
+
+					for(int i=0; i<dataLibrary::fracture_faces_circle_original.size(); i++)
+					{
+						stringstream ss;
+						ss << i;
+						viewer->addPolygon<pcl::PointXYZ>(dataLibrary::fracture_faces_circle_original[i], 1.0, 1.0, 1.0, "polygon_circle_original_"+ss.str(), v2);
 					}
 
 					for(int cluster_index = 0; cluster_index < dataLibrary::clusters.size(); cluster_index++)

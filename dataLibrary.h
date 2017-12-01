@@ -68,11 +68,12 @@ public:
 	static pcl::PointCloud<pcl::PointXYZ>::Ptr segmentation_rem;
 	static std::string cloudID;
 	static std::vector<pcl::PointIndices> clusters;
-	static std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> cluster_patches;			//for reading in the saved clusters data
-	static std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> fracture_faces_hull;		//for visualizing fracture oulines
-	static std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> fracture_faces_hull_up;		//for visualizing fracture oulines (up side)
-	static std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> fracture_faces_hull_down;	//for visualizing fracture oulines (down side)
-	static std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> fracture_faces_expanded;	//for visualizing expanded fracture oulines
+	static std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> cluster_patches;				//for reading in the saved clusters data
+	static std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> fracture_faces_hull;			//for visualizing fracture oulines
+	static std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> fracture_faces_hull_up;			//for visualizing fracture oulines (up side)
+	static std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> fracture_faces_hull_down;		//for visualizing fracture oulines (down side)
+	static std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> fracture_faces_circle_original;	//for visualizing original fracture circles
+	static std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> fracture_faces_expanded;		//for visualizing expanded fracture oulines
 	static std::vector<float> dips;
 	static std::vector<float> dip_directions;
 	static std::vector<float> out_dips;
@@ -102,6 +103,8 @@ public:
 	static bool haveBaseData();
 	static void clearall();
 	static void clearWorkFlow();
+	static bool projection322(const Eigen::Vector3f &xyz_centroid, const Eigen::Vector3f &unit_V1, const Eigen::Vector3f &unit_V2, pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_in, pcl::PointCloud<pcl::PointXY>::Ptr cloud_out);
+	static bool projection223(const Eigen::Vector3f &xyz_centroid, const Eigen::Vector3f &unit_V1, const Eigen::Vector3f &unit_V2, pcl::PointCloud<pcl::PointXY>::Ptr cloud_in, pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_out);
     static bool projection323(const Eigen::Vector3f &V1, const Eigen::Vector3f &V2, const Eigen::Vector3f &point_in, Eigen::Vector3f &point_out);
     static bool projection322(const Eigen::Vector3f &V1, const Eigen::Vector3f &V2, const Eigen::Vector3f &point_in, Eigen::Vector2f &point_out);
     static bool projection322(const Eigen::Vector3f &V1, const Eigen::Vector3f &V2, pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_in, std::vector<Eigen::Vector2f> &Points_out);

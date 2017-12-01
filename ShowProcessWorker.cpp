@@ -49,7 +49,6 @@
 #include <pcl/point_types.h>
 #include <pcl/kdtree/kdtree_flann.h>
 #include <pcl/surface/mls.h>
-#include <pcl/surface/concave_hull.h>
 #include <pcl/surface/convex_hull.h>
 #include <pcl/features/normal_3d.h>
 #include <pcl/features/normal_3d_omp.h>
@@ -194,6 +193,7 @@ void ShowProcessWorker::doWork()
 		//compute convex hull
 		pcl::ConvexHull<pcl::PointXYZ> chull_all;
 		chull_all.setInputCloud(cloud_projected_all);
+		chull_all.setDimension(2);
 		chull_all.reconstruct(*dataLibrary::cloud_hull_all);
 	}
 
@@ -238,27 +238,25 @@ void ShowProcessWorker::doWork()
 			centroid(0)=xyz_centroid(0);
 			centroid(1)=xyz_centroid(1);
 			centroid(2)=xyz_centroid(2);
+			Eigen::Vector3f normal;
+			normal(0) = nx;
+			normal(1) = ny;
+			normal(2) = nz;
 
-			//project data onto plane
-			//set plane parameter
-			pcl::ModelCoefficients::Ptr coefficients (new pcl::ModelCoefficients());
-			coefficients->values.resize(4);
-			coefficients->values[0] = nx;
-			coefficients->values[1] = ny;
-			coefficients->values[2] = nz;
-			coefficients->values[3] = - (nx*xyz_centroid[0] + ny*xyz_centroid[1] + nz*xyz_centroid[2]);
-			//projecting
-			pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_projected (new pcl::PointCloud<pcl::PointXYZ>);
-			pcl::ProjectInliers<pcl::PointXYZ> proj;
-			proj.setModelType(pcl::SACMODEL_PLANE);
-			proj.setInputCloud(plane_cloud);
-			proj.setModelCoefficients(coefficients);
-			proj.filter(*cloud_projected);
+			Eigen::Vector3f V1 = normal.cross(dataLibrary::plane_normal_all);
+			V1 = V1/std::sqrt(V1.dot(V1));
+			Eigen::Vector3f V2 = normal.cross(V1);
+			V2 = V2/std::sqrt(V2.dot(V2));
+			pcl::PointCloud<pcl::PointXY>::Ptr cloud_projected_2d (new pcl::PointCloud<pcl::PointXY>);
+			dataLibrary::projection322(centroid, V1, V2, plane_cloud, cloud_projected_2d);
+			pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_projected_3d (new pcl::PointCloud<pcl::PointXYZ>);
+			dataLibrary::projection223(centroid, V1, V2, cloud_projected_2d, cloud_projected_3d);
 
 			//generate a convex hull
 			pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_hull (new pcl::PointCloud<pcl::PointXYZ>);
 			pcl::ConvexHull<pcl::PointXYZ> chull;
-			chull.setInputCloud(cloud_projected);
+			chull.setInputCloud(cloud_projected_3d);
+			chull.setDimension(2);
 			chull.reconstruct(*cloud_hull);
 			dataLibrary::fracture_faces_hull.push_back(cloud_hull);
 
@@ -266,11 +264,6 @@ void ShowProcessWorker::doWork()
 			{
 				indices_all->indices.insert(indices_all->indices.end(), dataLibrary::clusters[cluster_index].indices.begin(), dataLibrary::clusters[cluster_index].indices.end());
 			}
-
-			Eigen::Vector3f normal;
-			normal(0) = nx;
-			normal(1) = ny;
-			normal(2) = nz;
 
 			if(show_fracture_traces)
 			{

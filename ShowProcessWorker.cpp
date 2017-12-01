@@ -37,7 +37,6 @@
  *
  */
 
-#include <QStringList>
 #include <vector>
 #include <string>
 #include <math.h>
@@ -73,57 +72,17 @@ bool ShowProcessWorker::is_para_satisfying(QString message)
 	}
 	else
 	{
-		this->setParaSize(0);
 		if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>0)
 		{
-			this->setParaIndex(this->getParaSize());
-			this->setDefaltFMAP_Mode();
-			bool need_expand_ratio(false);
-			if((dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>this->getParaIndex())&&(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[this->getParaIndex()] == "circular"))
+			for(this->setParaIndex(0); this->getParaIndex()<dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size(); this->setParaIndex(this->getParaIndex()+1))
 			{
-				this->setFMAP_Mode(FMAP_CIRCULAR);
-				need_expand_ratio = true;
-				this->setParaIndex(this->getParaIndex()+1);
+				this->contents.push_back(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[this->getParaIndex()]);
 			}
-			else if((dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>this->getParaIndex())&&(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[this->getParaIndex()] == "rectangular"))
-			{
-				this->setFMAP_Mode(FMAP_RECTANGULAR);
-				need_expand_ratio = true;
-				this->setParaIndex(this->getParaIndex()+1);
-			}
-			if(need_expand_ratio)
-			{
-				if((dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>this->getParaIndex())&&(dataLibrary::isOnlyDouble(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[this->getParaIndex()].c_str())))
-				{
-					double ratio;
-					std::stringstream ss(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[this->getParaIndex()]);
-					ss >> ratio;
-					this->setExpandRatio(ratio);
-					this->setParaIndex(this->getParaIndex()+1);
-				}
-				else
-				{
-					message = QString("showprocess: The Expand Ratio (double) Is Needed For the 'circular' and 'rectangular' Options.");
-					return false;
-				}
-			}
-			if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>this->getParaIndex())
-			{
-				for(; this->getParaIndex()<dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size(); this->setParaIndex(this->getParaIndex()+1))
-				{
-					this->contents.push_back(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[this->getParaIndex()]);
-				}
-				return true;
-			}
-			else
-			{
-				message = QString("showprocess: No Name of Process Given.");
-				return false;
-			}
+			return true;
 		}
 		else
 		{
-			message = QString("showprocess: No Parameter Given.");
+			message = QString("showprocess: No Parameters Given.");
 			return false;
 		}
 	}
@@ -275,13 +234,7 @@ void ShowProcessWorker::doWork()
 			if(show_fracture_traces)
 			{
 				float length;
-				bool flag;
-				if(this->getFMAP_Mode() == FMAP_LOWER_BOUND)
-					flag = dataLibrary::LowerBound(dataLibrary::plane_normal_all, centroid_all, dataLibrary::cloud_hull_all, normal, centroid, cloud_hull, cluster_index, length, false, show_extension_line);
-				else if(this->getFMAP_Mode() == FMAP_RECTANGULAR)
-					flag = dataLibrary::Rectangular(dataLibrary::plane_normal_all, centroid_all, dataLibrary::cloud_hull_all, normal, centroid, cloud_hull, cluster_index, length, this->getExpandRatio(), false, show_extension_line);
-				else if(this->getFMAP_Mode() == FMAP_CIRCULAR)
-					flag = dataLibrary::Circular(dataLibrary::plane_normal_all, centroid_all, dataLibrary::cloud_hull_all, normal, centroid, cloud_hull, cluster_index, length, this->getExpandRatio(), false, show_extension_line);
+				bool flag = dataLibrary::Rectangular(dataLibrary::plane_normal_all, centroid_all, dataLibrary::cloud_hull_all, normal, centroid, cloud_hull, cluster_index, length, 1.0, false, show_extension_line);
 			}
 		}
 
@@ -318,13 +271,7 @@ void ShowProcessWorker::doWork()
 
 	if(!this->getMuteMode()&&is_success)
     {
-		QStringList Qcontents;
-		for(int i=0; i<this->contents.size(); i++)
-		{
-			Qcontents.append(QString::fromStdString(this->contents[i]));
-		}
-		Qcontents.append(QString::number(this->getFMAP_Mode()));
-        emit show(Qcontents);
+        emit show(this->contents);
     }
 
 	dataLibrary::Status = STATUS_READY;

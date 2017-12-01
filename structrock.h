@@ -46,7 +46,6 @@
 #include <qprocess.h>
 #include <qstringlist.h>
 #include <qfileinfo.h>
-#include <QStringList>
 #include <pcl/visualization/pcl_visualizer.h>
 #include <pcl/visualization/cloud_viewer.h>
 #include <pcl/io/io.h>
@@ -133,7 +132,7 @@ private slots:
 	void ShowStatus(int i);
 	void command_parser();
 	void Show_Errors(const QString &errors);
-	void Show_Process(QStringList Qcontents);
+	void Show_Process(std::vector<std::string> contents);
 	void Show_SFeature();
 	void slotReboot()
 	{

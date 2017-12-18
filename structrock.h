@@ -40,8 +40,8 @@
 #ifndef STRUCTROCK_H
 #define STRUCTROCK_H
 
-#include <QtGui/QMainWindow>
-#include <QtGui/QApplication>
+#include <QMainWindow>
+#include <QApplication>
 #include <QDesktopWidget>
 #include <qprocess.h>
 #include <qstringlist.h>
@@ -87,7 +87,7 @@ class structrock : public QMainWindow
 	Q_OBJECT
 
 public:
-	structrock(QWidget *parent = 0, Qt::WFlags flags = 0);
+	structrock(QWidget *parent = 0, Qt::WindowFlags flags = 0);
 	~structrock();
 	void OpenWorkFlow(QString filename);
 	void OpenWorkFlow(std::string commands);

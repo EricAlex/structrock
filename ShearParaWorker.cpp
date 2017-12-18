@@ -47,6 +47,8 @@
 #include <pcl/io/io.h>
 #include <pcl/io/pcd_io.h>
 #include <pcl/point_types.h>
+#include <pcl/PCLPointCloud2.h>
+#include <pcl/conversions.h>
 #include <pcl/kdtree/kdtree_flann.h>
 #include <pcl/surface/mls.h>
 #include <pcl/surface/concave_hull.h>
@@ -163,7 +165,7 @@ void ShearParaWorker::doWork()
 		string screen_png = *strfilename + "_" + strs.str() +"_.png";
         ofstream fout(textfilename.c_str());
         pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_ptr(new pcl::PointCloud<pcl::PointXYZ>);
-        pcl::fromROSMsg(dataLibrary::Fracture_Triangles[i]->cloud, *cloud_ptr);
+        pcl::fromPCLPointCloud2(dataLibrary::Fracture_Triangles[i]->cloud, *cloud_ptr);
         // determine the shear plane, P
         float nx, ny, nz, curvature;
         Eigen::Matrix3f convariance_matrix;

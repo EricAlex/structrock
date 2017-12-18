@@ -39,8 +39,8 @@
 
 #include <string>
 #include <sstream>
-#include <pcl/features/normal_3d.h>
-#include <pcl/features/normal_3d_omp.h>
+#include "geo_normal_3d.h"
+#include "geo_normal_3d_omp.h"
 #include "knnormalWorker.h"
 #include "dataLibrary.h"
 #include "globaldef.h"
@@ -100,7 +100,7 @@ void knnormalWorker::doWork()
     this->timer_start();
 
 	//begin of processing
-    pcl::NormalEstimationOMP<pcl::PointXYZ, pcl::Normal> ne;
+    GeoNormalEstimationOMP<pcl::PointXYZ, pcl::Normal> ne;
     ne.setInputCloud(dataLibrary::cloudxyz);
     pcl::search::KdTree<pcl::PointXYZ>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZ>());
     ne.setSearchMethod(tree);

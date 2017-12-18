@@ -46,7 +46,7 @@
 #include <algorithm>
 #include <time.h>
 #include <math.h>
-#include <libpq-fe.h>
+//#include <libpq-fe.h>
 #include <pcl/common/common_headers.h>
 #include <pcl/search/search.h>
 #include <pcl/search/kdtree.h>
@@ -98,7 +98,7 @@
 
 using namespace std;
 
-structrock::structrock(QWidget *parent, Qt::WFlags flags)
+structrock::structrock(QWidget *parent, Qt::WindowFlags flags)
 	: QMainWindow(parent, flags),
 	viewer(new pcl::visualization::PCLVisualizer("3D Viewer")),
 	v1(1),
@@ -1182,7 +1182,7 @@ void structrock::ShowPCD(int i)
         
         viewer->resetCameraViewpoint (dataLibrary::cloudID);
         // Position, Viewpoint, Down
-        viewer->setCameraPose (0,0,0,0,0,-1,0,1,0);
+        viewer->setCameraPosition (0,0,0,0,0,-1,0,1,0);
         viewer->resetCamera();
 		ui.qvtkWidget->update();
 	}
@@ -1192,7 +1192,7 @@ void structrock::ShowPCD(int i)
         
         viewer->resetCameraViewpoint (dataLibrary::cloudID);
         // Position, Viewpoint, Down
-        viewer->setCameraPose (0,0,0,0,0,-1,0,1,0);
+        viewer->setCameraPosition (0,0,0,0,0,-1,0,1,0);
         viewer->resetCamera();
         
 		ui.qvtkWidget->update();
@@ -1204,7 +1204,7 @@ void structrock::ShowPCD(int i)
 
         viewer->resetCameraViewpoint (dataLibrary::cloudID);
         // Position, Viewpoint, Down
-        viewer->setCameraPose (0,0,0,0,0,-1,0,1,0);
+        viewer->setCameraPosition (0,0,0,0,0,-1,0,1,0);
         viewer->resetCamera();
         
 		ui.qvtkWidget->update();
@@ -1593,7 +1593,7 @@ void structrock::ShowFractureClasses()
 			std::ostringstream strs;
 			strs << i;
 			pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_ptr(new pcl::PointCloud<pcl::PointXYZ>);
-			pcl::fromROSMsg(dataLibrary::Fracture_Triangles[i]->cloud, *cloud_ptr);
+			pcl::fromPCLPointCloud2(dataLibrary::Fracture_Triangles[i]->cloud, *cloud_ptr);
 			
 			viewer->addPointCloud(cloud_ptr, strs.str(), v1);
 			viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, dataLibrary::fracture_classes_rgb[i].x, dataLibrary::fracture_classes_rgb[i].y, dataLibrary::fracture_classes_rgb[i].z, strs.str(), v1);
@@ -2417,7 +2417,7 @@ void structrock::Testing()
 	}*/
     
     //Function: connect to postgreSQL database.
-    bool isOK;
+    /*bool isOK;
     QString conn_string = QInputDialog::getText(NULL, "Input Dialog", "Connection Strings:", QLineEdit::Normal, "keyword = value", &isOK);
     if(isOK)
     {
@@ -2429,10 +2429,10 @@ void structrock::Testing()
         
         conninfo = conn_string.toStdString().c_str();
 
-        /* Make a connection to the database */
+        // Make a connection to the database
         conn = PQconnectdb(conninfo);
 
-        /* Check to see that the backend connection was successfully made */
+        // Check to see that the backend connection was successfully made
         if (PQstatus(conn) != CONNECTION_OK)
         {
             std::string Error_message("Connection to database failed: ");
@@ -2443,14 +2443,14 @@ void structrock::Testing()
         }
         else
         {
-            /*
-            * Our test case here involves using a cursor, for which we must be inside
-            * a transaction block.  We could do the whole thing with a single
-            * PQexec() of "select * from pg_database", but that's too trivial to make
-            * a good example.
-            */
+            //
+            // Our test case here involves using a cursor, for which we must be inside
+            // a transaction block.  We could do the whole thing with a single
+            // PQexec() of "select * from pg_database", but that's too trivial to make
+            // a good example.
+            //
 
-            /* Start a transaction block */
+            // Start a transaction block
             res = PQexec(conn, "BEGIN");
             if (PQresultStatus(res) != PGRES_COMMAND_OK)
             {
@@ -2462,14 +2462,14 @@ void structrock::Testing()
                 PQclear(res);
             }
 
-		/* end the transaction */
+			// end the transaction
             res = PQexec(conn, "END");
             PQclear(res);
 
-	/* close the connection to the database and cleanup */
+			// close the connection to the database and cleanup
             PQfinish(conn);
         }
-    }
+    }*/
 }
 
 void structrock::TestResult(int i)

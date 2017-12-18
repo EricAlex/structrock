@@ -37,7 +37,7 @@
  *
  */
 
-#include <QtGui/QApplication>
+#include <QApplication>
 #include <QDesktopWidget>
 #include "globaldef.h"
 #include "structrock.h"

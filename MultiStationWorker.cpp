@@ -39,6 +39,8 @@
 
 #include <string>
 #include <sstream>
+#include <pcl/PCLPointCloud2.h>
+#include <pcl/conversions.h>
 #include <pcl/kdtree/kdtree_flann.h>
 #include <pcl/surface/mls.h>
 #include <pcl/filters/voxel_grid.h>
@@ -113,11 +115,11 @@ void MultiStationWorker::doWork()
 	bool is_reading_success(true);
 	for(int i=0; i<this->multiStationFilePath.size(); i++)
 	{
-		sensor_msgs::PointCloud2::Ptr cloud_blob(new sensor_msgs::PointCloud2);
+		pcl::PCLPointCloud2::Ptr cloud_blob(new pcl::PCLPointCloud2);
 		if(!pcl::io::loadPCDFile (this->multiStationFilePath[i], *cloud_blob))
 		{
 			pcl::PointCloud<pcl::PointXYZRGB>::Ptr temp_cloudxyzrgb(new pcl::PointCloud<pcl::PointXYZRGB>);
-			pcl::fromROSMsg (*cloud_blob, *temp_cloudxyzrgb);
+			pcl::fromPCLPointCloud2 (*cloud_blob, *temp_cloudxyzrgb);
 			this->multiStationPointClouds.push_back(temp_cloudxyzrgb);
 		}
 		else

@@ -354,7 +354,7 @@ void dataLibrary::assign_left_with_right(pcl::PointXYZ &left, const Eigen::Vecto
 	left.z = right(2);
 }
 
-bool dataLibrary::no_trim_edges(const Eigen::Vector3f &V, const Eigen::Vector3f &xyz_centroid, pcl::PointCloud<pcl::PointXYZ>::Ptr convex_hull, const Eigen::Vector3f &max_intersection, const Eigen::Vector3f &min_intersection, int patchNum, float &length)
+bool dataLibrary::no_trim_edges(const Eigen::Vector3f &V, const Eigen::Vector3f &xyz_centroid, pcl::PointCloud<pcl::PointXYZ>::Ptr convex_hull, const Eigen::Vector3f &max_intersection, const Eigen::Vector3f &min_intersection, int patchNum, double f_p_angle, float &length)
 {
 	stringstream ss;
 	ss << patchNum;
@@ -379,6 +379,7 @@ bool dataLibrary::no_trim_edges(const Eigen::Vector3f &V, const Eigen::Vector3f 
 		NewLine.g = 1;
 		NewLine.b = 0;
 		NewLine.ID = "Line_in"+ss.str();
+		NewLine.f_p_angle = f_p_angle;
 		dataLibrary::Lines.push_back(NewLine);
 
 		length=temp_length;
@@ -393,6 +394,7 @@ bool dataLibrary::no_trim_edges(const Eigen::Vector3f &V, const Eigen::Vector3f 
 		NewLine.g = 1;
 		NewLine.b = 0;
 		NewLine.ID = "Line_in"+ss.str();
+		NewLine.f_p_angle = f_p_angle;
 		dataLibrary::Lines.push_back(NewLine);
 		
 		length=temp_length;
@@ -407,6 +409,7 @@ bool dataLibrary::no_trim_edges(const Eigen::Vector3f &V, const Eigen::Vector3f 
 		NewLine.g = 0;
 		NewLine.b = 0;
 		NewLine.ID = "Line_out"+ss.str();
+		NewLine.f_p_angle = f_p_angle;
 		dataLibrary::Lines.push_back(NewLine);
 		
 		length=temp_length;
@@ -414,7 +417,138 @@ bool dataLibrary::no_trim_edges(const Eigen::Vector3f &V, const Eigen::Vector3f 
 	}
 }
 
-bool dataLibrary::trim_edges(const Eigen::Vector3f &V, const Eigen::Vector3f &xyz_centroid, pcl::PointCloud<pcl::PointXYZ>::Ptr convex_hull, const Eigen::Vector3f &max_intersection, const Eigen::Vector3f &min_intersection, int patchNum, float &length)
+bool dataLibrary::edge_inside_part(const Eigen::Vector3f &V, pcl::PointCloud<pcl::PointXYZ>::Ptr convex_hull, const Eigen::Vector3f &in_begin, const Eigen::Vector3f &in_end, Eigen::Vector3f &out_begin, Eigen::Vector3f &out_end)
+{
+	Eigen::Vector3f V_x = convex_hull->at(1).getVector3fMap() - convex_hull->at(0).getVector3fMap();
+	Eigen::Vector3f V_y = V.cross(V_x);
+	std::vector<Eigen::Vector2f> convex_hull_2d;
+
+	dataLibrary::projection322(V_x, V_y, convex_hull, convex_hull_2d);
+	Eigen::Vector2f test_point_2d_begin, test_point_2d_end;
+	dataLibrary::projection322(V_x, V_y, in_begin, test_point_2d_begin);
+	dataLibrary::projection322(V_x, V_y, in_end, test_point_2d_end);
+	if((isInPolygon(convex_hull_2d, test_point_2d_begin))&&(isInPolygon(convex_hull_2d, test_point_2d_end)))
+	{// All end points are in.
+		out_begin = in_begin;
+		out_end = in_end;
+		return true;
+	}
+	else if((isInPolygon(convex_hull_2d, test_point_2d_begin))&&!(isInPolygon(convex_hull_2d, test_point_2d_end)))
+	{// the begin point is in, the end one is out.
+		int hull_size = convex_hull->size();
+		Eigen::Vector3f P_in = in_begin;
+		Eigen::Vector3f P_out = in_end;
+		Eigen::Vector3f P_edge;
+		for(int i=0; i<hull_size; i++)
+		{
+			Eigen::Vector3f N_i = convex_hull->at(i).getVector3fMap();
+			Eigen::Vector3f P_in_P_out = P_out - P_in;
+			Eigen::Vector3f P_in_N_i = N_i - P_in;
+			if(std::acos(P_in_P_out.dot(P_in_N_i)/(std::sqrt(P_in_P_out.dot(P_in_P_out))*std::sqrt(P_in_N_i.dot(P_in_N_i))))<=EPSILON)
+			{
+				P_edge = N_i;
+				break;
+			}
+			Eigen::Vector3f N_j = convex_hull->at((i+1)%hull_size).getVector3fMap();
+			Eigen::Vector3f P_in_N_j = N_j - P_in;
+			Eigen::Vector3f N_i_N_j = N_j - N_i;
+			if(P_in_N_i.cross(P_in_P_out).dot(P_in_P_out.cross(P_in_N_j))>0)
+			{
+				float angle_a = std::acos(P_in_N_i.dot(P_in_P_out)/(std::sqrt(P_in_N_i.dot(P_in_N_i))*std::sqrt(P_in_P_out.dot(P_in_P_out))));
+				float angle_b = std::acos(P_in_P_out.dot(P_in_N_j)/(std::sqrt(P_in_P_out.dot(P_in_P_out))*std::sqrt(P_in_N_j.dot(P_in_N_j))));
+				if((angle_a+angle_b)<(TWOPI/2))
+				{
+					float x = P_in_P_out.cross(P_in_N_i)(0)/N_i_N_j.cross(P_in_P_out)(0);
+					P_edge = P_in + (P_in_N_i + x*N_i_N_j);
+					break;
+				}
+			}
+		}
+		out_begin = in_begin;
+		out_end = P_edge;
+		return true;
+	}
+	else if(!(isInPolygon(convex_hull_2d, test_point_2d_begin))&&(isInPolygon(convex_hull_2d, test_point_2d_end)))
+	{// the end point is in, the begin one is out.
+		int hull_size = convex_hull->size();
+		Eigen::Vector3f P_in = in_end;
+		Eigen::Vector3f P_out = in_begin;
+		Eigen::Vector3f P_edge;
+		for(int i=0; i<hull_size; i++)
+		{
+			Eigen::Vector3f N_i = convex_hull->at(i).getVector3fMap();
+			Eigen::Vector3f P_in_P_out = P_out - P_in;
+			Eigen::Vector3f P_in_N_i = N_i - P_in;
+			if(std::acos(P_in_P_out.dot(P_in_N_i)/(std::sqrt(P_in_P_out.dot(P_in_P_out))*std::sqrt(P_in_N_i.dot(P_in_N_i))))<=EPSILON)
+			{
+				P_edge = N_i;
+				break;
+			}
+			Eigen::Vector3f N_j = convex_hull->at((i+1)%hull_size).getVector3fMap();
+			Eigen::Vector3f P_in_N_j = N_j - P_in;
+			Eigen::Vector3f N_i_N_j = N_j - N_i;
+			if(P_in_N_i.cross(P_in_P_out).dot(P_in_P_out.cross(P_in_N_j))>0)
+			{
+				float angle_a = std::acos(P_in_N_i.dot(P_in_P_out)/(std::sqrt(P_in_N_i.dot(P_in_N_i))*std::sqrt(P_in_P_out.dot(P_in_P_out))));
+				float angle_b = std::acos(P_in_P_out.dot(P_in_N_j)/(std::sqrt(P_in_P_out.dot(P_in_P_out))*std::sqrt(P_in_N_j.dot(P_in_N_j))));
+				if((angle_a+angle_b)<(TWOPI/2))
+				{
+					float x = P_in_P_out.cross(P_in_N_i)(0)/N_i_N_j.cross(P_in_P_out)(0);
+					P_edge = P_in + (P_in_N_i + x*N_i_N_j);
+					break;
+				}
+			}
+		}
+		out_begin = P_edge;
+		out_end = in_end;
+		return true;
+	}
+	else if(isSegmentCrossPolygon(test_point_2d_begin, test_point_2d_end, convex_hull_2d))
+	{// All end points are out, but still, the segment is crossing the polygon.
+		int hull_size = convex_hull->size();
+		Eigen::Vector3f P_in = in_begin;
+		Eigen::Vector3f P_out = in_end;
+		Eigen::Vector3f P_in_P_out = P_out - P_in;
+		Eigen::Vector3f P_edge_in, P_edge_out;
+		for(int i=0; i<hull_size; i++)
+		{
+			Eigen::Vector3f N_i = convex_hull->at(i).getVector3fMap();
+			Eigen::Vector3f P_in_N_i = N_i - P_in;
+			Eigen::Vector3f N_j = convex_hull->at((i+1)%hull_size).getVector3fMap();
+			Eigen::Vector3f P_in_N_j = N_j - P_in;
+			Eigen::Vector3f N_i_N_j = N_j - N_i;
+			if(P_in_N_i.cross(P_in_P_out).dot(P_in_P_out.cross(P_in_N_j))>0)
+			{
+				float x = P_in_P_out.cross(P_in_N_i)(0)/N_i_N_j.cross(P_in_P_out)(0);
+				P_edge_in = P_in + (P_in_N_i + x*N_i_N_j);
+				for(int j=i+1; j<hull_size; j++)
+				{
+					Eigen::Vector3f N_k = convex_hull->at(j).getVector3fMap();
+					Eigen::Vector3f P_in_N_k = N_k - P_in;
+					Eigen::Vector3f N_l = convex_hull->at((j+1)%hull_size).getVector3fMap();
+					Eigen::Vector3f P_in_N_l = N_l - P_in;
+					Eigen::Vector3f N_k_N_l = N_l - N_k;
+					if(P_in_N_k.cross(P_in_P_out).dot(P_in_P_out.cross(P_in_N_l))>0)
+					{
+						float x = P_in_P_out.cross(P_in_N_k)(0)/N_k_N_l.cross(P_in_P_out)(0);
+						P_edge_out = P_in + (P_in_N_k + x*N_k_N_l);
+						break;
+					}
+				}
+				break;
+			}
+		}
+		out_begin = P_edge_in;
+		out_end = P_edge_out;
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+}
+
+bool dataLibrary::trim_edges(const Eigen::Vector3f &V, const Eigen::Vector3f &xyz_centroid, pcl::PointCloud<pcl::PointXYZ>::Ptr convex_hull, const Eigen::Vector3f &max_intersection, const Eigen::Vector3f &min_intersection, int patchNum, double f_p_angle, float &length)
 {
 	stringstream ss;
 	ss << patchNum;
@@ -436,6 +570,7 @@ bool dataLibrary::trim_edges(const Eigen::Vector3f &V, const Eigen::Vector3f &xy
 		NewLine.g = 1;
 		NewLine.b = 0;
 		NewLine.ID = "Line_in"+ss.str();
+		NewLine.f_p_angle = f_p_angle;
 		dataLibrary::Lines.push_back(NewLine);
 		
 		length=std::sqrt((max_intersection-min_intersection).dot(max_intersection-min_intersection));
@@ -479,6 +614,7 @@ bool dataLibrary::trim_edges(const Eigen::Vector3f &V, const Eigen::Vector3f &xy
 		NewLine.g = 1;
 		NewLine.b = 0;
 		NewLine.ID = "Line_in"+ss.str();
+		NewLine.f_p_angle = f_p_angle;
 		dataLibrary::Lines.push_back(NewLine);
 		
 		length=std::sqrt((P_edge - P_in).dot(P_edge - P_in));
@@ -522,6 +658,7 @@ bool dataLibrary::trim_edges(const Eigen::Vector3f &V, const Eigen::Vector3f &xy
 		NewLine.g = 1;
 		NewLine.b = 0;
 		NewLine.ID = "Line_in"+ss.str();
+		NewLine.f_p_angle = f_p_angle;
 		dataLibrary::Lines.push_back(NewLine);
 
 		length=std::sqrt((P_edge - P_in).dot(P_edge - P_in));
@@ -569,6 +706,7 @@ bool dataLibrary::trim_edges(const Eigen::Vector3f &V, const Eigen::Vector3f &xy
 		NewLine.g = 1;
 		NewLine.b = 0;
 		NewLine.ID = "Line_in"+ss.str();
+		NewLine.f_p_angle = f_p_angle;
 		dataLibrary::Lines.push_back(NewLine);
 		
 		length=std::sqrt((P_edge_out - P_edge_in).dot(P_edge_out - P_edge_in));
@@ -583,6 +721,7 @@ bool dataLibrary::trim_edges(const Eigen::Vector3f &V, const Eigen::Vector3f &xy
 		NewLine.g = 0;
 		NewLine.b = 0;
 		NewLine.ID = "Line_out"+ss.str();
+		NewLine.f_p_angle = f_p_angle;
 		dataLibrary::Lines.push_back(NewLine);
 		
 		length=std::sqrt((max_intersection-min_intersection).dot(max_intersection-min_intersection));
@@ -592,6 +731,11 @@ bool dataLibrary::trim_edges(const Eigen::Vector3f &V, const Eigen::Vector3f &xy
 
 bool dataLibrary::Circular(const Eigen::Vector3f &V, const Eigen::Vector3f &xyz_centroid, pcl::PointCloud<pcl::PointXYZ>::Ptr convex_hull, const Eigen::Vector3f &V_i, const Eigen::Vector3f &xyz_centroid_i, pcl::PointCloud<pcl::PointXYZ>::Ptr convex_hull_i, int patchNum, float &length, const float &expand_ratio, bool is_triming_edges, bool needExLine)
 {
+	double f_p_angle = std::acos(V.dot(V_i)/(std::sqrt(V.dot(V))*std::sqrt(V_i.dot(V_i))));
+	if(f_p_angle > TWOPI/4)
+	{
+		f_p_angle = TWOPI/2 - f_p_angle;
+	}
 	typedef float mytype;			// coordinate type
 	int d = 3;						// dimension
 	int n = convex_hull_i->size();	// number of points
@@ -678,11 +822,11 @@ bool dataLibrary::Circular(const Eigen::Vector3f &V, const Eigen::Vector3f &xyz_
 		Eigen::Vector3f min_intersection = C_0 + std::cos(ans2)*U_axis + std::sin(ans2)*V_axis;
 		if(is_triming_edges)
 		{
-			return dataLibrary::trim_edges(V, xyz_centroid, convex_hull, max_intersection, min_intersection, patchNum, length);
+			return dataLibrary::trim_edges(V, xyz_centroid, convex_hull, max_intersection, min_intersection, patchNum, f_p_angle, length);
 		}
 		else
 		{
-			return dataLibrary::no_trim_edges(V, xyz_centroid, convex_hull, max_intersection, min_intersection, patchNum, length);
+			return dataLibrary::no_trim_edges(V, xyz_centroid, convex_hull, max_intersection, min_intersection, patchNum, f_p_angle, length);
 		}
 	}
 	else
@@ -847,6 +991,11 @@ bool dataLibrary::Rectangular(const Eigen::Vector3f &V, const Eigen::Vector3f &x
 
 bool dataLibrary::LowerBound(const Eigen::Vector3f &V, const Eigen::Vector3f &xyz_centroid, pcl::PointCloud<pcl::PointXYZ>::Ptr convex_hull, const Eigen::Vector3f &V_i, const Eigen::Vector3f &xyz_centroid_i, pcl::PointCloud<pcl::PointXYZ>::Ptr convex_hull_i, int patchNum, float &length, bool is_triming_edges, bool needExLine)
 {
+	double f_p_angle = std::acos(V.dot(V_i)/(std::sqrt(V.dot(V))*std::sqrt(V_i.dot(V_i))));
+	if(f_p_angle > TWOPI/4)
+	{
+		f_p_angle = TWOPI/2 - f_p_angle;
+	}
 	int hull_size_i = convex_hull_i->size();
 	std::vector<Eigen::Vector3f> intersections;
 	for(int i=0; i<hull_size_i; i++)
@@ -867,9 +1016,9 @@ bool dataLibrary::LowerBound(const Eigen::Vector3f &V, const Eigen::Vector3f &xy
 	if(intersections.size()>=2)
 	{
 		if(is_triming_edges)
-			return dataLibrary::trim_edges(V, xyz_centroid, convex_hull, intersections[0], intersections[1], patchNum, length);
+			return dataLibrary::trim_edges(V, xyz_centroid, convex_hull, intersections[0], intersections[1], patchNum, f_p_angle, length);
 		else
-			return dataLibrary::no_trim_edges(V, xyz_centroid, convex_hull, intersections[0], intersections[1], patchNum, length);
+			return dataLibrary::no_trim_edges(V, xyz_centroid, convex_hull, intersections[0], intersections[1], patchNum, f_p_angle, length);
 	}
 	else
 	{

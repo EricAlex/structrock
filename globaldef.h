@@ -71,6 +71,7 @@
 #define STATUS_OPENPOLYGONMESH	120
 #define STATUS_READNSHOWCLASSES	121
 #define STATUS_MULTISTATION	122
+#define STATUS_SAVEMESH 123
 
 #define FEATURE_ROUGHNESS   1001
 #define FEATURE_AREA    1002
@@ -80,6 +81,9 @@
 #define FMAP_LOWER_BOUND	2001
 #define FMAP_CIRCULAR	2002
 #define FMAP_RECTANGULAR	2003
+
+#define A_L_MODEL_LINEAR    3001
+#define A_L_MODEL_SQRT  3002
 
 struct RGSpara{
     double curvature;
@@ -117,6 +121,7 @@ struct Line{
     float g;
     float b;
     std::string ID;
+    double f_p_angle;
 };
 
 struct WorkLine{

@@ -546,70 +546,41 @@ void structrock::command_parser()
 		std::string command_string = dataLibrary::Workflow[dataLibrary::current_workline_index].command;
 		std::transform(command_string.begin(), command_string.end(), command_string.begin(), ::tolower);
 		QString error_msg("");
-		if(command_string == "openpcd")
+		if(command_string == "delete")
 		{
-			if(readfileworker.is_para_satisfying(error_msg))
+			if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>0)
 			{
-				if(!dataLibrary::have_called_read_file)
-				{
-					readfileworker.setWorkFlowMode(true);
-					readfileworker.prepare();
-					QObject::connect(&readfileworker, SIGNAL(ReadFileReady(int)), this, SLOT(ShowPCD(int)));
-					QObject::connect(&readfileworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
-					QObject::connect(&readfileworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
-					QObject::connect(&readfileworker, SIGNAL(GoWorkFlow()), this, SLOT(command_parser()));
+				std::string file_path = dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[0];
+				#if defined(_WIN32)||defined(_WIN64)
+					size_t f = file_path.find("\\");
+					file_path.replace(f, std::string("\\").length(), "\\\\");
+				#endif
+				#if !defined(_WIN32)&&(defined(__unix__)||defined(__unix)||(defined(__APPLE__)&&defined(__MACH__)))
+					unlink(file_path.c_str());
+				#elif defined(_WIN32)||defined(_WIN64)
+					DeleteFile(file_path.c_str());
+				#endif
 
-					readfileworker.readFile();
-					dataLibrary::have_called_read_file = true;
-				}
-				else
-				{
-					this->NewWindow_current_command();
-				}
+				dataLibrary::current_workline_index+=1;
+				command_parser();
 			}
 			else
 			{
-				Show_Errors(error_msg);
+				Show_Errors(QString("delete: Path not provided."));
 			}
 		}
-		else if(command_string == "openclusters")
+		else if(command_string == "downsample")
 		{
-			if(openclustersworker.is_para_satisfying(error_msg))
+			if(downsampleworker.is_para_satisfying(error_msg))
 			{
-				openclustersworker.setWorkFlowMode(true);
-				openclustersworker.prepare();
-				connect(&openclustersworker, SIGNAL(show()), this, SLOT(ShowClusters()));
-				connect(&openclustersworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
-				connect(&openclustersworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
-				connect(&openclustersworker, SIGNAL(GoWorkFlow()), this, SLOT(command_parser()));
-
-				openclustersworker.openclusters();
-			}
-			else
-			{
-				Show_Errors(error_msg);
-			}
-		}
-		else if(command_string == "openxyz")
-		{
-			if(readxyzworker.is_para_satisfying(error_msg))
-			{
-				if(!dataLibrary::have_called_read_file)
-				{
-					readxyzworker.setWorkFlowMode(true);
-					readxyzworker.prepare();
-					connect(&readxyzworker, SIGNAL(ReadXYZReady(int)), this, SLOT(ShowPCD(int)));
-					connect(&readxyzworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
-					connect(&readxyzworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
-					connect(&readxyzworker, SIGNAL(GoWorkFlow()), this, SLOT(command_parser()));
-
-					readxyzworker.readXYZ();
-					dataLibrary::have_called_read_file = true;
-				}
-				else
-				{
-					this->NewWindow_current_command();
-				}
+				downsampleworker.setWorkFlowMode(true);
+				downsampleworker.prepare();
+				connect(&downsampleworker, SIGNAL(show()), this, SLOT(ShowDownsample()));
+				connect(&downsampleworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
+				connect(&downsampleworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
+				connect(&downsampleworker, SIGNAL(GoWorkFlow()), this, SLOT(command_parser()));
+				
+				downsampleworker.downsample();
 			}
 			else
 			{
@@ -691,27 +662,40 @@ void structrock::command_parser()
 				Show_Errors(QString("foreach: Loop Variable and/or Loop Array not provided."));
 			}
 		}
-		else if(command_string == "delete")
+		else if(command_string == "ftriangulation")
 		{
-			if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>0)
+			if(triangulationworker.is_para_satisfying(error_msg))
 			{
-				std::string file_path = dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[0];
-				#if defined(_WIN32)||defined(_WIN64)
-					size_t f = file_path.find("\\");
-					file_path.replace(f, std::string("\\").length(), "\\\\");
-				#endif
-				#if !defined(_WIN32)&&(defined(__unix__)||defined(__unix)||(defined(__APPLE__)&&defined(__MACH__)))
-					unlink(file_path.c_str());
-				#elif defined(_WIN32)||defined(_WIN64)
-					DeleteFile(file_path.c_str());
-				#endif
+				triangulationworker.setWorkFlowMode(true);
+				triangulationworker.prepare();
+				connect(&triangulationworker, SIGNAL(show()), this, SLOT(ShowTriangulation()));
+				connect(&triangulationworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
+				connect(&triangulationworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
+				connect(&triangulationworker, SIGNAL(GoWorkFlow()), this, SLOT(command_parser()));
 
-				dataLibrary::current_workline_index+=1;
-				command_parser();
+				triangulationworker.triangulation();
 			}
 			else
 			{
-				Show_Errors(QString("delete: Path not provided."));
+				Show_Errors(error_msg);
+			}
+		}
+		else if(command_string == "knnormal")
+		{
+			if(knnormalworker.is_para_satisfying(error_msg))
+			{
+				knnormalworker.setWorkFlowMode(true);
+				knnormalworker.prepare();
+				connect(&knnormalworker, SIGNAL(show(bool)), this, SLOT(ShowNormal(bool)));
+				connect(&knnormalworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
+				connect(&knnormalworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
+				connect(&knnormalworker, SIGNAL(GoWorkFlow()), this, SLOT(command_parser()));
+
+				knnormalworker.knnormal();
+			}
+			else
+			{
+				Show_Errors(error_msg);
 			}
 		}
 		else if(command_string == "movefile")
@@ -766,6 +750,262 @@ void structrock::command_parser()
 				Show_Errors(error_msg);
 			}
 		}
+		else if(command_string == "openclusters")
+		{
+			if(openclustersworker.is_para_satisfying(error_msg))
+			{
+				openclustersworker.setWorkFlowMode(true);
+				openclustersworker.prepare();
+				connect(&openclustersworker, SIGNAL(show()), this, SLOT(ShowClusters()));
+				connect(&openclustersworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
+				connect(&openclustersworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
+				connect(&openclustersworker, SIGNAL(GoWorkFlow()), this, SLOT(command_parser()));
+
+				openclustersworker.openclusters();
+			}
+			else
+			{
+				Show_Errors(error_msg);
+			}
+		}
+		else if(command_string == "openftriangulation")
+		{
+			if(readPolygonMeshworker.is_para_satisfying(error_msg))
+			{
+				readPolygonMeshworker.setWorkFlowMode(true);
+				readPolygonMeshworker.prepare();
+				connect(&readPolygonMeshworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
+				connect(&readPolygonMeshworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
+				connect(&readPolygonMeshworker, SIGNAL(GoWorkFlow()), this, SLOT(command_parser()));
+
+				readPolygonMeshworker.readpolygonmesh();
+			}
+			else
+			{
+				Show_Errors(error_msg);
+			}
+		}
+		else if(command_string == "openpcd")
+		{
+			if(readfileworker.is_para_satisfying(error_msg))
+			{
+				if(!dataLibrary::have_called_read_file)
+				{
+					readfileworker.setWorkFlowMode(true);
+					readfileworker.prepare();
+					QObject::connect(&readfileworker, SIGNAL(ReadFileReady(int)), this, SLOT(ShowPCD(int)));
+					QObject::connect(&readfileworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
+					QObject::connect(&readfileworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
+					QObject::connect(&readfileworker, SIGNAL(GoWorkFlow()), this, SLOT(command_parser()));
+
+					readfileworker.readFile();
+					dataLibrary::have_called_read_file = true;
+				}
+				else
+				{
+					this->NewWindow_current_command();
+				}
+			}
+			else
+			{
+				Show_Errors(error_msg);
+			}
+		}
+		else if(command_string == "openxyz")
+		{
+			if(readxyzworker.is_para_satisfying(error_msg))
+			{
+				if(!dataLibrary::have_called_read_file)
+				{
+					readxyzworker.setWorkFlowMode(true);
+					readxyzworker.prepare();
+					connect(&readxyzworker, SIGNAL(ReadXYZReady(int)), this, SLOT(ShowPCD(int)));
+					connect(&readxyzworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
+					connect(&readxyzworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
+					connect(&readxyzworker, SIGNAL(GoWorkFlow()), this, SLOT(command_parser()));
+
+					readxyzworker.readXYZ();
+					dataLibrary::have_called_read_file = true;
+				}
+				else
+				{
+					this->NewWindow_current_command();
+				}
+			}
+			else
+			{
+				Show_Errors(error_msg);
+			}
+		}
+		else if(command_string == "quitsession")
+		{
+			if(dataLibrary::current_workline_index+1<dataLibrary::Workflow.size())
+			{
+				this->NewWindow_next_command();
+			}
+			TimingShutdown *shutdown(new TimingShutdown);
+			connect(shutdown, SIGNAL(shutdown()), this, SLOT(exit()));
+			shutdown->start();
+		}
+		else if(command_string == "ranormal")
+		{
+			if(ranormalworker.is_para_satisfying(error_msg))
+			{
+				ranormalworker.setWorkFlowMode(true);
+				ranormalworker.prepare();
+				connect(&ranormalworker, SIGNAL(show(bool)), this, SLOT(ShowNormal(bool)));
+				connect(&ranormalworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
+				connect(&ranormalworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
+				connect(&ranormalworker, SIGNAL(GoWorkFlow()), this, SLOT(command_parser()));
+				
+				ranormalworker.ranormal();
+			}
+			else
+			{
+				Show_Errors(error_msg);
+			}
+		}
+		else if(command_string == "readnshowfracturetypes")
+		{
+			if(readnShowClassesworker.is_para_satisfying(error_msg))
+			{
+				readnShowClassesworker.setWorkFlowMode(true);
+				readnShowClassesworker.prepare();
+				connect(&readnShowClassesworker, SIGNAL(show()), this, SLOT(ShowFractureClasses()));
+				connect(&readnShowClassesworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
+				connect(&readnShowClassesworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
+				connect(&readnShowClassesworker, SIGNAL(GoWorkFlow()), this, SLOT(command_parser()));
+
+				readnShowClassesworker.readnshowclasses();
+			}
+			else
+			{
+				Show_Errors(error_msg);
+			}
+		}
+		else if(command_string == "resample")
+		{
+			if(resampleworker.is_para_satisfying(error_msg))
+			{
+				resampleworker.setWorkFlowMode(true);
+				resampleworker.prepare();
+				connect(&resampleworker, SIGNAL(show()), this, SLOT(ShowResample()));
+				connect(&resampleworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
+				connect(&resampleworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
+				connect(&resampleworker, SIGNAL(GoWorkFlow()), this, SLOT(command_parser()));
+            
+				resampleworker.resample();
+			}
+			else
+			{
+				Show_Errors(error_msg);
+			}
+		}
+		else if(command_string == "rgsegmentation")
+		{
+			if(rgsworker.is_para_satisfying(error_msg))
+    		{
+				rgsworker.setWorkFlowMode(true);
+				rgsworker.prepare();
+				connect(&rgsworker, SIGNAL(show()), this, SLOT(ShowRGS()));
+				connect(&rgsworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
+				connect(&rgsworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
+				connect(&rgsworker, SIGNAL(GoWorkFlow()), this, SLOT(command_parser()));
+
+				rgsworker.rgs();
+			}
+    		else
+    		{
+				Show_Errors(error_msg);
+    		}
+		}
+		else if(command_string == "rostatic")
+		{
+			if(staticroworker.is_para_satisfying(error_msg))
+			{
+				staticroworker.setWorkFlowMode(true);
+				staticroworker.prepare();
+				connect(&staticroworker, SIGNAL(show()), this, SLOT(ShowSRO()));
+				connect(&staticroworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
+				connect(&staticroworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
+				connect(&staticroworker, SIGNAL(GoWorkFlow()), this, SLOT(command_parser()));
+            
+				staticroworker.rostatic();
+			}
+			else
+			{
+				Show_Errors(error_msg);
+			}
+		}
+		else if(command_string == "saveclusters")
+		{
+			if(saveclustersworker.is_para_satisfying(error_msg))
+			{
+				saveclustersworker.setWorkFlowMode(true);
+				saveclustersworker.prepare();
+				connect(&saveclustersworker, SIGNAL(SaveClustersReady(QString)), this, SLOT(ShowSavedClusters(QString)));
+				connect(&saveclustersworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
+				connect(&saveclustersworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
+				connect(&saveclustersworker, SIGNAL(GoWorkFlow()), this, SLOT(command_parser()));
+
+				saveclustersworker.saveclusters();
+			}
+			else
+			{
+				Show_Errors(error_msg);
+			}
+		}
+		else if(command_string == "saveftriangulation")
+		{
+			if(savePolygonMeshworker.is_para_satisfying(error_msg))
+			{
+				savePolygonMeshworker.setWorkFlowMode(true);
+				savePolygonMeshworker.prepare();
+				connect(&savePolygonMeshworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
+				connect(&savePolygonMeshworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
+				connect(&savePolygonMeshworker, SIGNAL(GoWorkFlow()), this, SLOT(command_parser()));
+
+				savePolygonMeshworker.savepolygonmesh();
+			}
+			else
+			{
+				Show_Errors(error_msg);
+			}
+		}
+		else if(command_string == "savemesh")
+		{
+			if(saveMeshworker.is_para_satisfying(error_msg))
+			{
+				saveMeshworker.setWorkFlowMode(true);
+				saveMeshworker.prepare();
+				connect(&saveMeshworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
+				connect(&saveMeshworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
+				connect(&saveMeshworker, SIGNAL(GoWorkFlow()), this, SLOT(command_parser()));
+
+				saveMeshworker.savemesh();
+			}
+			else
+			{
+				Show_Errors(error_msg);
+			}
+		}
+		else if(command_string == "savenormals")
+		{
+			if(savenormalsworker.is_para_satisfying(error_msg))
+			{
+				savenormalsworker.setWorkFlowMode(true);
+				savenormalsworker.prepare();
+				connect(&savenormalsworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
+				connect(&savenormalsworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
+				connect(&savenormalsworker, SIGNAL(GoWorkFlow()), this, SLOT(command_parser()));
+
+				savenormalsworker.savenormals();
+			}
+			else
+			{
+				Show_Errors(error_msg);
+			}
+		}
 		else if(command_string == "savepcdascii")
 		{
 			if(savepcdASCIIworker.is_para_satisfying(error_msg))
@@ -800,219 +1040,6 @@ void structrock::command_parser()
 				Show_Errors(error_msg);
 			}
 		}
-		else if(command_string == "saveftriangulation")
-		{
-			if(savePolygonMeshworker.is_para_satisfying(error_msg))
-			{
-				savePolygonMeshworker.setWorkFlowMode(true);
-				savePolygonMeshworker.prepare();
-				connect(&savePolygonMeshworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
-				connect(&savePolygonMeshworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
-				connect(&savePolygonMeshworker, SIGNAL(GoWorkFlow()), this, SLOT(command_parser()));
-
-				savePolygonMeshworker.savepolygonmesh();
-			}
-			else
-			{
-				Show_Errors(error_msg);
-			}
-		}
-		else if(command_string == "openftriangulation")
-		{
-			if(readPolygonMeshworker.is_para_satisfying(error_msg))
-			{
-				readPolygonMeshworker.setWorkFlowMode(true);
-				readPolygonMeshworker.prepare();
-				connect(&readPolygonMeshworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
-				connect(&readPolygonMeshworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
-				connect(&readPolygonMeshworker, SIGNAL(GoWorkFlow()), this, SLOT(command_parser()));
-
-				readPolygonMeshworker.readpolygonmesh();
-			}
-			else
-			{
-				Show_Errors(error_msg);
-			}
-		}
-		else if(command_string == "savenormals")
-		{
-			if(savenormalsworker.is_para_satisfying(error_msg))
-			{
-				savenormalsworker.setWorkFlowMode(true);
-				savenormalsworker.prepare();
-				connect(&savenormalsworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
-				connect(&savenormalsworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
-				connect(&savenormalsworker, SIGNAL(GoWorkFlow()), this, SLOT(command_parser()));
-
-				savenormalsworker.savenormals();
-			}
-			else
-			{
-				Show_Errors(error_msg);
-			}
-		}
-		else if(command_string == "saveclusters")
-		{
-			if(saveclustersworker.is_para_satisfying(error_msg))
-			{
-				saveclustersworker.setWorkFlowMode(true);
-				saveclustersworker.prepare();
-				connect(&saveclustersworker, SIGNAL(SaveClustersReady(QString)), this, SLOT(ShowSavedClusters(QString)));
-				connect(&saveclustersworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
-				connect(&saveclustersworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
-				connect(&saveclustersworker, SIGNAL(GoWorkFlow()), this, SLOT(command_parser()));
-
-				saveclustersworker.saveclusters();
-			}
-			else
-			{
-				Show_Errors(error_msg);
-			}
-		}
-		else if(command_string == "downsample")
-		{
-			if(downsampleworker.is_para_satisfying(error_msg))
-			{
-				downsampleworker.setWorkFlowMode(true);
-				downsampleworker.prepare();
-				connect(&downsampleworker, SIGNAL(show()), this, SLOT(ShowDownsample()));
-				connect(&downsampleworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
-				connect(&downsampleworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
-				connect(&downsampleworker, SIGNAL(GoWorkFlow()), this, SLOT(command_parser()));
-				
-				downsampleworker.downsample();
-			}
-			else
-			{
-				Show_Errors(error_msg);
-			}
-		}
-		else if(command_string == "resample")
-		{
-			if(resampleworker.is_para_satisfying(error_msg))
-			{
-				resampleworker.setWorkFlowMode(true);
-				resampleworker.prepare();
-				connect(&resampleworker, SIGNAL(show()), this, SLOT(ShowResample()));
-				connect(&resampleworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
-				connect(&resampleworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
-				connect(&resampleworker, SIGNAL(GoWorkFlow()), this, SLOT(command_parser()));
-            
-				resampleworker.resample();
-			}
-			else
-			{
-				Show_Errors(error_msg);
-			}
-		}
-		else if(command_string == "knnormal")
-		{
-			if(knnormalworker.is_para_satisfying(error_msg))
-			{
-				knnormalworker.setWorkFlowMode(true);
-				knnormalworker.prepare();
-				connect(&knnormalworker, SIGNAL(show(bool)), this, SLOT(ShowNormal(bool)));
-				connect(&knnormalworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
-				connect(&knnormalworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
-				connect(&knnormalworker, SIGNAL(GoWorkFlow()), this, SLOT(command_parser()));
-
-				knnormalworker.knnormal();
-			}
-			else
-			{
-				Show_Errors(error_msg);
-			}
-		}
-		else if(command_string == "ranormal")
-		{
-			if(ranormalworker.is_para_satisfying(error_msg))
-			{
-				ranormalworker.setWorkFlowMode(true);
-				ranormalworker.prepare();
-				connect(&ranormalworker, SIGNAL(show(bool)), this, SLOT(ShowNormal(bool)));
-				connect(&ranormalworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
-				connect(&ranormalworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
-				connect(&ranormalworker, SIGNAL(GoWorkFlow()), this, SLOT(command_parser()));
-				
-				ranormalworker.ranormal();
-			}
-			else
-			{
-				Show_Errors(error_msg);
-			}
-		}
-		else if(command_string == "rostatic")
-		{
-			if(staticroworker.is_para_satisfying(error_msg))
-			{
-				staticroworker.setWorkFlowMode(true);
-				staticroworker.prepare();
-				connect(&staticroworker, SIGNAL(show()), this, SLOT(ShowSRO()));
-				connect(&staticroworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
-				connect(&staticroworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
-				connect(&staticroworker, SIGNAL(GoWorkFlow()), this, SLOT(command_parser()));
-            
-				staticroworker.rostatic();
-			}
-			else
-			{
-				Show_Errors(error_msg);
-			}
-		}
-		else if(command_string == "rgsegmentation")
-		{
-			if(rgsworker.is_para_satisfying(error_msg))
-    		{
-				rgsworker.setWorkFlowMode(true);
-				rgsworker.prepare();
-				connect(&rgsworker, SIGNAL(show()), this, SLOT(ShowRGS()));
-				connect(&rgsworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
-				connect(&rgsworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
-				connect(&rgsworker, SIGNAL(GoWorkFlow()), this, SLOT(command_parser()));
-
-				rgsworker.rgs();
-			}
-    		else
-    		{
-				Show_Errors(error_msg);
-    		}
-		}
-		else if(command_string == "showprocess")
-		{
-			if(showprocessworker.is_para_satisfying(error_msg))
-			{
-				showprocessworker.setWorkFlowMode(true);
-				showprocessworker.prepare();
-				connect(&showprocessworker, SIGNAL(show(QStringList)), this, SLOT(Show_Process(QStringList)));
-				connect(&showprocessworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
-				connect(&showprocessworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
-				connect(&showprocessworker, SIGNAL(GoWorkFlow()), this, SLOT(command_parser()));
-
-				showprocessworker.showProcess();
-			}
-			else
-			{
-				Show_Errors(error_msg);
-			}
-		}
-		else if(command_string == "ftriangulation")
-		{
-			if(triangulationworker.is_para_satisfying(error_msg))
-			{
-				triangulationworker.setWorkFlowMode(true);
-				triangulationworker.prepare();
-				connect(&triangulationworker, SIGNAL(show()), this, SLOT(ShowTriangulation()));
-				connect(&triangulationworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
-				connect(&triangulationworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
-				connect(&triangulationworker, SIGNAL(GoWorkFlow()), this, SLOT(command_parser()));
-
-				triangulationworker.triangulation();
-			}
-			else
-			{
-				Show_Errors(error_msg);
-			}
-		}
 		else if(command_string == "shearpara")
 		{
 			if(shearparaworker.is_para_satisfying(error_msg))
@@ -1033,18 +1060,18 @@ void structrock::command_parser()
 				Show_Errors(error_msg);
 			}
 		}
-		else if(command_string == "readnshowfracturetypes")
+		else if(command_string == "showprocess")
 		{
-			if(readnShowClassesworker.is_para_satisfying(error_msg))
+			if(showprocessworker.is_para_satisfying(error_msg))
 			{
-				readnShowClassesworker.setWorkFlowMode(true);
-				readnShowClassesworker.prepare();
-				connect(&readnShowClassesworker, SIGNAL(show()), this, SLOT(ShowFractureClasses()));
-				connect(&readnShowClassesworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
-				connect(&readnShowClassesworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
-				connect(&readnShowClassesworker, SIGNAL(GoWorkFlow()), this, SLOT(command_parser()));
+				showprocessworker.setWorkFlowMode(true);
+				showprocessworker.prepare();
+				connect(&showprocessworker, SIGNAL(show(QStringList)), this, SLOT(Show_Process(QStringList)));
+				connect(&showprocessworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
+				connect(&showprocessworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
+				connect(&showprocessworker, SIGNAL(GoWorkFlow()), this, SLOT(command_parser()));
 
-				readnShowClassesworker.readnshowclasses();
+				showprocessworker.showProcess();
 			}
 			else
 			{
@@ -1068,16 +1095,6 @@ void structrock::command_parser()
 			{
 				Show_Errors(error_msg);
 			}
-		}
-		else if(command_string == "quitsession")
-		{
-			if(dataLibrary::current_workline_index+1<dataLibrary::Workflow.size())
-			{
-				this->NewWindow_next_command();
-			}
-			TimingShutdown *shutdown(new TimingShutdown);
-			connect(shutdown, SIGNAL(shutdown()), this, SLOT(exit()));
-			shutdown->start();
 		}
 		else if(command_string == "showstereonet")
 		{
@@ -2687,6 +2704,14 @@ void structrock::ShowStatus(int i)
 	case STATUS_MULTISTATION:
 		{
 			head="Busy processing multistation point cloud data";
+			head+=tail;
+			ui.label->setText(QString::fromStdString(head));
+			ui.label->setPalette(pa);
+			break;
+		}
+	case STATUS_SAVEMESH:
+		{
+			head="Busy saving meshes of fracture traces map";
 			head+=tail;
 			ui.label->setText(QString::fromStdString(head));
 			ui.label->setPalette(pa);

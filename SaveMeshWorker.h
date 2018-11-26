@@ -38,18 +38,39 @@
  */
 
 #pragma once
+
 #include "Worker.h"
-class ReadPolygonMeshWorker : public Worker
+#include "globaldef.h"
+
+class SaveMeshWorker : public Worker
 {
 	Q_OBJECT
-
-private:
-	QString _filename;
-
+    
 public:
-	void readpolygonmesh()
+	void savemesh()
 	{
 		QMetaObject::invokeMethod(this, "doWork");
+	}
+private:
+	QString _filename;
+	int _aperture_length_model;
+	double _proportionality_coefficient;
+public:
+	void setApertureLengthModel(int model)
+	{
+		_aperture_length_model = model;
+	}
+	int getApertureLengthModel()
+	{
+		return _aperture_length_model;
+	}
+	void setProportionalityCoefficient(double coefficient)
+	{
+		_proportionality_coefficient = coefficient;
+	}
+	double getProportionalityCoefficient()
+	{
+		return _proportionality_coefficient;
 	}
 	void setFileName(QString name)
 	{
@@ -62,8 +83,6 @@ public:
 	virtual bool is_para_satisfying(QString message);
 	virtual void prepare();
 
-public slots:
-	void doWork();
-signals:
-	void show();
+private slots:
+    void doWork();
 };

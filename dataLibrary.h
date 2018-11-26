@@ -68,7 +68,7 @@ public:
 	static pcl::PointCloud<pcl::PointXYZ>::Ptr segmentation_rem;
 	static std::string cloudID;
 	static std::vector<pcl::PointIndices> clusters;
-	static std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> cluster_patches;				//for reading in the saved clusters data
+	static std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> cluster_patches;			//for reading in the saved clusters data
 	static std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> fracture_faces_hull;			//for visualizing fracture oulines
 	static std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> fracture_faces_hull_up;			//for visualizing fracture oulines (up side)
 	static std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> fracture_faces_hull_down;		//for visualizing fracture oulines (down side)
@@ -87,9 +87,11 @@ public:
 	static std::vector<pcl::PolygonMesh::Ptr> Fracture_Triangles;
     static pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_hull_all;
 	static std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> fracture_patches;
-	static std::vector<int> fracture_classes;
-	static std::vector<Vector3f> fracture_classes_rgb;
-    static Eigen::Vector3f plane_normal_all;
+	static std::vector<Striation> fracture_striations;
+	static std::vector<Step> fracture_steps;
+	static std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> fractures_with_feature;
+    static std::string info_str;
+	static Eigen::Vector3f plane_normal_all;
     static std::vector<Line> Lines;
 	static std::vector<Line> Lines_max;
 	static std::vector<Line> Lines_min;
@@ -99,6 +101,8 @@ public:
 	static Vector3f cloud_centor;
 
 public:
+	static void getColorBetweenBlueNRed(float value, int &red, int &green, int &blue);
+	static void getHeatMapColor(float value, int &red, int &green, int &blue);
 	static void checkupflow();
 	static bool haveBaseData();
 	static void clearall();
@@ -116,8 +120,9 @@ public:
 	static bool isInPolygon(const std::vector<Eigen::Vector2f> &convex_hull, const Eigen::Vector2f &test_point);
 	static float crossMultiply(const Eigen::Vector2f &u, const Eigen::Vector2f &v);
 	static bool isSegmentCrossPolygon(const Eigen::Vector2f &point_a, const Eigen::Vector2f &point_b, const std::vector<Eigen::Vector2f> &convex_hull);
-	static bool no_trim_edges(const Eigen::Vector3f &V, const Eigen::Vector3f &xyz_centroid, pcl::PointCloud<pcl::PointXYZ>::Ptr convex_hull, const Eigen::Vector3f &max_intersection, const Eigen::Vector3f &min_intersection, int patchNum, float &length);
-	static bool trim_edges(const Eigen::Vector3f &V, const Eigen::Vector3f &xyz_centroid, pcl::PointCloud<pcl::PointXYZ>::Ptr convex_hull, const Eigen::Vector3f &max_intersection, const Eigen::Vector3f &min_intersection, int patchNum, float &length);
+	static bool edge_inside_part(const Eigen::Vector3f &V, pcl::PointCloud<pcl::PointXYZ>::Ptr convex_hull, const Eigen::Vector3f &in_begin, const Eigen::Vector3f &in_end, Eigen::Vector3f &out_begin, Eigen::Vector3f &out_end);
+	static bool no_trim_edges(const Eigen::Vector3f &V, const Eigen::Vector3f &xyz_centroid, pcl::PointCloud<pcl::PointXYZ>::Ptr convex_hull, const Eigen::Vector3f &max_intersection, const Eigen::Vector3f &min_intersection, int patchNum, double f_p_angle, float &length);
+	static bool trim_edges(const Eigen::Vector3f &V, const Eigen::Vector3f &xyz_centroid, pcl::PointCloud<pcl::PointXYZ>::Ptr convex_hull, const Eigen::Vector3f &max_intersection, const Eigen::Vector3f &min_intersection, int patchNum, double f_p_angle, float &length);
 	static bool Circular(const Eigen::Vector3f &V, const Eigen::Vector3f &xyz_centroid, pcl::PointCloud<pcl::PointXYZ>::Ptr convex_hull, const Eigen::Vector3f &V_i, const Eigen::Vector3f &xyz_centroid_i, pcl::PointCloud<pcl::PointXYZ>::Ptr convex_hull_i, int patchNum, float &length, const float &expand_ratio, bool is_triming_edges, bool needExLine);
 	static bool Rectangular(const Eigen::Vector3f &V, const Eigen::Vector3f &xyz_centroid, pcl::PointCloud<pcl::PointXYZ>::Ptr convex_hull, const Eigen::Vector3f &V_i, const Eigen::Vector3f &xyz_centroid_i, pcl::PointCloud<pcl::PointXYZ>::Ptr convex_hull_i, int patchNum, float &length, const float &expand_ratio, bool is_triming_edges, bool needExLine);
 	static bool LowerBound(const Eigen::Vector3f &V, const Eigen::Vector3f &xyz_centroid, pcl::PointCloud<pcl::PointXYZ>::Ptr convex_hull, const Eigen::Vector3f &V_i, const Eigen::Vector3f &xyz_centroid_i, pcl::PointCloud<pcl::PointXYZ>::Ptr convex_hull_i, int patchNum, float &length, bool is_triming_edges, bool needExLine);
@@ -127,4 +132,6 @@ public:
 	static void assign_left_with_right(Vector3f &left, const Eigen::Vector3f &right);
 	static void assign_left_with_right(Eigen::Vector3f &left, const float* right);
 	static void assign_left_with_right(pcl::PointXYZ &left, const Eigen::Vector3f &right);
+	static Eigen::Vector4f fitPlaneManually(const pcl::PointCloud<pcl::PointXYZ>& cloud);
+	static Eigen::Vector3f compute3DCentroid(const pcl::PointCloud<pcl::PointXYZ>& cloud);
 };

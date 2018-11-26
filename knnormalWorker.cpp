@@ -122,7 +122,7 @@ void knnormalWorker::doWork()
 
     this->timer_stop();
 
-    if(this->getWriteLogMpde()&&is_success)
+    if(this->getWriteLogMode()&&is_success)
     {
         std::string log_text = "\tComputing K Nearest Neighbor Normal costs: ";
         std::ostringstream strs;

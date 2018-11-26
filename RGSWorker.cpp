@@ -167,7 +167,7 @@ void RGSWorker::doWork()
 
     this->timer_stop();
 
-    if(this->getWriteLogMpde()&&is_success)
+    if(this->getWriteLogMode()&&is_success)
     {
         std::string log_text = "\tRegion Growing Segmentation costs: ";
         std::ostringstream strs;

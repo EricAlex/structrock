@@ -107,7 +107,7 @@ void downsampleWorker::doWork()
 
     this->timer_stop();
 
-    if(this->getWriteLogMpde()&&is_success)
+    if(this->getWriteLogMode()&&is_success)
     {
         std::string log_text = "\tDownsampling costs: ";
         std::ostringstream strs;

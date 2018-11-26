@@ -74,7 +74,9 @@ bool ReadPolygonMeshWorker::is_para_satisfying(QString message)
 
 void ReadPolygonMeshWorker::prepare()
 {
-	
+	this->setUnmute();
+	this->setWriteLog();
+	this->check_mute_nolog();
 }
 
 void ReadPolygonMeshWorker::doWork()
@@ -85,6 +87,8 @@ void ReadPolygonMeshWorker::doWork()
 	std::string* strfilename = new std::string(ba.data());
 
 	dataLibrary::Status = STATUS_OPENPOLYGONMESH;
+
+	this->timer_start();
 
 	//begin of processing
 	int fracture_count;
@@ -103,6 +107,22 @@ void ReadPolygonMeshWorker::doWork()
 	}
 	is_success = true;
 	//end of processing
+
+	this->timer_stop();
+
+	if(this->getWriteLogMode()&&is_success)
+    {
+        std::string log_text = "\tOpening Fractures Triangulation Data costs: ";
+        std::ostringstream strs;
+        strs << this->getTimer_sec();
+        log_text += (strs.str() +" seconds.");
+        dataLibrary::write_text_to_log_file(log_text);
+    }
+
+    if(!this->getMuteMode()&&is_success)
+    {
+        emit show();
+    }
 
 	dataLibrary::Status = STATUS_READY;
 	emit showReadyStatus();

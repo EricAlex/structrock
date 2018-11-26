@@ -145,20 +145,13 @@ void SaveClustersWorker::doWork()
     
 	//begin of processing
     //compute centor point and normal
+    Eigen::Vector3f centroid_all = dataLibrary::compute3DCentroid(*dataLibrary::cloudxyz);
     float nx_all, ny_all, nz_all;
-    float curvature_all;
-    Eigen::Matrix3f convariance_matrix_all;
-    Eigen::Vector4f xyz_centroid_all, plane_parameters_all;
-    pcl::compute3DCentroid(*dataLibrary::cloudxyz, xyz_centroid_all);
-    pcl::computeCovarianceMatrix(*dataLibrary::cloudxyz, xyz_centroid_all, convariance_matrix_all);
-    pcl::solvePlaneParameters(convariance_matrix_all, nx_all, ny_all, nz_all, curvature_all);
-    Eigen::Vector3f centroid_all;
-    dataLibrary::plane_normal_all(0)=nx_all;
-    dataLibrary::plane_normal_all(1)=ny_all;
-    dataLibrary::plane_normal_all(2)=nz_all;
-    centroid_all(0)=xyz_centroid_all(0);
-    centroid_all(1)=xyz_centroid_all(1);
-    centroid_all(2)=xyz_centroid_all(2);
+    Eigen::Vector4f plane_normal_param = dataLibrary::fitPlaneManually(*dataLibrary::cloudxyz);
+    nx_all = plane_normal_param(0);
+    ny_all = plane_normal_param(1);
+    nz_all = plane_normal_param(2);
+    dataLibrary::plane_normal_all << nx_all, ny_all, nz_all;
 
 	//calculate total surface roughness of outcrop
 	float total_distance=0.0;
@@ -178,7 +171,7 @@ void SaveClustersWorker::doWork()
     coefficients_all->values[0] = nx_all;
     coefficients_all->values[1] = ny_all;
     coefficients_all->values[2] = nz_all;
-    coefficients_all->values[3] = - (nx_all*xyz_centroid_all[0] + ny_all*xyz_centroid_all[1] + nz_all*xyz_centroid_all[2]);
+    coefficients_all->values[3] = - (nx_all*centroid_all[0] + ny_all*centroid_all[1] + nz_all*centroid_all[2]);
     
     pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_projected_all (new pcl::PointCloud<pcl::PointXYZ>);
     pcl::ProjectInliers<pcl::PointXYZ> proj_all;
@@ -261,21 +254,14 @@ void SaveClustersWorker::doWork()
         }
         
         //prepare for projecting data onto plane
+        Eigen::Vector3f centroid = dataLibrary::compute3DCentroid(*plane_cloud);
         float nx, ny, nz;
-        float curvature;
-        Eigen::Matrix3f convariance_matrix;
-        Eigen::Vector4f xyz_centroid, plane_parameters;
-        pcl::compute3DCentroid(*plane_cloud, xyz_centroid);
-        pcl::computeCovarianceMatrix(*plane_cloud, xyz_centroid, convariance_matrix);
-        pcl::solvePlaneParameters(convariance_matrix, nx, ny, nz, curvature);
-        Eigen::Vector3f centroid;
-        centroid(0)=xyz_centroid(0);
-        centroid(1)=xyz_centroid(1);
-        centroid(2)=xyz_centroid(2);
-		Eigen::Vector3f normal;
-        normal(0) = nx;
-        normal(1) = ny;
-        normal(2) = nz;
+        Eigen::Vector4f plane_normal_param_patch = dataLibrary::fitPlaneManually(*plane_cloud);
+        nx = plane_normal_param_patch(0);
+        ny = plane_normal_param_patch(1);
+        nz = plane_normal_param_patch(2);
+        Eigen::Vector3f normal;
+        normal << nx, ny, nz;
 
 		Eigen::Vector3f V1 = normal.cross(dataLibrary::plane_normal_all);
 		V1 = V1/std::sqrt(V1.dot(V1));
@@ -499,7 +485,7 @@ void SaveClustersWorker::doWork()
 
     this->timer_stop();
 
-    if(this->getWriteLogMpde()&&is_success)
+    if(this->getWriteLogMode()&&is_success)
     {
         std::string log_text = "\tSaving Clusters costs: ";
         std::ostringstream strs;

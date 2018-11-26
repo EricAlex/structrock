@@ -105,7 +105,7 @@ public:
 	{
 		_write_log = false;
 	}
-	bool getWriteLogMpde()
+	bool getWriteLogMode()
 	{
 		return _write_log;
 	}

@@ -119,7 +119,7 @@ void ReadFileWorker::doWork()
 
 	this->timer_stop();
 
-    if(this->getWriteLogMpde()&&is_success)
+    if(this->getWriteLogMode()&&is_success)
     {
 		std::string string_filename = this->getFileName().toUtf8().constData();
         std::string log_text = string_filename + "\n\tReading PCD file costs: ";

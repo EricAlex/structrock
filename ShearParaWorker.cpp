@@ -59,6 +59,7 @@
 #include <pcl/ModelCoefficients.h>
 #include <pcl/filters/project_inliers.h>
 #include <Eigen/src/Core/Matrix.h>
+#include "omp.h"
 #include "globaldef.h"
 #include "dataLibrary.h"
 #include "ShearParaWorker.h"
@@ -172,14 +173,6 @@ void ShearParaWorker::doWork()
     ofstream is_large_enough_out(is_large_enough.c_str());
     for(int i=0; i<dataLibrary::Fracture_Triangles.size(); i++)
     {
-        std::ostringstream strs;
-        strs << i;
-        string textfilename = *strfilename + "_" + strs.str() +"_.txt";
-        string reci_big_c_filename = *strfilename + "_" + strs.str() +"_reciprocal_C_.txt";
-        string theta_max_filename = *strfilename + "_" + strs.str() +"_theta_max_.txt";
-        ofstream fout(textfilename.c_str());
-        ofstream reci_big_c_fout(reci_big_c_filename.c_str());
-        ofstream theta_max_fout(theta_max_filename.c_str());
         pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_ptr(new pcl::PointCloud<pcl::PointXYZ>);
         pcl::fromROSMsg(dataLibrary::Fracture_Triangles[i]->cloud, *cloud_ptr);
         // determine the shear plane, P
@@ -271,6 +264,11 @@ void ShearParaWorker::doWork()
             temp_new(2) = -sdirections[j](2);
             sdirections.push_back(temp_new);
         }
+		vector<float> SP_arr, reci_big_c_arr, theta_max_arr;
+        SP_arr.resize(sdirections.size(), 0.0);
+        reci_big_c_arr.resize(sdirections.size(), 0.0);
+        theta_max_arr.resize(sdirections.size(), 0.0);
+        #pragma omp parallel for
         for(int j=0; j<sdirections.size(); j++)
         {
             float A_0, theta_max;
@@ -331,9 +329,22 @@ void ShearParaWorker::doWork()
             }
             float SP = (theta_max*S_x/S_xy)*360/TWOPI;
             float reci_big_c = S_x/S_xy;
-            fout<<SP*sdirections[j](0)<<"\t"<<SP*sdirections[j](1)<<"\t"<<SP*sdirections[j](2)<<"\t"<<SP<<"\n";
-            reci_big_c_fout<<reci_big_c*sdirections[j](0)<<"\t"<<reci_big_c*sdirections[j](1)<<"\t"<<reci_big_c*sdirections[j](2)<<"\t"<<reci_big_c<<"\n";
-            theta_max_fout<<theta_max*sdirections[j](0)<<"\t"<<theta_max*sdirections[j](1)<<"\t"<<theta_max*sdirections[j](2)<<"\t"<<theta_max<<"\n";
+            SP_arr[j] = SP;
+            reci_big_c_arr[j] = reci_big_c;
+            theta_max_arr[j] = theta_max;
+        }
+		std::ostringstream strs;
+        strs << i;
+        string textfilename = *strfilename + "_" + strs.str() +"_.txt";
+        string reci_big_c_filename = *strfilename + "_" + strs.str() +"_reciprocal_C_.txt";
+        string theta_max_filename = *strfilename + "_" + strs.str() +"_theta_max_.txt";
+        ofstream fout(textfilename.c_str());
+        ofstream reci_big_c_fout(reci_big_c_filename.c_str());
+        ofstream theta_max_fout(theta_max_filename.c_str());
+        for(int j=0; j<sdirections.size(); j++){
+            fout<<SP_arr[j]*sdirections[j](0)<<"\t"<<SP_arr[j]*sdirections[j](1)<<"\t"<<SP_arr[j]*sdirections[j](2)<<"\t"<<SP_arr[j]<<"\n";
+            reci_big_c_fout<<reci_big_c_arr[j]*sdirections[j](0)<<"\t"<<reci_big_c_arr[j]*sdirections[j](1)<<"\t"<<reci_big_c_arr[j]*sdirections[j](2)<<"\t"<<reci_big_c_arr[j]<<"\n";
+            theta_max_fout<<theta_max_arr[j]*sdirections[j](0)<<"\t"<<theta_max_arr[j]*sdirections[j](1)<<"\t"<<theta_max_arr[j]*sdirections[j](2)<<"\t"<<theta_max_arr[j]<<"\n";
         }
         fout<<flush;
         fout.close();

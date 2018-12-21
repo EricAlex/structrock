@@ -52,6 +52,7 @@
 #include <math.h>
 #include <time.h>
 #include <queue>
+#include "omp.h"
 
 
 /** \brief
@@ -651,15 +652,16 @@ template <typename PointT, typename NormalT> void
 GeoRegionGrowing<PointT, NormalT>::findPointNeighbours ()
 {
   int point_number = static_cast<int> (indices_->size ());
-  std::vector<int> neighbours;
-  std::vector<float> distances;
+  std::vector<int> temp_neighbours;
 
-  point_neighbours_.resize (input_->points.size (), neighbours);
+  point_neighbours_.resize (input_->points.size (), temp_neighbours);
 
+  #pragma omp parallel for
   for (int i_point = 0; i_point < point_number; i_point++)
   {
     int point_index = (*indices_)[i_point];
-    neighbours.clear ();
+    std::vector<int> neighbours;
+    std::vector<float> distances;
     search_->nearestKSearch (i_point, neighbour_number_, neighbours, distances);
     point_neighbours_[point_index].swap (neighbours);
   }

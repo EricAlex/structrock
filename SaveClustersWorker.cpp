@@ -65,7 +65,7 @@
 
 using namespace std;
 
-bool SaveClustersWorker::is_para_satisfying(QString message)
+bool SaveClustersWorker::is_para_satisfying(QString &message)
 {
 	if(dataLibrary::clusters.size() == 0)
 	{
@@ -75,7 +75,7 @@ bool SaveClustersWorker::is_para_satisfying(QString message)
 	else
 	{
 		this->setParaSize(1);
-		if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>0)
+		if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>=this->getParaSize())
 		{
 			this->setFileName(QString::fromUtf8(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[0].c_str()));
 			this->setParaIndex(this->getParaSize());

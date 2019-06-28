@@ -134,4 +134,6 @@ public:
 	static void assign_left_with_right(pcl::PointXYZ &left, const Eigen::Vector3f &right);
 	static Eigen::Vector4f fitPlaneManually(const pcl::PointCloud<pcl::PointXYZ>& cloud);
 	static Eigen::Vector3f compute3DCentroid(const pcl::PointCloud<pcl::PointXYZ>& cloud);
+	static Eigen::Vector4f fitPlaneManually(const pcl::PointCloud<pcl::PointXYZRGB>& cloud);
+	static Eigen::Vector3f compute3DCentroid(const pcl::PointCloud<pcl::PointXYZRGB>& cloud);
 };

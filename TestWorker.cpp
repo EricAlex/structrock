@@ -49,10 +49,10 @@
 
 using namespace std;
 
-bool TestWorker::is_para_satisfying(QString message)
+bool TestWorker::is_para_satisfying(QString &message)
 {
 	this->setParaSize(1);
-	if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>0)
+	if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>=this->getParaSize())
 	{
 		this->setFileName(QString::fromUtf8(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[0].c_str()));
 		this->setParaIndex(this->getParaSize());

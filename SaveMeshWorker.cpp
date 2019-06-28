@@ -52,7 +52,7 @@
 
 using namespace std;
 
-bool SaveMeshWorker::is_para_satisfying(QString message)
+bool SaveMeshWorker::is_para_satisfying(QString &message)
 {
 	if((dataLibrary::cloud_hull_all->size() == 0)||(dataLibrary::Lines.size() == 0))
 	{
@@ -62,7 +62,7 @@ bool SaveMeshWorker::is_para_satisfying(QString message)
 	else
 	{
 		this->setParaSize(2);
-		if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>1)
+		if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>=this->getParaSize())
 		{
 			this->setFileName(QString::fromUtf8(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[0].c_str()));
 			if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[1] == "linear")

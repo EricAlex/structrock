@@ -50,7 +50,7 @@
 #include "globaldef.h"
 #include "dataLibrary.h"
 
-bool ReadnShowClassesWorker::is_para_satisfying(QString message){
+bool ReadnShowClassesWorker::is_para_satisfying(QString &message){
 	if(dataLibrary::Fracture_Triangles.size() == 0){
 		message = QString("readnshowshearfeatures: Please Performed Fracture Triangulation or Read Triangulation PolygonMesh Data First!");
 		return false;
@@ -207,13 +207,15 @@ void ReadnShowClassesWorker::doWork(){
 				}
 				std::vector<float> temp_ratio_vec;
 				for(int i=0; i<striations_size; i++){
-					temp_ratio_vec.push_back(dataLibrary::fracture_striations[i].ratio);
+                    if(dataLibrary::fracture_striations[i].ratio > 0.0){
+                        temp_ratio_vec.push_back(dataLibrary::fracture_striations[i].ratio);
+                    }
 				}
 				std::sort(temp_ratio_vec.begin(), temp_ratio_vec.end());
 				float Min_Percent = this->getPercentOut();
 				float Max_Percent = 1 - Min_Percent;
-				float max_ratio = temp_ratio_vec[int(temp_ratio_vec.size()*Max_Percent)];
-				float min_ratio = temp_ratio_vec[int(temp_ratio_vec.size()*Min_Percent)];
+				float max_ratio = temp_ratio_vec[int((temp_ratio_vec.size()-1)*Max_Percent)];
+				float min_ratio = temp_ratio_vec[int((temp_ratio_vec.size()-1)*Min_Percent)];
 				dataLibrary::info_str = "Min Ratio: ";
                 std::ostringstream min_strs, max_strs;
                 min_strs << min_ratio;
@@ -315,13 +317,15 @@ void ReadnShowClassesWorker::doWork(){
 				}
 				std::vector<float> temp_ratio_vec;
 				for(int i=0; i<steps_size; i++){
-					temp_ratio_vec.push_back(dataLibrary::fracture_steps[i].ratio);
+                    if(dataLibrary::fracture_steps[i].ratio > 0.0){
+                        temp_ratio_vec.push_back(dataLibrary::fracture_steps[i].ratio);
+                    }
 				}
 				std::sort(temp_ratio_vec.begin(), temp_ratio_vec.end());
                 float Min_Percent = this->getPercentOut();
                 float Max_Percent = 1 - Min_Percent;
-                float max_ratio = temp_ratio_vec[int(temp_ratio_vec.size()*Max_Percent)];
-                float min_ratio = temp_ratio_vec[int(temp_ratio_vec.size()*Min_Percent)];
+                float max_ratio = temp_ratio_vec[int((temp_ratio_vec.size()-1)*Max_Percent)];
+                float min_ratio = temp_ratio_vec[int((temp_ratio_vec.size()-1)*Min_Percent)];
 				dataLibrary::info_str = "Min Ratio: ";
                 std::ostringstream min_strs, max_strs;
                 min_strs << min_ratio;

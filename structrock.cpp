@@ -368,7 +368,7 @@ void structrock::OpenXYZ()
 
 void structrock::OpenWorkFlow()
 {
-	QString filename = QFileDialog::getOpenFileName(NULL,tr("Open Work Flow File"),QDir::currentPath(),tr("Work Flow (*.txt);;All files (*.*)"));
+	QString filename = QFileDialog::getOpenFileName(NULL,tr("Open Work Flow File"),QDir::currentPath(),tr("All files (*.*)"));
     
     if(!filename.isNull())
     {
@@ -692,6 +692,23 @@ void structrock::command_parser()
 				connect(&knnormalworker, SIGNAL(GoWorkFlow()), this, SLOT(command_parser()));
 
 				knnormalworker.knnormal();
+			}
+			else
+			{
+				Show_Errors(error_msg);
+			}
+		}
+		else if(command_string == "lagrangetensor")
+		{
+			if(lagrangeTensorWorker.is_para_satisfying(error_msg))
+			{
+				lagrangeTensorWorker.setWorkFlowMode(true);
+				lagrangeTensorWorker.prepare();
+				connect(&lagrangeTensorWorker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
+				connect(&lagrangeTensorWorker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
+				connect(&lagrangeTensorWorker, SIGNAL(GoWorkFlow()), this, SLOT(command_parser()));
+
+				lagrangeTensorWorker.LagrangeTensor();
 			}
 			else
 			{
@@ -1202,7 +1219,7 @@ void structrock::ShowPCD(int i)
         
         viewer->resetCameraViewpoint (dataLibrary::cloudID);
         // Position, Viewpoint, Down
-        // viewer->setCameraPosition (0,0,0,0,0,-1);
+        //viewer->setCameraPosition (0,0,0,0,0,-1);
         viewer->resetCamera();
 		ui.qvtkWidget->update();
 	}
@@ -1215,7 +1232,7 @@ void structrock::ShowPCD(int i)
 
         viewer->resetCameraViewpoint (dataLibrary::cloudID);
         // Position, Viewpoint, Down
-        // viewer->setCameraPosition (0,0,0,0,0,-1);
+        //viewer->setCameraPosition (0,0,0,0,0,-1);
         viewer->resetCamera();
         
 		ui.qvtkWidget->update();
@@ -1227,7 +1244,7 @@ void structrock::ShowPCD(int i)
 
         viewer->resetCameraViewpoint (dataLibrary::cloudID);
         // Position, Viewpoint, Down
-        // viewer->setCameraPosition (0,0,0,0,0,-1);
+        //viewer->setCameraPosition (0,0,0,0,0,-1);
         viewer->resetCamera();
         
 		ui.qvtkWidget->update();
@@ -2775,7 +2792,7 @@ void structrock::ShowStatus(int i)
 		}
 	case STATUS_MULTISTATION:
 		{
-			head="Busy processing multistation point cloud data";
+			head="Busy	processing multistation point cloud data";
 			head+=tail;
 			ui.label->setText(QString::fromStdString(head));
 			ui.label->setPalette(pa);
@@ -2783,7 +2800,15 @@ void structrock::ShowStatus(int i)
 		}
 	case STATUS_SAVEMESH:
 		{
-			head="Busy saving meshes of fracture traces map";
+			head="Busy	saving meshes of fracture traces map";
+			head+=tail;
+			ui.label->setText(QString::fromStdString(head));
+			ui.label->setPalette(pa);
+			break;
+		}
+	case STATUS_LAGRANGETENSOR:
+		{
+			head="Busy	calculating Lagrange strain tensor for each fracture";
 			head+=tail;
 			ui.label->setText(QString::fromStdString(head));
 			ui.label->setPalette(pa);

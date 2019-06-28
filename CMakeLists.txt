@@ -6,8 +6,6 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}")
 
 #set(CMAKE_INSTALL_PREFIX ${CMAKE_BINARY_DIR)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
-
 file(COPY qcustomplot.h DESTINATION ${CMAKE_BINARY_DIR})
 
 project(structrock)
@@ -62,10 +60,19 @@ else()
 set(myApp_ICON ${CMAKE_CURRENT_SOURCE_DIR}/structrock.rc)
 endif(APPLE)
 
+if(UNIX)
+file(COPY icon.ico DESTINATION ${CMAKE_BINARY_DIR})
+file(WRITE structrock.desktop "[Desktop Entry]\nVersion=1.0\nName=Structrock\nGenericName=Structrock\nExec=${CMAKE_BINARY_DIR}/${project_NAME}\nIcon=${CMAKE_BINARY_DIR}/icon.ico\nTerminal=false\nType=Application\nCategories=Science;Math;\nKeywords=Science;3D Point Cloud;Rock;Processing;")
+file(RENAME structrock.desktop ${CMAKE_BINARY_DIR}/structrock.desktop)
+endif(UNIX)
+
 ADD_EXECUTABLE(${project_NAME} ${GUI_TYPE} ${myApp_ICON} ${project_SOURCES} ${project_FORMS_HEADERS} ${project_HEADERS_MOC})
 
 if(MSVC)
 set_target_properties(${project_NAME} PROPERTIES LINK_FLAGS "/ENTRY:mainCRTStartup")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /openmp")
+else()
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp -march=native")
 endif(MSVC)
 
 TARGET_LINK_LIBRARIES(structrock ${QT_LIBRARIES} ${PCL_LIBRARIES} ${VTK_LIBRARIES} ${PostgreSQL_LIBRARIES})

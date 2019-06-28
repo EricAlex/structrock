@@ -80,6 +80,7 @@
 #include "ReadnShowClassesWorker.h"
 #include "MultiStationWorker.h"
 #include "SaveMeshWorker.h"
+#include "LagrangeTensorWorker.h"
 #include "TestWorker.h"
 #include "TimingShutdown.h"
 
@@ -222,6 +223,7 @@ private:
 	ReadnShowClassesWorker readnShowClassesworker;
 	MultiStationWorker multiStationworker;
 	SaveMeshWorker saveMeshworker;
+	LagrangeTensorWorker lagrangeTensorWorker;
 	TestWorker testworker;
 
 public:

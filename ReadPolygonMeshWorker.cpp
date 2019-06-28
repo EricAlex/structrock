@@ -38,6 +38,7 @@
  */
 
 #include <string>
+#include <iostream>
 #include <sstream>
 #include <fstream>
 #include <pcl/io/io.h>
@@ -48,7 +49,9 @@
 #include "globaldef.h"
 #include "dataLibrary.h"
 
-bool ReadPolygonMeshWorker::is_para_satisfying(QString message)
+using namespace std;
+
+bool ReadPolygonMeshWorker::is_para_satisfying(QString &message)
 {
 	if(dataLibrary::Fracture_Triangles.size()>0)
 	{
@@ -58,7 +61,7 @@ bool ReadPolygonMeshWorker::is_para_satisfying(QString message)
 	else
 	{
 		this->setParaSize(1);
-		if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>0)
+		if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>=this->getParaSize())
 		{
 			this->setFileName(QString::fromUtf8(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[0].c_str()));
 			this->setParaIndex(this->getParaSize());
@@ -84,36 +87,62 @@ void ReadPolygonMeshWorker::doWork()
 	bool is_success(false);
 
 	QByteArray ba = this->getFileName().toLocal8Bit();
-	std::string* strfilename = new std::string(ba.data());
+	string* strfilename = new string(ba.data());
 
 	dataLibrary::Status = STATUS_OPENPOLYGONMESH;
 
 	this->timer_start();
 
 	//begin of processing
-	int fracture_count;
-	std::string fracture_count_file = *strfilename + "_count.txt";
-	ifstream fracture_count_in(fracture_count_file.c_str());
-	fracture_count_in>>fracture_count;
-	fracture_count_in.close();
-	for(int i=0; i<fracture_count; i++)
-	{
-		pcl::PolygonMesh::Ptr temp_mesh (new pcl::PolygonMesh);
-		std::ostringstream strs;
-		strs << i;
-		std::string vtkfilename = *strfilename + "_" + strs.str() +"_.ply";
-		pcl::io::loadPolygonFile(vtkfilename, *temp_mesh);
-		dataLibrary::Fracture_Triangles.push_back(temp_mesh);
+	string fracture_count_file = *strfilename + "_count.txt";
+	ifstream fracture_count_in;
+    fracture_count_in.open (fracture_count_file.c_str());
+    if (!fracture_count_in.is_open() || fracture_count_in.fail()){
+		emit showErrors(QString(("Unable to open file "+fracture_count_file).c_str()));
+        fracture_count_in.close();
+    }
+	else{
+		string line;
+		int linenum = 1;
+		bool read_count_success(false);
+		int fracture_count;
+		while (!fracture_count_in.eof()){
+			getline(fracture_count_in, line);
+			if(linenum == 1){
+				// Ignore empty lines
+				if (line != ""){
+					boost::trim(line);
+					fracture_count = stoi(line);
+					read_count_success = true;
+				}
+			}
+			linenum++;
+		}
+		fracture_count_in.close();
+		if(read_count_success){
+			for(int i=0; i<fracture_count; i++)
+			{
+				pcl::PolygonMesh::Ptr temp_mesh (new pcl::PolygonMesh);
+				ostringstream strs;
+				strs << i;
+				string vtkfilename = *strfilename + "_" + strs.str() +"_.ply";
+				pcl::io::loadPolygonFile(vtkfilename, *temp_mesh);
+				dataLibrary::Fracture_Triangles.push_back(temp_mesh);
+			}
+			is_success = true;
+		}
+		else{
+			emit showErrors(QString(("File "+fracture_count_file+" is corrupted.").c_str()));
+		}
 	}
-	is_success = true;
 	//end of processing
 
 	this->timer_stop();
 
 	if(this->getWriteLogMode()&&is_success)
     {
-        std::string log_text = "\tOpening Fractures Triangulation Data costs: ";
-        std::ostringstream strs;
+        string log_text = "\tOpening Fractures Triangulation Data costs: ";
+        ostringstream strs;
         strs << this->getTimer_sec();
         log_text += (strs.str() +" seconds.");
         dataLibrary::write_text_to_log_file(log_text);

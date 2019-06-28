@@ -1084,12 +1084,51 @@ Eigen::Vector4f dataLibrary::fitPlaneManually(const pcl::PointCloud<pcl::PointXY
 
   normal /= length;
   params(2) /= length;
-  
+
   Eigen::Vector4f ans;
   ans << normal(0), normal(1), normal(2), params(2);
   return ans;
 }
 Eigen::Vector3f dataLibrary::compute3DCentroid(const pcl::PointCloud<pcl::PointXYZ>& cloud){
+	double cx, cy, cz;
+	cx = cy = cz = 0.0;
+	for(int i=0; i<cloud.size(); i++){
+		cx += cloud.at(i).x;
+		cy += cloud.at(i).y;
+		cz += cloud.at(i).z;
+	}
+	Eigen::Vector3f ans;
+	ans << cx/cloud.size(), cy/cloud.size(), cz/cloud.size();
+	return ans;
+}
+
+Eigen::Vector4f dataLibrary::fitPlaneManually(const pcl::PointCloud<pcl::PointXYZRGB>& cloud){
+  Eigen::MatrixXd lhs (cloud.size(), 3);
+  Eigen::VectorXd rhs (cloud.size());
+
+  for (size_t i = 0; i < cloud.size(); ++i)
+  {
+    const auto& pt = cloud.points[i];
+    lhs(i, 0) = pt.x;
+    lhs(i, 1) = pt.y;
+    lhs(i, 2) = 1.0;
+
+    rhs(i) = -1.0 * pt.z;
+  }
+
+  Eigen::Vector3d params = lhs.jacobiSvd(Eigen::ComputeThinU | Eigen::ComputeThinV).solve(rhs);
+
+  Eigen::Vector3d normal (params(0), params(1), 1.0);
+  auto length = normal.norm();
+
+  normal /= length;
+  params(2) /= length;
+
+  Eigen::Vector4f ans;
+  ans << normal(0), normal(1), normal(2), params(2);
+  return ans;
+}
+Eigen::Vector3f dataLibrary::compute3DCentroid(const pcl::PointCloud<pcl::PointXYZRGB>& cloud){
 	double cx, cy, cz;
 	cx = cy = cz = 0.0;
 	for(int i=0; i<cloud.size(); i++){

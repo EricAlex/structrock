@@ -45,14 +45,14 @@
 #include "MultiInputDialog.h"
 #include "geo_region_growing.h"
 
-bool RGSWorker::is_para_satisfying(QString message)
+bool RGSWorker::is_para_satisfying(QString &message)
 {
 	if(dataLibrary::haveBaseData())
     {
 		if(!dataLibrary::pointnormals->empty())
 		{
 			this->setParaSize(6);
-			if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>5)
+			if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>=this->getParaSize())
 			{
 				double smoothness, curvature, residual;
 				std::stringstream ss_smoothness(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[0]);

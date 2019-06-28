@@ -63,7 +63,7 @@
 #include "globaldef.h"
 #include "dataLibrary.h"
 
-bool ShowProcessWorker::is_para_satisfying(QString message)
+bool ShowProcessWorker::is_para_satisfying(QString &message)
 {
 	if(dataLibrary::clusters.size() == 0)
 	{
@@ -73,7 +73,7 @@ bool ShowProcessWorker::is_para_satisfying(QString message)
 	else
 	{
 		this->setParaSize(0);
-		if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>0)
+		if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>=this->getParaSize())
 		{
 			this->setParaIndex(this->getParaSize());
 			this->setDefaltFMAP_Mode();

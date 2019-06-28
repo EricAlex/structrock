@@ -92,7 +92,7 @@ public:
 	double getEFEpsilon(){
 		return _euclidean_fitness_epsilon;
 	}
-	virtual bool is_para_satisfying(QString message);
+	virtual bool is_para_satisfying(QString &message);
 	virtual void prepare();
 
 private slots:

@@ -46,13 +46,13 @@
 #include <pcl/registration/icp.h>
 #include <pcl/registration/icp_nl.h>
 #include <pcl/registration/transforms.h>
-#include <pcl/features/normal_3d.h>
-#include <pcl/features/normal_3d_omp.h>
+#include "geo_normal_3d.h"
+#include "geo_normal_3d_omp.h"
 #include "globaldef.h"
 #include "MultiStationWorker.h"
 #include "dataLibrary.h"
 
-bool MultiStationWorker::is_para_satisfying(QString message)
+bool MultiStationWorker::is_para_satisfying(QString &message)
 {
 	this->setParaSize(6);
 	if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>=this->getParaSize())
@@ -164,7 +164,7 @@ void MultiStationWorker::doWork()
     	sor.setStddevMulThresh(this->getPreAlignStdDev());
 		sor.setNegative(false);
     	sor.filter(*ro_rgb_cloud);
-		pcl::NormalEstimationOMP<pcl::PointXYZRGB, pcl::Normal> ne_target;
+		GeoNormalEstimationOMP<pcl::PointXYZRGB, pcl::Normal> ne_target;
     	ne_target.setInputCloud(ro_rgb_cloud);
     	pcl::search::KdTree<pcl::PointXYZRGB>::Ptr tree_target (new pcl::search::KdTree<pcl::PointXYZRGB>());
     	ne_target.setSearchMethod(tree_target);
@@ -189,7 +189,7 @@ void MultiStationWorker::doWork()
     		sor_i.setStddevMulThresh(this->getPreAlignStdDev());
 			sor_i.setNegative(false);
     		sor_i.filter(*ro_rgb_cloud_i);
-			pcl::NormalEstimationOMP<pcl::PointXYZRGB, pcl::Normal> ne_i;
+			GeoNormalEstimationOMP<pcl::PointXYZRGB, pcl::Normal> ne_i;
     		ne_i.setInputCloud(ro_rgb_cloud_i);
     		pcl::search::KdTree<pcl::PointXYZRGB>::Ptr tree_i (new pcl::search::KdTree<pcl::PointXYZRGB>());
     		ne_i.setSearchMethod(tree_i);

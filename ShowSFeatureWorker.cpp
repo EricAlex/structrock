@@ -48,10 +48,10 @@
 #include "globaldef.h"
 #include "dataLibrary.h"
 
-bool ShowSFeatureWorker::is_para_satisfying(QString message)
+bool ShowSFeatureWorker::is_para_satisfying(QString &message)
 {
 	this->setParaSize(1);
-	if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>0)
+	if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>=this->getParaSize())
 	{
 		FeaturePara temp_para;
 		temp_para.percent_out = 0.0f;

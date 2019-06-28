@@ -80,7 +80,7 @@ public:
 	float getRatioThreshold(){
 	    return _ratio_threshold;
 	}
-	virtual bool is_para_satisfying(QString message);
+	virtual bool is_para_satisfying(QString &message);
 	virtual void prepare();
 
 public slots:

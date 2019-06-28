@@ -45,12 +45,12 @@
 #include "globaldef.h"
 #include "dataLibrary.h"
 
-bool resampleWorker::is_para_satisfying(QString message)
+bool resampleWorker::is_para_satisfying(QString &message)
 {
 	if(dataLibrary::haveBaseData())
     {
 		this->setParaSize(1);
-		if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>0)
+		if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>=this->getParaSize())
 		{
 			double radius;
 			std::stringstream ss(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[0]);

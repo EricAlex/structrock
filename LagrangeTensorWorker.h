@@ -39,29 +39,95 @@
 
 #pragma once
 #include "Worker.h"
-class SavePolygonMeshWorker : public Worker
-{
-	Q_OBJECT
+class LagrangeTensorWorker : public Worker{
+    Q_OBJECT
 
 private:
-	QString _filename;
+	QString _filename_striations;
+	QString _filename_steps;
+	QString _filename_size;
+	QString _filename_tensor;
+	bool _has_size_th;
+	double _size_th;
+	double _angle_th;
+	double _striations_M_th;
+	double _steps_M_th;
+	bool _is_K_fixed;
+	double _K;
 
 public:
-	void savepolygonmesh()
-	{
+	void LagrangeTensor(){
 		QMetaObject::invokeMethod(this, "doWork");
 	}
-	void setFileName(QString name)
-	{
-		_filename = name;
+	void setStriationsFileName(QString name){
+		_filename_striations = name;
 	}
-	QString getFileName()
-	{
-		return _filename;
+	QString getStriationsFileName(){
+		return _filename_striations;
+	}
+	void setStepsFileName(QString name){
+		_filename_steps = name;
+	}
+	QString getStepsFileName(){
+		return _filename_steps;
+	}
+	void setSizeFileName(QString name){
+		_filename_size = name;
+	}
+	QString getSizeFileName(){
+		return _filename_size;
+	}
+	void setTensorFileName(QString name){
+		_filename_tensor = name;
+	}
+	QString getTensorFileName(){
+		return _filename_tensor;
+	}
+	void setSizeThMode(bool mode){
+		_has_size_th = mode;
+	}
+	bool getSizeThMode(){
+		return _has_size_th;
+	}
+	void setSizeTh(double size_th){
+		_size_th = size_th;
+	}
+	double getSizeTh(){
+		return _size_th;
+	}
+	void setAngleTh(double angle_th){
+		_angle_th = angle_th;
+	}
+	double getAngleTh(){
+		return _angle_th;
+	}
+	void setStriationsMTh(double striations_M_th){
+		_striations_M_th = striations_M_th;
+	}
+	double getStriationsMTh(){
+		return _striations_M_th;
+	}
+	void setStepsMTh(double steps_M_th){
+		_steps_M_th = steps_M_th;
+	}
+	double getStepsMTh(){
+		return _steps_M_th;
+	}
+	void setKfixedMode(bool mode){
+		_is_K_fixed = mode;
+	}
+	bool getKfixedMode(){
+		return _is_K_fixed;
+	}
+	void setK(double K){
+		_K = K;
+	}
+	double getK(){
+		return _K;
 	}
 	virtual bool is_para_satisfying(QString &message);
 	virtual void prepare();
 
-public slots:
-	void doWork();
+private slots:
+    void doWork();
 };

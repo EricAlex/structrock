@@ -39,18 +39,18 @@
 
 #include <string>
 #include <sstream>
-#include <pcl/features/normal_3d.h>
-#include <pcl/features/normal_3d_omp.h>
+#include "geo_normal_3d.h"
+#include "geo_normal_3d_omp.h"
 #include "ranormalWorker.h"
 #include "dataLibrary.h"
 #include "globaldef.h"
 
-bool ranormalWorker::is_para_satisfying(QString message)
+bool ranormalWorker::is_para_satisfying(QString &message)
 {
 	if(dataLibrary::haveBaseData())
     {
 		this->setParaSize(1);
-		if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>0)
+		if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>=this->getParaSize())
 		{
 			double radius;
 			std::stringstream ss(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[0]);
@@ -100,7 +100,7 @@ void ranormalWorker::doWork()
     this->timer_start();
 
 	//begin of processing
-    pcl::NormalEstimationOMP<pcl::PointXYZ, pcl::Normal> ne;
+    GeoNormalEstimationOMP<pcl::PointXYZ, pcl::Normal> ne;
     ne.setInputCloud(dataLibrary::cloudxyz);
     pcl::search::KdTree<pcl::PointXYZ>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZ>());
     ne.setSearchMethod(tree);

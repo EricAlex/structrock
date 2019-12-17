@@ -4,6 +4,8 @@ set(project_NAME structrock)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}")
 
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
+
 file(COPY qcustomplot.h DESTINATION ${CMAKE_BINARY_DIR})
 
 project(structrock)

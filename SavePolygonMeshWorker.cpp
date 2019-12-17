@@ -48,12 +48,12 @@
 #include "globaldef.h"
 #include "dataLibrary.h"
 
-bool SavePolygonMeshWorker::is_para_satisfying(QString message)
+bool SavePolygonMeshWorker::is_para_satisfying(QString &message)
 {
 	if(dataLibrary::Fracture_Triangles.size()>0)
 	{
 		this->setParaSize(1);
-		if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>0)
+		if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>=this->getParaSize())
 		{
 			this->setFileName(QString::fromUtf8(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[0].c_str()));
 			this->setParaIndex(this->getParaSize());

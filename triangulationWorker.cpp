@@ -42,20 +42,21 @@
 #include <pcl/point_types.h>
 #include <pcl/io/pcd_io.h>
 #include <pcl/kdtree/kdtree_flann.h>
-#include <pcl/features/normal_3d.h>
-#include <pcl/features/normal_3d_omp.h>
 #include <pcl/PolygonMesh.h>
 #include <pcl/surface/gp3.h>
+#include "geo_normal_3d.h"
+#include "geo_normal_3d_omp.h"
+#include "omp.h"
 #include "globaldef.h"
 #include "dataLibrary.h"
 #include "triangulationWorker.h"
 
-bool triangulationWorker::is_para_satisfying(QString message)
+bool triangulationWorker::is_para_satisfying(QString &message)
 {
 	if((dataLibrary::clusters.size()>0)||(dataLibrary::cluster_patches.size()>0))
     {
 		this->setParaSize(8);
-		if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>7)
+		if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>=this->getParaSize())
 		{
 			int knNeighbors, maxNearestNeighbors;
 			double searchRadius, Mu, maxSurfaceAngle, minAngle, maxAngle;
@@ -133,14 +134,15 @@ void triangulationWorker::doWork()
     this->timer_start();
 
 	//begin of processing
-    if(dataLibrary::cluster_patches.size()>0)
-    {
-        for(int i=0; i<dataLibrary::cluster_patches.size(); i++)
-        {
+    if(dataLibrary::cluster_patches.size()>0){
+        pcl::PolygonMesh::Ptr null_triangles;
+        dataLibrary::Fracture_Triangles.resize(dataLibrary::cluster_patches.size(), null_triangles);
+        #pragma omp parallel for
+        for(int i=0; i<dataLibrary::cluster_patches.size(); i++){
             pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>);
             pcl::copyPointCloud(*dataLibrary::cluster_patches[i], *cloud);
             // Normal estimation
-            pcl::NormalEstimationOMP<pcl::PointXYZ, pcl::Normal> ne;
+            GeoNormalEstimationOMP<pcl::PointXYZ, pcl::Normal> ne;
             pcl::PointCloud<pcl::Normal>::Ptr normals (new pcl::PointCloud<pcl::Normal>);
             pcl::search::KdTree<pcl::PointXYZ>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZ>);
             tree->setInputCloud (cloud);
@@ -178,21 +180,21 @@ void triangulationWorker::doWork()
             gp3.setInputCloud (cloud_with_normals);
             gp3.setSearchMethod (tree2);
             gp3.reconstruct (*triangles);
-            dataLibrary::Fracture_Triangles.push_back(triangles);
+            dataLibrary::Fracture_Triangles[i] = triangles;
         }
         is_success = true;
     }
-    else if(dataLibrary::clusters.size()>0)
-    {
-        for(int cluster_index = 0; cluster_index < dataLibrary::clusters.size(); cluster_index++)
-        {
+    else if(dataLibrary::clusters.size()>0){
+        pcl::PolygonMesh::Ptr null_triangles;
+        dataLibrary::Fracture_Triangles.resize(dataLibrary::clusters.size(), null_triangles);
+        #pragma omp parallel for
+        for(int cluster_index = 0; cluster_index < dataLibrary::clusters.size(); cluster_index++){
             pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>);
-            for(int j = 0; j < dataLibrary::clusters[cluster_index].indices.size(); j++)
-            {
+            for(int j = 0; j < dataLibrary::clusters[cluster_index].indices.size(); j++){
                 cloud->push_back(dataLibrary::cloudxyz->at(dataLibrary::clusters[cluster_index].indices[j]));
             }
             // Normal estimation
-            pcl::NormalEstimationOMP<pcl::PointXYZ, pcl::Normal> ne;
+            GeoNormalEstimationOMP<pcl::PointXYZ, pcl::Normal> ne;
             pcl::PointCloud<pcl::Normal>::Ptr normals (new pcl::PointCloud<pcl::Normal>);
             pcl::search::KdTree<pcl::PointXYZ>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZ>);
             tree->setInputCloud (cloud);
@@ -230,7 +232,7 @@ void triangulationWorker::doWork()
             gp3.setInputCloud (cloud_with_normals);
             gp3.setSearchMethod (tree2);
             gp3.reconstruct (*triangles);
-            dataLibrary::Fracture_Triangles.push_back(triangles);
+            dataLibrary::Fracture_Triangles[cluster_index] = triangles;
         }
         is_success = true;
     }
@@ -238,7 +240,7 @@ void triangulationWorker::doWork()
 
     this->timer_stop();
 
-    if(this->getWriteLogMpde()&&is_success)
+    if(this->getWriteLogMode()&&is_success)
     {
         std::string log_text = "\tFractures Triangulation costs: ";
         std::ostringstream strs;

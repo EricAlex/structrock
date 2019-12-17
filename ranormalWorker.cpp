@@ -45,12 +45,12 @@
 #include "dataLibrary.h"
 #include "globaldef.h"
 
-bool ranormalWorker::is_para_satisfying(QString message)
+bool ranormalWorker::is_para_satisfying(QString &message)
 {
 	if(dataLibrary::haveBaseData())
     {
 		this->setParaSize(1);
-		if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>0)
+		if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>=this->getParaSize())
 		{
 			double radius;
 			std::stringstream ss(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[0]);
@@ -122,7 +122,7 @@ void ranormalWorker::doWork()
 
     this->timer_stop();
 
-    if(this->getWriteLogMpde()&&is_success)
+    if(this->getWriteLogMode()&&is_success)
     {
         std::string log_text = "\tComputing Radius Normal costs: ";
         std::ostringstream strs;

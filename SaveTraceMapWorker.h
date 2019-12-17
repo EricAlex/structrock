@@ -38,18 +38,53 @@
  */
 
 #pragma once
+
 #include "Worker.h"
-class SavePolygonMeshWorker : public Worker
+#include "globaldef.h"
+
+class SaveTraceMapWorker : public Worker
 {
 	Q_OBJECT
-
-private:
-	QString _filename;
-
+    
 public:
-	void savepolygonmesh()
+	void savetracemap()
 	{
 		QMetaObject::invokeMethod(this, "doWork");
+	}
+private:
+	bool _trim_trace_edges;
+	QString _filename;
+	int _fracture_map_mode;
+	double _expand_ratio;
+    bool _is_clusters_from_files;
+public:
+	void setTrimTraceEdgesMode(bool mode)
+	{
+		_trim_trace_edges = mode;
+	}
+	bool getTrimTraceEdgesMode()
+	{
+		return _trim_trace_edges;
+	}
+	void setDefaltFMAP_Mode()
+	{
+		_fracture_map_mode = FMAP_LOWER_BOUND;
+	}
+	void setFMAP_Mode(int mode)
+	{
+		_fracture_map_mode = mode;
+	}
+	int getFMAP_Mode()
+	{
+		return _fracture_map_mode;
+	}
+	void setExpandRatio(double ratio)
+	{
+		_expand_ratio = ratio;
+	}
+	double getExpandRatio()
+	{
+		return _expand_ratio;
 	}
 	void setFileName(QString name)
 	{
@@ -59,9 +94,20 @@ public:
 	{
 		return _filename;
 	}
+    void setClustersFromFilesFlag(bool flag)
+	{
+		_is_clusters_from_files = flag;
+	}
+	bool IsClustersFromFiles()
+	{
+		return _is_clusters_from_files;
+	}
 	virtual bool is_para_satisfying(QString &message);
 	virtual void prepare();
 
-public slots:
-	void doWork();
+private slots:
+    void doWork();
+signals:
+    void SaveTraceMapReady(const QString &filename);
+    void ShowTraceMap();
 };

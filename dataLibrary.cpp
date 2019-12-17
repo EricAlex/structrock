@@ -77,8 +77,10 @@ int dataLibrary::Status(STATUS_READY);
 std::vector<pcl::PolygonMesh::Ptr> dataLibrary::Fracture_Triangles;
 pcl::PointCloud<pcl::PointXYZ>::Ptr dataLibrary::cloud_hull_all (new pcl::PointCloud<pcl::PointXYZ>);
 std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> dataLibrary::fracture_patches;
-std::vector<int> dataLibrary::fracture_classes;
-std::vector<Vector3f> dataLibrary::fracture_classes_rgb;
+std::vector<Striation> dataLibrary::fracture_striations;
+std::vector<Step> dataLibrary::fracture_steps;
+std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> dataLibrary::fractures_with_feature;
+std::string dataLibrary::info_str("");
 Eigen::Vector3f dataLibrary::plane_normal_all;
 std::vector<Line> dataLibrary::Lines;
 std::vector<Line> dataLibrary::Lines_max;
@@ -96,6 +98,40 @@ bool dataLibrary::isOnlyDouble(const char* str)
 	if(*endptr != '\0' || endptr == str)
 		return false;
 	return true;
+}
+void dataLibrary::getColorBetweenBlueNRed(float value, int &red, int &green, int &blue){
+	int aR = 0;   int aG = 0; int aB=255;  // RGB for blue.
+	int bR = 255; int bG = 0; int bB=0;    // RGB for red.
+	
+	red   = int((float)(bR - aR) * value + aR);      // Evaluated as -255*value + 255.
+	green = int((float)(bG - aG) * value + aG);      // Evaluates as 0.
+	blue  = int((float)(bB - aB) * value + aB);      // Evaluates as 255*value + 0.
+}
+void dataLibrary::getHeatMapColor(float value, int &red, int &green, int &blue){
+	const int NUM_COLORS = 3;
+	static float color[NUM_COLORS][3] = { {0,0,1}, {0,1,0}, {1,0,0} };
+	// A static array of 3 colors:  (blue,  green, red) using {r,g,b} for each.
+	
+	int idx1;        // |-- Our desired color will be between these two indexes in "color".
+	int idx2;        // |
+	float fractBetween = 0;  // Fraction between "idx1" and "idx2" where our value is.
+	
+	if(value <= 0){
+		idx1 = idx2 = 0;
+	}    // accounts for an input <=0
+	else if(value >= 1){
+		idx1 = idx2 = NUM_COLORS-1;
+	}    // accounts for an input >=0
+	else{
+		value = value * (NUM_COLORS-1);        // Will multiply value by 3.
+		idx1  = floor(value);                  // Our desired color will be after this index.
+		idx2  = idx1+1;                        // ... and before this index (inclusive).
+		fractBetween = value - float(idx1);    // Distance between the two indexes (0-1).
+	}
+	
+	red = int(255*((color[idx2][0] - color[idx1][0])*fractBetween + color[idx1][0]));
+	green = int(255*((color[idx2][1] - color[idx1][1])*fractBetween + color[idx1][1]));
+	blue = int(255*((color[idx2][2] - color[idx1][2])*fractBetween + color[idx1][2]));
 }
 void dataLibrary::checkupflow()
 {
@@ -1025,6 +1061,76 @@ bool dataLibrary::LowerBound(const Eigen::Vector3f &V, const Eigen::Vector3f &xy
 		length = 0.0;
 		return false;
 	}
+}
+
+Eigen::Vector4f dataLibrary::fitPlaneManually(const pcl::PointCloud<pcl::PointXYZ>& cloud){
+  Eigen::MatrixXd lhs (cloud.size(), 3);
+  Eigen::VectorXd rhs (cloud.size());
+
+  for (size_t i = 0; i < cloud.size(); ++i)
+  {
+    const auto& pt = cloud.points[i];
+    lhs(i, 0) = pt.x;
+    lhs(i, 1) = pt.y;
+    lhs(i, 2) = 1.0;
+
+    rhs(i) = -1.0 * pt.z;
+  }
+
+  Eigen::Vector3d params = lhs.jacobiSvd(Eigen::ComputeThinU | Eigen::ComputeThinV).solve(rhs);
+
+  Eigen::Vector3d normal (params(0), params(1), 1.0);
+  auto length = normal.norm();
+
+  normal /= length;
+  params(2) /= length;
+
+  return {normal(0), normal(1), normal(2), params(2)};
+}
+Eigen::Vector3f dataLibrary::compute3DCentroid(const pcl::PointCloud<pcl::PointXYZ>& cloud){
+	double cx, cy, cz;
+	cx = cy = cz = 0.0;
+	for(int i=0; i<cloud.size(); i++){
+		cx += cloud.at(i).x;
+		cy += cloud.at(i).y;
+		cz += cloud.at(i).z;
+	}
+	return { cx/cloud.size(), cy/cloud.size(), cz/cloud.size() };
+}
+
+Eigen::Vector4f dataLibrary::fitPlaneManually(const pcl::PointCloud<pcl::PointXYZRGB>& cloud){
+  Eigen::MatrixXd lhs (cloud.size(), 3);
+  Eigen::VectorXd rhs (cloud.size());
+
+  for (size_t i = 0; i < cloud.size(); ++i)
+  {
+    const auto& pt = cloud.points[i];
+    lhs(i, 0) = pt.x;
+    lhs(i, 1) = pt.y;
+    lhs(i, 2) = 1.0;
+
+    rhs(i) = -1.0 * pt.z;
+  }
+
+  Eigen::Vector3d params = lhs.jacobiSvd(Eigen::ComputeThinU | Eigen::ComputeThinV).solve(rhs);
+
+  Eigen::Vector3d normal (params(0), params(1), 1.0);
+  auto length = normal.norm();
+
+  normal /= length;
+  params(2) /= length;
+
+  return {normal(0), normal(1), normal(2), params(2)};
+}
+Eigen::Vector3f dataLibrary::compute3DCentroid(const pcl::PointCloud<pcl::PointXYZRGB>& cloud){
+	double cx, cy, cz;
+	cx = cy = cz = 0.0;
+	for(int i=0; i<cloud.size(); i++){
+		cx += cloud.at(i).x;
+		cy += cloud.at(i).y;
+		cz += cloud.at(i).z;
+	}
+	return { cx/cloud.size(), cy/cloud.size(), cz/cloud.size() };
 }
 
 bool dataLibrary::checkContents(std::vector<std::string> contents, std::string query)

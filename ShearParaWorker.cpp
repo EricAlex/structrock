@@ -61,28 +61,24 @@
 #include <pcl/ModelCoefficients.h>
 #include <pcl/filters/project_inliers.h>
 #include <Eigen/src/Core/Matrix.h>
+#include "omp.h"
 #include "globaldef.h"
 #include "dataLibrary.h"
 #include "ShearParaWorker.h"
 
 using namespace std;
 
-bool ShearParaWorker::is_para_satisfying(QString message)
+bool ShearParaWorker::is_para_satisfying(QString &message)
 {
 	if(dataLibrary::Fracture_Triangles.size() == 0)
 	{
 		message = QString("shearpara: You Haven't Performed Fracture Triangulation Yet!");
 		return false;
 	}
-	else if(dataLibrary::cloudxyz->empty()&&dataLibrary::cloudxyzrgb->empty())
-	{
-		message = QString("shearpara: Please Read Point Cloud Data First (to show each fracture)!");
-		return false;
-	}
 	else
 	{
 		this->setParaSize(1);
-		if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>0)
+		if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>=this->getParaSize())
 		{
 			this->setFileName(QString::fromUtf8(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[0].c_str()));
 			this->setParaIndex(this->getParaSize());
@@ -98,6 +94,12 @@ bool ShearParaWorker::is_para_satisfying(QString message)
 
 void ShearParaWorker::prepare()
 {
+    this->setSaveScreenMode(false);
+    if((dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>this->getParaIndex())&&(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[this->getParaIndex()] == "savescreen"))
+	{
+		this->setSaveScreenMode(true);
+		this->setParaIndex(this->getParaIndex()+1);
+	}
 	this->setUnmute();
 	this->setWriteLog();
 	this->check_mute_nolog();
@@ -150,44 +152,53 @@ void ShearParaWorker::doWork()
     this->timer_start();
 
 	//begin of processing
-
-	emit prepare_2_s_f();
-
-	string dip_dipdir_file = *strfilename + "_dip_dipdir.txt";
-    ofstream dip_dipdir_out(dip_dipdir_file.c_str());
-    string is_large_enough = *strfilename + "_is_large_enough.txt";
-    ofstream is_large_enough_out(is_large_enough.c_str());
-    for(int i=0; i<dataLibrary::Fracture_Triangles.size(); i++)
+    if(this->getSaveScreenMode())
     {
-        std::ostringstream strs;
-        strs << i;
-        string textfilename = *strfilename + "_" + strs.str() +"_.txt";
-		string screen_png = *strfilename + "_" + strs.str() +"_.png";
-        ofstream fout(textfilename.c_str());
+        emit prepare_2_s_f();
+
+        for(int i=0; i<dataLibrary::Fracture_Triangles.size(); i++)
+        {
+            std::ostringstream strs;
+            strs << i;
+            string screen_png = *strfilename + "_" + strs.str() +"_.png";
+            pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_ptr(new pcl::PointCloud<pcl::PointXYZ>);
+            pcl::fromPCLPointCloud2(dataLibrary::Fracture_Triangles[i]->cloud, *cloud_ptr);
+            dataLibrary::fracture_patches.push_back(cloud_ptr);
+            emit show_f_save_screen(QString::fromUtf8(screen_png.c_str()));
+            this->Sleep(1000);
+        }
+    }
+
+    vector<float> dip_arr, dip_dir_arr;
+    vector<int> is_large_enough_arr;
+    dip_arr.resize(dataLibrary::Fracture_Triangles.size(), 0.0);
+    dip_dir_arr.resize(dataLibrary::Fracture_Triangles.size(), 0.0);
+    is_large_enough_arr.resize(dataLibrary::Fracture_Triangles.size(), 0);
+    for(int i=0; i<dataLibrary::Fracture_Triangles.size(); i++){
         pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_ptr(new pcl::PointCloud<pcl::PointXYZ>);
         pcl::fromPCLPointCloud2(dataLibrary::Fracture_Triangles[i]->cloud, *cloud_ptr);
         // determine the shear plane, P
-        float nx, ny, nz, curvature;
+
+        /*float nx, ny, nz, curvature;
         Eigen::Matrix3f convariance_matrix;
-        Eigen::Vector4f xyz_centroid, plane_parameters;
+        Eigen::Vector4f xyz_centroid;
         pcl::compute3DCentroid(*cloud_ptr, xyz_centroid);
         pcl::computeCovarianceMatrix(*cloud_ptr, xyz_centroid, convariance_matrix);
         pcl::solvePlaneParameters(convariance_matrix, nx, ny, nz, curvature);
-        Eigen::Vector3f centroid, plane_normal;
+        Eigen::Vector3f plane_normal;
         plane_normal(0)=nx/sqrt(nx*nx+ny*ny+nz*nz);
         plane_normal(1)=ny/sqrt(nx*nx+ny*ny+nz*nz);
-        plane_normal(2)=nz/sqrt(nx*nx+ny*ny+nz*nz);
-        centroid(0)=xyz_centroid(0);
-        centroid(1)=xyz_centroid(1);
-        centroid(2)=xyz_centroid(2);
+        plane_normal(2)=nz/sqrt(nx*nx+ny*ny+nz*nz);*/
 
-        dataLibrary::fracture_patches.push_back(cloud_ptr);
+        float nx, ny, nz;
+        Eigen::Vector4f plane_normal_param = dataLibrary::fitPlaneManually(*cloud_ptr);
+        nx = plane_normal_param(0);
+        ny = plane_normal_param(1);
+        nz = plane_normal_param(2);
+        Eigen::Vector3f plane_normal;
+        plane_normal << nx, ny, nz;
 
-        emit show_f_save_screen(QString::fromUtf8(screen_png.c_str()));
-
-		this->Sleep(1000);
-
-		is_large_enough_out<<cloud_ptr->points.size()<<"\n";
+        is_large_enough_arr[i] = cloud_ptr->points.size();
 
         float dip_direction, dip;
         //Dip Direction
@@ -215,7 +226,8 @@ void ShearParaWorker::doWork()
         {
             dip = 90.0 - atan(fabs(nz)/sqrt((nx*nx + ny*ny)))*180/M_PI;
         }
-        dip_dipdir_out<<dip<<"\t"<<dip_direction<<"\n";
+        dip_arr[i] = dip;
+        dip_dir_arr[i] = dip_direction;
 
         // shear directions parallel to P
         std::vector<Eigen::Vector3f> sdirections;
@@ -255,8 +267,12 @@ void ShearParaWorker::doWork()
             temp_new(2) = -sdirections[j](2);
             sdirections.push_back(temp_new);
         }
-        for(int j=0; j<sdirections.size(); j++)
-        {
+        vector<float> SP_arr, reci_big_c_arr, theta_max_arr;
+        SP_arr.resize(sdirections.size(), 0.0);
+        reci_big_c_arr.resize(sdirections.size(), 0.0);
+        theta_max_arr.resize(sdirections.size(), 0.0);
+        #pragma omp parallel for
+        for(int j=0; j<sdirections.size(); j++){
             float A_0, theta_max;
             A_0 = 0.0;
             std::vector< std::pair<float, float> > ADAs_As;
@@ -314,10 +330,38 @@ void ShearParaWorker::doWork()
                 S_xy += (Big_X[k] - mean_X)*(Big_Y[k] - mean_Y);
             }
             float SP = (theta_max*S_x/S_xy)*360/TWOPI;
-            fout<<SP*sdirections[j](0)<<"\t"<<SP*sdirections[j](1)<<"\t"<<SP*sdirections[j](2)<<"\t"<<SP<<"\n";
+            float reci_big_c = S_x/S_xy;
+            SP_arr[j] = SP;
+            reci_big_c_arr[j] = reci_big_c;
+            theta_max_arr[j] = theta_max;
+        }
+        std::ostringstream strs;
+        strs << i;
+        string textfilename = *strfilename + "_" + strs.str() +"_.txt";
+        string reci_big_c_filename = *strfilename + "_" + strs.str() +"_reciprocal_C_.txt";
+        string theta_max_filename = *strfilename + "_" + strs.str() +"_theta_max_.txt";
+        ofstream fout(textfilename.c_str());
+        ofstream reci_big_c_fout(reci_big_c_filename.c_str());
+        ofstream theta_max_fout(theta_max_filename.c_str());
+        for(int j=0; j<sdirections.size(); j++){
+            fout<<SP_arr[j]*sdirections[j](0)<<"\t"<<SP_arr[j]*sdirections[j](1)<<"\t"<<SP_arr[j]*sdirections[j](2)<<"\t"<<SP_arr[j]<<"\n";
+            reci_big_c_fout<<reci_big_c_arr[j]*sdirections[j](0)<<"\t"<<reci_big_c_arr[j]*sdirections[j](1)<<"\t"<<reci_big_c_arr[j]*sdirections[j](2)<<"\t"<<reci_big_c_arr[j]<<"\n";
+            theta_max_fout<<theta_max_arr[j]*sdirections[j](0)<<"\t"<<theta_max_arr[j]*sdirections[j](1)<<"\t"<<theta_max_arr[j]*sdirections[j](2)<<"\t"<<theta_max_arr[j]<<"\n";
         }
         fout<<flush;
         fout.close();
+        reci_big_c_fout<<flush;
+        reci_big_c_fout.close();
+        theta_max_fout<<flush;
+        theta_max_fout.close();
+    }
+    string dip_dipdir_file = *strfilename + "_dip_dipdir.txt";
+    ofstream dip_dipdir_out(dip_dipdir_file.c_str());
+    string is_large_enough = *strfilename + "_is_large_enough.txt";
+    ofstream is_large_enough_out(is_large_enough.c_str());
+    for(int i=0; i<dataLibrary::Fracture_Triangles.size(); i++){
+        dip_dipdir_out<<dip_arr[i]<<'\t'<<dip_dir_arr[i]<<'\n';
+        is_large_enough_out<<is_large_enough_arr[i]<<'\n';
     }
 	dip_dipdir_out<<flush;
     dip_dipdir_out.close();
@@ -328,7 +372,7 @@ void ShearParaWorker::doWork()
 
     this->timer_stop();
 
-    if(this->getWriteLogMpde()&&is_success)
+    if(this->getWriteLogMode()&&is_success)
     {
         std::string log_text = "\tFracture Shear Parameter Estimation costs: ";
         std::ostringstream strs;

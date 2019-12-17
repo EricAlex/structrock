@@ -39,10 +39,12 @@
 
 #pragma once
 
-#include <time.h>
+#include <chrono>
 #include <QObject>
 #include <QThread>
 #include "MyThread.h"
+
+using namespace std::chrono;
 
 class Worker : public QObject
 {
@@ -74,8 +76,8 @@ private:
 	bool _write_log;
 	int _para_size;
 	int _para_index;
-	clock_t _time_start;
-	clock_t _time_finish;
+	steady_clock::time_point _time_start;
+	steady_clock::time_point _time_finish;
 public:
 	void setWorkFlowMode(bool mode)
 	{
@@ -105,7 +107,7 @@ public:
 	{
 		_write_log = false;
 	}
-	bool getWriteLogMpde()
+	bool getWriteLogMode()
 	{
 		return _write_log;
 	}
@@ -114,8 +116,8 @@ public:
 		t.Sleep(ms);
 	}
 	void check_mute_nolog();
-	bool is_para_satisfying(QString message){}
-	void prepare(){}
+	virtual bool is_para_satisfying(QString &message){}
+	virtual void prepare(){}
 	void setParaSize(int size)
 	{
 		_para_size = size;
@@ -134,15 +136,16 @@ public:
 	}
 	void timer_start()
 	{
-		_time_start = clock();
+		_time_start = steady_clock::now();
 	}
 	void timer_stop()
 	{
-		_time_finish = clock();
+		_time_finish = steady_clock::now();
 	}
 	double getTimer_sec()
 	{
-		return (double)(_time_finish-_time_start)/CLOCKS_PER_SEC;
+		steady_clock::duration time_span = _time_finish - _time_start;
+		return double(time_span.count()) * steady_clock::period::num / steady_clock::period::den;
 	}
 
 private:

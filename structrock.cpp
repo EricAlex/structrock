@@ -368,7 +368,7 @@ void structrock::OpenXYZ()
 
 void structrock::OpenWorkFlow()
 {
-	QString filename = QFileDialog::getOpenFileName(NULL,tr("Open Work Flow File"),QDir::currentPath(),tr("Work Flow (*.txt);;All files (*.*)"));
+	QString filename = QFileDialog::getOpenFileName(NULL,tr("Open Work Flow File"),QDir::currentPath(),tr("All files (*.*)"));
     
     if(!filename.isNull())
     {
@@ -698,6 +698,23 @@ void structrock::command_parser()
 				Show_Errors(error_msg);
 			}
 		}
+		else if(command_string == "lagrangetensor")
+		{
+			if(lagrangeTensorWorker.is_para_satisfying(error_msg))
+			{
+				lagrangeTensorWorker.setWorkFlowMode(true);
+				lagrangeTensorWorker.prepare();
+				connect(&lagrangeTensorWorker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
+				connect(&lagrangeTensorWorker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
+				connect(&lagrangeTensorWorker, SIGNAL(GoWorkFlow()), this, SLOT(command_parser()));
+
+				lagrangeTensorWorker.LagrangeTensor();
+			}
+			else
+			{
+				Show_Errors(error_msg);
+			}
+		}
 		else if(command_string == "movefile")
 		{
 			if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>1)
@@ -774,6 +791,7 @@ void structrock::command_parser()
 			{
 				readPolygonMeshworker.setWorkFlowMode(true);
 				readPolygonMeshworker.prepare();
+				connect(&readPolygonMeshworker, SIGNAL(show()), this, SLOT(ShowTriangulation()));
 				connect(&readPolygonMeshworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
 				connect(&readPolygonMeshworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
 				connect(&readPolygonMeshworker, SIGNAL(GoWorkFlow()), this, SLOT(command_parser()));
@@ -865,18 +883,18 @@ void structrock::command_parser()
 				Show_Errors(error_msg);
 			}
 		}
-		else if(command_string == "readnshowfracturetypes")
+		else if(command_string == "readnshowshearfeatures")
 		{
 			if(readnShowClassesworker.is_para_satisfying(error_msg))
 			{
 				readnShowClassesworker.setWorkFlowMode(true);
 				readnShowClassesworker.prepare();
-				connect(&readnShowClassesworker, SIGNAL(show()), this, SLOT(ShowFractureClasses()));
+				connect(&readnShowClassesworker, SIGNAL(show()), this, SLOT(ShowFractureShearFeatures()));
 				connect(&readnShowClassesworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
 				connect(&readnShowClassesworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
 				connect(&readnShowClassesworker, SIGNAL(GoWorkFlow()), this, SLOT(command_parser()));
 
-				readnShowClassesworker.readnshowclasses();
+				readnShowClassesworker.readnshowfeatures();
 			}
 			else
 			{
@@ -943,7 +961,6 @@ void structrock::command_parser()
 			{
 				saveclustersworker.setWorkFlowMode(true);
 				saveclustersworker.prepare();
-				connect(&saveclustersworker, SIGNAL(SaveClustersReady(QString)), this, SLOT(ShowSavedClusters(QString)));
 				connect(&saveclustersworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
 				connect(&saveclustersworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
 				connect(&saveclustersworker, SIGNAL(GoWorkFlow()), this, SLOT(command_parser()));
@@ -1034,6 +1051,25 @@ void structrock::command_parser()
 				connect(&savepcdBinaryworker, SIGNAL(GoWorkFlow()), this, SLOT(command_parser()));
 
 				savepcdBinaryworker.savebinary();
+			}
+			else
+			{
+				Show_Errors(error_msg);
+			}
+		}
+		else if(command_string == "savetracemap")
+		{
+			if(saveTraceMapWorker.is_para_satisfying(error_msg))
+			{
+				saveTraceMapWorker.setWorkFlowMode(true);
+				saveTraceMapWorker.prepare();
+				connect(&saveTraceMapWorker, SIGNAL(SaveTraceMapReady(QString)), this, SLOT(Show_SaveTraceMap(QString)));
+				connect(&saveTraceMapWorker, SIGNAL(ShowTraceMap()), this, SLOT(ShowSavedClusters()));
+				connect(&saveTraceMapWorker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
+				connect(&saveTraceMapWorker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
+				connect(&saveTraceMapWorker, SIGNAL(GoWorkFlow()), this, SLOT(command_parser()));
+
+				saveTraceMapWorker.savetracemap();
 			}
 			else
 			{
@@ -1182,6 +1218,8 @@ void structrock::Show_f_n_SaveScreen(const QString &filename)
 	viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 3, *strfilename, v1);
 	ui.qvtkWidget->update();
 	viewer->saveScreenshot(*strfilename);
+	// important to save twice here
+	viewer->saveScreenshot(*strfilename);
 	viewer->removePointCloud(*strfilename,v1);
 }
 
@@ -1206,10 +1244,13 @@ void structrock::ShowPCD(int i)
 	else if(i==CLOUDXYZRGB)
 	{
 		viewer->addPointCloud(dataLibrary::cloudxyzrgb, dataLibrary::cloudID, v1);
-        
+        // to show the reference coordinate system
+		// Eigen::Vector3f centroid = dataLibrary::compute3DCentroid(*dataLibrary::cloudxyz);
+		// viewer->addCoordinateSystem(0.3,centroid(0),centroid(1)-0.5,centroid(2)-1,dataLibrary::cloudID + "_reference",v1);
+
         viewer->resetCameraViewpoint (dataLibrary::cloudID);
         // Position, Viewpoint, Down
-        viewer->setCameraPosition (0,0,0,0,0,-1,0,1,0);
+        viewer->setCameraPosition (0,0,0,0,0,-1,0,0,1);
         viewer->resetCamera();
         
 		ui.qvtkWidget->update();
@@ -1566,6 +1607,81 @@ void structrock::ShowTriangulation()
 			string patchID = "Mesh_" + ss.str();
 			viewer->addPolygonMesh(*dataLibrary::Fracture_Triangles[i], patchID, v2);
 		}
+		// to add reference coordinate system on the fracture surface for shear parameters
+		pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_ptr(new pcl::PointCloud<pcl::PointXYZ>);
+        pcl::fromPCLPointCloud2(dataLibrary::Fracture_Triangles[0]->cloud, *cloud_ptr);
+		Eigen::Vector3f Cloud_center = dataLibrary::compute3DCentroid(*cloud_ptr);
+		
+		/*float nx, ny, nz;
+		float curvature;
+		Eigen::Matrix3f convariance_matrix;
+		Eigen::Vector4f xyz_centroid;
+		xyz_centroid << Cloud_center(0), Cloud_center(1), Cloud_center(2), 1;
+		pcl::computeCovarianceMatrix(*cloud_ptr, xyz_centroid, convariance_matrix);
+		pcl::solvePlaneParameters(convariance_matrix, nx, ny, nz, curvature);
+		Eigen::Vector3f plane_normal;
+        plane_normal << nx, ny, nz;*/
+
+		float nx, ny, nz;
+        Eigen::Vector4f plane_normal_param = dataLibrary::fitPlaneManually(*cloud_ptr);
+        nx = plane_normal_param(0);
+        ny = plane_normal_param(1);
+        nz = plane_normal_param(2);
+        Eigen::Vector3f plane_normal;
+        plane_normal << nx, ny, nz;
+
+		std::vector<Eigen::Vector3f> sdirections;
+        Eigen::Vector3f original;
+        if((nx==0)&&(ny==0))
+        {
+            original(0)=1.0;
+            original(1)=0.0;
+            original(2)=0.0;
+        }
+        else
+        {
+            original(0)=-plane_normal(1);
+            original(1)=plane_normal(0);
+            original(2)=0.0;
+        }
+	    for(float j=-TWOPI/2; j<-0.001; j+=TWOPI/72)
+	    {
+		    float x = plane_normal(0);
+		    float y = plane_normal(1);
+		    float z = plane_normal(2);
+		    float c = std::cos(j);
+		    float s = std::sqrt(1-c*c);
+		    float C = 1-c;
+		    Eigen::Matrix3f rmat;
+		    rmat<<x*x*C+c,x*y*C-z*s,x*z*C+y*s,y*x*C+z*s,y*y*C+c,y*z*C-x*s,z*x*C-y*s,z*y*C+x*s,z*z*C+c;
+            Eigen::Vector3f rotated=rmat*original;
+            rotated.normalize();
+		    sdirections.push_back(rotated);
+        }
+        int halfsize = sdirections.size();
+        for(int j=0; j<halfsize; j++)
+        {
+            Eigen::Vector3f temp_new;
+            temp_new(0) = -sdirections[j](0);
+            temp_new(1) = -sdirections[j](1);
+            temp_new(2) = -sdirections[j](2);
+            sdirections.push_back(temp_new);
+        }
+		float scale = 0.25;
+		plane_normal.normalize();
+		Cloud_center = Cloud_center + 0.02*plane_normal;
+		plane_normal *= scale;
+		DrawLine(Cloud_center,Cloud_center + plane_normal,0,0,1,3,"Normal_dir",v2);
+		DrawLine(Cloud_center,Cloud_center + scale * sdirections[0],1,0,0,3,"ZeroD_dir",v2);
+		DrawLine(Cloud_center,Cloud_center + scale * sdirections[18],0,1,0,3,"NinetyD_dir",v2);
+		/*for(int j=0; j<sdirections.size(); j++){
+			stringstream ss;
+			ss << j;
+			string ShearDirID = "Shear_Dir_" + ss.str();
+			float color = (float)j/sdirections.size();
+			DrawLine(Cloud_center,Cloud_center + scale * sdirections[j],color,1.0-color,color,3,ShearDirID,v2);
+		}*/
+
 		ui.qvtkWidget->update();
 	}
 }
@@ -1573,51 +1689,37 @@ void structrock::ShowTriangulation()
 void structrock::ShowShearPara()
 {}
 
-void structrock::ShowFractureClasses()
+void structrock::ShowFractureShearFeatures()
 {
-	if(dataLibrary::fracture_classes.size()!=dataLibrary::Fracture_Triangles.size())
-	{
-		std::ostringstream count_1_strs, count_2_strs;
-		count_1_strs << dataLibrary::fracture_classes.size();
-		count_2_strs << dataLibrary::Fracture_Triangles.size();
-		std::string message = "(" + count_1_strs.str() + "/" + count_2_strs.str() + ") Fracture Types Data and Fracture PolygonMeshes Data MUST HAVE THE SAME LENGTH!";
-		Show_Errors(QString::fromUtf8(message.c_str()));
-	}
-	else
-	{
-		if(!dataLibrary::cloudxyzrgb->empty())
-		{
-			viewer->removeAllPointClouds(v2);
-			viewer->removeAllShapes(v2);
-			viewer->addPointCloud(dataLibrary::cloudxyzrgb, dataLibrary::cloudID+"2", v2);
-			ui.qvtkWidget->update();
-		}
-		else if(!dataLibrary::cloudxyz->empty())
-		{
-			viewer->removeAllPointClouds(v2);
-			viewer->removeAllShapes(v2);
-			viewer->addPointCloud(dataLibrary::cloudxyz, dataLibrary::cloudID+"2", v2);
-			viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 0.0, 0.7, 0.0, dataLibrary::cloudID+"2", v2);
-			ui.qvtkWidget->update();
-		}
-		else
-		{
-			Show_Errors(QString("shearpara: Please Read Point Cloud Data First (to show each fracture)!"));
-		}
-
-		for(int i=0; i<dataLibrary::Fracture_Triangles.size(); i++)
-		{
-			std::ostringstream strs;
-			strs << i;
-			pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_ptr(new pcl::PointCloud<pcl::PointXYZ>);
-			pcl::fromPCLPointCloud2(dataLibrary::Fracture_Triangles[i]->cloud, *cloud_ptr);
-			
-			viewer->addPointCloud(cloud_ptr, strs.str(), v1);
-			viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, dataLibrary::fracture_classes_rgb[i].x, dataLibrary::fracture_classes_rgb[i].y, dataLibrary::fracture_classes_rgb[i].z, strs.str(), v1);
-			viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 3, strs.str(), v1);
-		}
+	if(!dataLibrary::cloudxyzrgb->empty()){
+		viewer->removeAllPointClouds(v2);
+		viewer->removeAllShapes(v2);
+		viewer->removeAllPointClouds(v1);
+		viewer->removeAllShapes(v1);
+		viewer->addPointCloud(dataLibrary::cloudxyzrgb, dataLibrary::cloudID+"2", v2);
+		viewer->addPointCloud(dataLibrary::cloudxyzrgb, dataLibrary::cloudID+"1", v1);
+		viewer->addText(dataLibrary::info_str, 10, 10, 26, 1.0, 1.0, 1.0, "v1 info text", v1);
 		ui.qvtkWidget->update();
 	}
+	else if(!dataLibrary::cloudxyz->empty()){
+		viewer->removeAllPointClouds(v2);
+		viewer->removeAllShapes(v2);
+		viewer->removeAllPointClouds(v1);
+		viewer->removeAllShapes(v1);
+		viewer->addPointCloud(dataLibrary::cloudxyz, dataLibrary::cloudID+"2", v2);
+		viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 0.0, 0.7, 0.0, dataLibrary::cloudID+"2", v2);
+		viewer->addPointCloud(dataLibrary::cloudxyz, dataLibrary::cloudID+"1", v1);
+		viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 0.0, 0.7, 0.0, dataLibrary::cloudID+"1", v1);
+		viewer->addText(dataLibrary::info_str, 10, 10, 26, 1.0, 1.0, 1.0, "v1 info text", v1);
+		ui.qvtkWidget->update();
+	}
+	for(int i=0; i<dataLibrary::fractures_with_feature.size(); i++){
+		std::ostringstream strs;
+		strs << i;
+		viewer->addPointCloud(dataLibrary::fractures_with_feature[i], strs.str(), v1);
+		viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 2, strs.str(), v1);
+	}
+	ui.qvtkWidget->update();
 }
 
 void structrock::DrawLine(const Eigen::Vector3f begin, const Eigen::Vector3f end, float r, float g, float b, std::string id, int viewpot)
@@ -1663,7 +1765,7 @@ void structrock::SaveClusters()
 			saveclustersworker.setWorkFlowMode(false);
 			saveclustersworker.setUnmute();
 			saveclustersworker.setWriteLog();
-            connect(&saveclustersworker, SIGNAL(SaveClustersReady(QString)), this, SLOT(ShowSavedClusters(QString)));
+            connect(&saveclustersworker, SIGNAL(SaveClustersReady()), this, SLOT(ShowSavedClusters()));
 			connect(&saveclustersworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
             connect(&saveclustersworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
             
@@ -1672,7 +1774,7 @@ void structrock::SaveClusters()
 	}
 }
 
-void structrock::ShowSavedClusters(QString filename)
+void structrock::ShowSavedClusters()
 {
 	viewer->removeAllPointClouds(v2);
 	viewer->removeAllShapes(v2);
@@ -1691,8 +1793,6 @@ void structrock::ShowSavedClusters(QString filename)
     }
 
 	ui.qvtkWidget->update();
-    
-    Show_SaveTraceMap(filename);
 }
 
 void structrock::Show_SaveTraceMap(QString filename)
@@ -1963,17 +2063,22 @@ void structrock::Show_SFeature()
 	{
 		viewer->removeAllPointClouds(v1);
 		viewer->addPointCloud(dataLibrary::cloudxyzrgb, dataLibrary::cloudID, v1);
+		viewer->removeAllPointClouds(v2);
+		viewer->addPointCloud(dataLibrary::cloudxyzrgb, dataLibrary::cloudID+"v2", v2);
 	}
 	else
 	{
 		viewer->removeAllPointClouds(v1);
 		viewer->addPointCloud(dataLibrary::cloudxyz, dataLibrary::cloudID, v1);
 		viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 0.0, 0.7, 0.0, dataLibrary::cloudID, v1);
+		viewer->removeAllPointClouds(v2);
+		viewer->addPointCloud(dataLibrary::cloudxyz, dataLibrary::cloudID+"v2", v2);
+		viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 0.0, 0.7, 0.0, dataLibrary::cloudID+"v2", v2);
 	}
 
-	viewer->removeAllPointClouds(v2);
 	viewer->removeAllShapes(v2);
 	viewer->addPointCloud(dataLibrary::cloudxyzrgb_features, "feature", v2);
+	viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 3, "feature", v2);
 
 	ui.qvtkWidget->update();
 }
@@ -2703,7 +2808,7 @@ void structrock::ShowStatus(int i)
 		}
 	case STATUS_MULTISTATION:
 		{
-			head="Busy processing multistation point cloud data";
+			head="Busy	processing multistation point cloud data";
 			head+=tail;
 			ui.label->setText(QString::fromStdString(head));
 			ui.label->setPalette(pa);
@@ -2711,7 +2816,23 @@ void structrock::ShowStatus(int i)
 		}
 	case STATUS_SAVEMESH:
 		{
-			head="Busy saving meshes of fracture traces map";
+			head="Busy	saving meshes of fracture traces map";
+			head+=tail;
+			ui.label->setText(QString::fromStdString(head));
+			ui.label->setPalette(pa);
+			break;
+		}
+	case STATUS_LAGRANGETENSOR:
+		{
+			head="Busy	calculating Lagrange strain tensor for each fracture";
+			head+=tail;
+			ui.label->setText(QString::fromStdString(head));
+			ui.label->setPalette(pa);
+			break;
+		}
+	case STATUS_SAVETRACEMAP:
+		{
+			head="Busy	saving trace map";
 			head+=tail;
 			ui.label->setText(QString::fromStdString(head));
 			ui.label->setPalette(pa);

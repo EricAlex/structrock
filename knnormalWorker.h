@@ -74,7 +74,7 @@ public:
 	{
 		return _k;
 	}
-	virtual bool is_para_satisfying(QString message);
+	virtual bool is_para_satisfying(QString &message);
 	virtual void prepare();
 
 private slots:

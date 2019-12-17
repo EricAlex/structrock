@@ -44,12 +44,12 @@
 #include "downsampleWorker.h"
 #include "dataLibrary.h"
 
-bool downsampleWorker::is_para_satisfying(QString message)
+bool downsampleWorker::is_para_satisfying(QString &message)
 {
 	if(dataLibrary::haveBaseData())
     {
 		this->setParaSize(1);
-		if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>0)
+		if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>=this->getParaSize())
 		{
 			double leaf;
 			std::stringstream ss(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[0]);
@@ -107,7 +107,7 @@ void downsampleWorker::doWork()
 
     this->timer_stop();
 
-    if(this->getWriteLogMpde()&&is_success)
+    if(this->getWriteLogMode()&&is_success)
     {
         std::string log_text = "\tDownsampling costs: ";
         std::ostringstream strs;

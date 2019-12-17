@@ -44,12 +44,12 @@
 #include "dataLibrary.h"
 #include "globaldef.h"
 
-bool StaticROWorker::is_para_satisfying(QString message)
+bool StaticROWorker::is_para_satisfying(QString &message)
 {
 	if(dataLibrary::haveBaseData())
     {
 		this->setParaSize(1);
-		if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>0)
+		if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>=this->getParaSize())
 		{
 			double stdDev;
 			std::stringstream ss(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[0]);
@@ -117,7 +117,7 @@ void StaticROWorker::doWork()
 
     this->timer_stop();
 
-    if(this->getWriteLogMpde()&&is_success)
+    if(this->getWriteLogMode()&&is_success)
     {
         std::string log_text = "\tStatistical Outlier Removing costs: ";
         std::ostringstream strs;

@@ -65,7 +65,7 @@
 #include "globaldef.h"
 #include "dataLibrary.h"
 
-bool ShowProcessWorker::is_para_satisfying(QString message)
+bool ShowProcessWorker::is_para_satisfying(QString &message)
 {
 	if(dataLibrary::clusters.size() == 0)
 	{
@@ -295,7 +295,7 @@ void ShowProcessWorker::doWork()
 
 	this->timer_stop();
 
-	if(this->getWriteLogMpde()&&is_success)
+	if(this->getWriteLogMode()&&is_success)
     {
         std::string log_text_head = "\tShowProcess (";
 		std::string log_text_body = "";

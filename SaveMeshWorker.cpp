@@ -52,7 +52,7 @@
 
 using namespace std;
 
-bool SaveMeshWorker::is_para_satisfying(QString message)
+bool SaveMeshWorker::is_para_satisfying(QString &message)
 {
 	if((dataLibrary::cloud_hull_all->size() == 0)||(dataLibrary::Lines.size() == 0))
 	{
@@ -137,6 +137,8 @@ void SaveMeshWorker::doWork()
 	//begin of processing
 	string inside_nodes_filename = strfilename->substr(0, strfilename->size()-4) += "_inside_nodes.txt";
 	ofstream inside_nodes_out(inside_nodes_filename.c_str());
+	string boundary_nodes_filename = strfilename->substr(0, strfilename->size()-4) += "_boundary_nodes.txt";
+	ofstream boundary_nodes_out(boundary_nodes_filename.c_str());
 	std::vector<Eigen::Vector3f> nodes, edges;
 	Eigen::Vector3f vertical_3d;
 	vertical_3d << 0.0, 0.0, 1.0;
@@ -165,6 +167,7 @@ void SaveMeshWorker::doWork()
 		Eigen::Vector3f temp_node, temp_edge;
 		temp_node << convex_hull_all_2d[i](0), convex_hull_all_2d[i](1), 0;
 		nodes.push_back(temp_node);
+		boundary_nodes_out << convex_hull_all_2d[i](0) << "\t" << convex_hull_all_2d[i](1) << "\n";
 		temp_edge << i, (i+1)%convex_hull_all_2d.size(), 0;
 		edges.push_back(temp_edge);
 	}
@@ -345,10 +348,14 @@ void SaveMeshWorker::doWork()
 			inside_nodes_out << inside_nodes.size() << "\n";
 			for(int i=0; i<inside_nodes.size(); i++)
 			{
-				inside_nodes_out << inside_nodes[i](0) << inside_nodes[i](1) << "\n";
+				inside_nodes_out << inside_nodes[i](0) << "\t" << inside_nodes[i](1) << "\n";
 			}
 		}
 	}
+	inside_nodes_out<<flush;
+	inside_nodes_out.close();
+	boundary_nodes_out<<flush;
+	boundary_nodes_out.close();
 	//write nodes and edges to msh file
 	ofstream fout(strfilename->c_str());
 	fout << "mshid=1" << "\n" << "ndims=2" << "\n";
@@ -399,7 +406,7 @@ void SaveMeshWorker::doWork()
 
     this->timer_stop();
 
-    if(this->getWriteLogMpde()&&is_success)
+    if(this->getWriteLogMode()&&is_success)
     {
         std::string log_text = "\tSaving Clusters costs: ";
         std::ostringstream strs;

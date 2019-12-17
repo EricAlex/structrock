@@ -49,7 +49,7 @@
 
 using namespace std;
 
-bool TestWorker::is_para_satisfying(QString message)
+bool TestWorker::is_para_satisfying(QString &message)
 {
 	this->setParaSize(1);
 	if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>0)

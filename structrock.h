@@ -80,6 +80,8 @@
 #include "ReadnShowClassesWorker.h"
 #include "MultiStationWorker.h"
 #include "SaveMeshWorker.h"
+#include "LagrangeTensorWorker.h"
+#include "SaveTraceMapWorker.h"
 #include "TestWorker.h"
 #include "TimingShutdown.h"
 
@@ -111,7 +113,7 @@ private slots:
 	void RadiusRemoveOutlier();
 	void SaveNormals();
 	void SaveClusters();
-    void ShowSavedClusters(QString filename);
+    void ShowSavedClusters();
 	void Show_SaveTraceMap(QString filename);
 	void Prepare_2_s_f();
 	void Show_f_n_SaveScreen(const QString &filename);
@@ -119,7 +121,7 @@ private slots:
 	void ShowRGS();
 	void ShowTriangulation();
 	void ShowShearPara();
-	void ShowFractureClasses();
+	void ShowFractureShearFeatures();
 	void OpenClusters();
 	void ShowClusters();
 	void OpenXYZ();
@@ -222,6 +224,8 @@ private:
 	ReadnShowClassesWorker readnShowClassesworker;
 	MultiStationWorker multiStationworker;
 	SaveMeshWorker saveMeshworker;
+	LagrangeTensorWorker lagrangeTensorWorker;
+	SaveTraceMapWorker saveTraceMapWorker;
 	TestWorker testworker;
 
 public:

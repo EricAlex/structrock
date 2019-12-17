@@ -59,9 +59,11 @@ public:
 	{
 		return _filename;
 	}
-	virtual bool is_para_satisfying(QString message);
+	virtual bool is_para_satisfying(QString &message);
 	virtual void prepare();
 
 public slots:
 	void doWork();
+signals:
+	void show();
 };

@@ -48,7 +48,7 @@
 #include "globaldef.h"
 #include "dataLibrary.h"
 
-bool ShowSFeatureWorker::is_para_satisfying(QString message)
+bool ShowSFeatureWorker::is_para_satisfying(QString &message)
 {
 	this->setParaSize(1);
 	if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>0)
@@ -75,6 +75,11 @@ bool ShowSFeatureWorker::is_para_satisfying(QString message)
 		else if(feature_str == "fracture_curvature")
 		{
 			temp_para.feature_type = FEATURE_FRACTURE_CURVATURE;
+			is_feature_defined = true;
+		}
+		else if(feature_str == "fracture_faces")
+		{
+			temp_para.feature_type = FEATURE_FRACTURE_FACES;
 			is_feature_defined = true;
 		}
 
@@ -391,10 +396,33 @@ void ShowSFeatureWorker::doWork()
 			//end of processing
 		}
 	}
+	else if(this->getFPara().feature_type == FEATURE_FRACTURE_FACES)
+	{
+		if(dataLibrary::cloudxyzrgb->empty()&&dataLibrary::cloudxyz->empty()){
+			emit showErrors(QString("ShowSFeatures (fracture_faces): Please read 'cloudxyzrgb' data or 'cloudxyz' data first."));
+		}
+		else if(dataLibrary::cluster_patches.empty()){
+			emit showErrors(QString("ShowSFeatures (fracture_faces): Please read clusters data first."));
+		}
+		else{
+			//begin of processing
+			//Clear data if needed
+			if(!dataLibrary::cloudxyzrgb_features->empty())
+				dataLibrary::cloudxyzrgb_features->clear();
+			
+			*dataLibrary::cloudxyzrgb_features = *dataLibrary::cluster_patches[0];
+			for(int i=1; i<dataLibrary::cluster_patches.size(); i++){
+				*dataLibrary::cloudxyzrgb_features += *dataLibrary::cluster_patches[i];
+			}
+
+			is_success = true;
+			//end of processing
+		}
+	}
 
 	this->timer_stop();
 
-	if(this->getWriteLogMpde()&&is_success)
+	if(this->getWriteLogMode()&&is_success)
 	{
 		std::string log_text = "\tShowSFeature Costs: ";
 		std::ostringstream strs;

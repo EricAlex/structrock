@@ -43,7 +43,7 @@
 #include "globaldef.h"
 #include "dataLibrary.h"
 
-bool SaveNormalsWorker::is_para_satisfying(QString message)
+bool SaveNormalsWorker::is_para_satisfying(QString &message)
 {
 	this->setParaSize(1);
 	if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>0)

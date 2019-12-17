@@ -45,21 +45,42 @@ class ReadnShowClassesWorker : public Worker
 
 private:
 	QString _filename;
+	int _feature_type;
+	float _percent_out;
+	float _ratio_threshold;
 
+private:
+	bool readFeatures(const std::string &filename, std::string err_message);
+	void saveColorBar(const std::string &filename);
 public:
-	void readnshowclasses()
-	{
+	void readnshowfeatures(){
 		QMetaObject::invokeMethod(this, "doWork");
 	}
-	void setFileName(QString name)
-	{
+	void setFileName(QString name){
 		_filename = name;
 	}
-	QString getFileName()
-	{
+	QString getFileName(){
 		return _filename;
 	}
-	virtual bool is_para_satisfying(QString message);
+	void setFeatureType(int type){
+		_feature_type = type;
+	}
+	int getFeatureType(){
+		return _feature_type;
+	}
+	void setPercentOut(float percent){
+		_percent_out = percent;
+	}
+	float getPercentOut(){
+		return _percent_out;
+	}
+	void setRatioThreshold(float threshold){
+        _ratio_threshold = threshold;
+	}
+	float getRatioThreshold(){
+	    return _ratio_threshold;
+	}
+	virtual bool is_para_satisfying(QString &message);
 	virtual void prepare();
 
 public slots:

@@ -72,11 +72,14 @@
 #define STATUS_READNSHOWCLASSES	121
 #define STATUS_MULTISTATION	122
 #define STATUS_SAVEMESH 123
+#define STATUS_LAGRANGETENSOR 124
+#define STATUS_SAVETRACEMAP 125
 
 #define FEATURE_ROUGHNESS   1001
 #define FEATURE_AREA    1002
 #define FEATURE_CURVATURE   1003
 #define FEATURE_FRACTURE_CURVATURE  1004
+#define FEATURE_FRACTURE_FACES  1005
 
 #define FMAP_LOWER_BOUND	2001
 #define FMAP_CIRCULAR	2002
@@ -84,6 +87,9 @@
 
 #define A_L_MODEL_LINEAR    3001
 #define A_L_MODEL_SQRT  3002
+
+#define FRACTURE_FEATURE_STRIATION  4001
+#define FRACTURE_FEATURE_STEP   4002
 
 struct RGSpara{
     double curvature;
@@ -112,6 +118,16 @@ struct FeaturePara{
 
 struct Vector3f{
 	float x, y, z;
+};
+
+struct Striation{
+    float ratio;
+    Vector3f direction;
+};
+
+struct Step{
+    float ratio;
+    Vector3f facing_direc;
 };
 
 struct Line{

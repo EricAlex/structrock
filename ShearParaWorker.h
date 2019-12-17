@@ -46,6 +46,7 @@ class ShearParaWorker : public Worker
 
 private:
 	QString _filename;
+	bool _save_screen_mode;
     
 public:
 	void shearpara()
@@ -60,7 +61,15 @@ public:
 	{
 		return _filename;
 	}
-	virtual bool is_para_satisfying(QString message);
+	void setSaveScreenMode(bool mode)
+	{
+		_save_screen_mode = mode;
+	}
+	bool getSaveScreenMode()
+	{
+		return _save_screen_mode;
+	}
+	virtual bool is_para_satisfying(QString &message);
 	virtual void prepare();
 
 private slots:

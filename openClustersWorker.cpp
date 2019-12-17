@@ -49,10 +49,10 @@
 
 using namespace std;
 
-bool openClustersWorker::is_para_satisfying(QString message)
+bool openClustersWorker::is_para_satisfying(QString &message)
 {
 	this->setParaSize(1);
-	if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>0)
+	if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>=this->getParaSize())
 	{
 		this->setFileName(QString::fromUtf8(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[0].c_str()));
 		this->setParaIndex(this->getParaSize());
@@ -162,7 +162,7 @@ void openClustersWorker::doWork()
 
     this->timer_stop();
 
-    if(this->getWriteLogMpde()&&is_success)
+    if(this->getWriteLogMode()&&is_success)
     {
 		std::string string_filename = this->getFileName().toUtf8().constData();
         std::string log_text = string_filename + "\n\tReading Clusters costs: ";

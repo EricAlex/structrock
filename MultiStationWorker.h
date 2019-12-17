@@ -52,31 +52,47 @@ class MultiStationWorker :
 private:
 	std::vector<std::string> multiStationFilePath;
 	std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> multiStationPointClouds;
-	double _stdDev;
-    double _leaf;
+	double _pre_align_ds_leaf;
+	double _pre_align_StdDev;
+	int _pre_align_normals_k;
+	double _max_correspondence_distance;
+	double _euclidean_fitness_epsilon;
 
 public:
-	void multiStation()
-	{
+	void multiStation(){
 		QMetaObject::invokeMethod(this, "doWork");
 	}
-	void setStdDev(double stdDev)
-	{
-		_stdDev = stdDev;
+	void setPreAlignDSLeaf(double pre_align_ds_leaf){
+		_pre_align_ds_leaf = pre_align_ds_leaf;
 	}
-	double getStdDev()
-	{
-		return _stdDev;
+	double getPreAlignDSLeaf(){
+		return _pre_align_ds_leaf;
 	}
-	void setLeaf(double leaf)
-	{
-		_leaf = leaf;
+	void setPreAlignStdDev(double pre_align_StdDev){
+		_pre_align_StdDev = pre_align_StdDev;
 	}
-	double getLeaf()
-	{
-		return _leaf;
+	double getPreAlignStdDev(){
+		return _pre_align_StdDev;
 	}
-	virtual bool is_para_satisfying(QString message);
+	void setPreAlignNormalsK(int pre_align_normals_k){
+		_pre_align_normals_k = pre_align_normals_k;
+	}
+	int getPreAlignNormalsK(){
+		return _pre_align_normals_k;
+	}
+	void setMaxCorrDistance(double max_correspondence_distance){
+		_max_correspondence_distance = max_correspondence_distance;
+	}
+	double getMaxCorrDistance(){
+		return _max_correspondence_distance;
+	}
+	void setEFEpsilon(double euclidean_fitness_epsilon){
+		_euclidean_fitness_epsilon = euclidean_fitness_epsilon;
+	}
+	double getEFEpsilon(){
+		return _euclidean_fitness_epsilon;
+	}
+	virtual bool is_para_satisfying(QString &message);
 	virtual void prepare();
 
 private slots:

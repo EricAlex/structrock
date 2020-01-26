@@ -961,7 +961,6 @@ void structrock::command_parser()
 			{
 				saveclustersworker.setWorkFlowMode(true);
 				saveclustersworker.prepare();
-				connect(&saveclustersworker, SIGNAL(SaveClustersReady(QString)), this, SLOT(ShowSavedClusters(QString)));
 				connect(&saveclustersworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
 				connect(&saveclustersworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
 				connect(&saveclustersworker, SIGNAL(GoWorkFlow()), this, SLOT(command_parser()));
@@ -1052,6 +1051,25 @@ void structrock::command_parser()
 				connect(&savepcdBinaryworker, SIGNAL(GoWorkFlow()), this, SLOT(command_parser()));
 
 				savepcdBinaryworker.savebinary();
+			}
+			else
+			{
+				Show_Errors(error_msg);
+			}
+		}
+		else if(command_string == "savetracemap")
+		{
+			if(saveTraceMapWorker.is_para_satisfying(error_msg))
+			{
+				saveTraceMapWorker.setWorkFlowMode(true);
+				saveTraceMapWorker.prepare();
+				connect(&saveTraceMapWorker, SIGNAL(SaveTraceMapReady(QString)), this, SLOT(Show_SaveTraceMap(QString)));
+				connect(&saveTraceMapWorker, SIGNAL(ShowTraceMap()), this, SLOT(ShowSavedClusters()));
+				connect(&saveTraceMapWorker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
+				connect(&saveTraceMapWorker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
+				connect(&saveTraceMapWorker, SIGNAL(GoWorkFlow()), this, SLOT(command_parser()));
+
+				saveTraceMapWorker.savetracemap();
 			}
 			else
 			{
@@ -1747,7 +1765,7 @@ void structrock::SaveClusters()
 			saveclustersworker.setWorkFlowMode(false);
 			saveclustersworker.setUnmute();
 			saveclustersworker.setWriteLog();
-            connect(&saveclustersworker, SIGNAL(SaveClustersReady(QString)), this, SLOT(ShowSavedClusters(QString)));
+            connect(&saveclustersworker, SIGNAL(SaveClustersReady()), this, SLOT(ShowSavedClusters()));
 			connect(&saveclustersworker, SIGNAL(showErrors(QString)), this, SLOT(Show_Errors(QString)));
             connect(&saveclustersworker, SIGNAL(showReadyStatus()), this, SLOT(ShowReady()));
             
@@ -1756,7 +1774,7 @@ void structrock::SaveClusters()
 	}
 }
 
-void structrock::ShowSavedClusters(QString filename)
+void structrock::ShowSavedClusters()
 {
 	viewer->removeAllPointClouds(v2);
 	viewer->removeAllShapes(v2);
@@ -1775,8 +1793,6 @@ void structrock::ShowSavedClusters(QString filename)
     }
 
 	ui.qvtkWidget->update();
-    
-    Show_SaveTraceMap(filename);
 }
 
 void structrock::Show_SaveTraceMap(QString filename)
@@ -2809,6 +2825,14 @@ void structrock::ShowStatus(int i)
 	case STATUS_LAGRANGETENSOR:
 		{
 			head="Busy	calculating Lagrange strain tensor for each fracture";
+			head+=tail;
+			ui.label->setText(QString::fromStdString(head));
+			ui.label->setPalette(pa);
+			break;
+		}
+	case STATUS_SAVETRACEMAP:
+		{
+			head="Busy	saving trace map";
 			head+=tail;
 			ui.label->setText(QString::fromStdString(head));
 			ui.label->setPalette(pa);

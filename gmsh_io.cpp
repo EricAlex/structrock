@@ -2311,4 +2311,3 @@ void gmsh_io::timestamp ( )
   return;
 # undef TIME_SIZE
 }
-

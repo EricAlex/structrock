@@ -75,40 +75,10 @@ bool SaveClustersWorker::is_para_satisfying(QString &message)
 	else
 	{
 		this->setParaSize(1);
-		if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>=this->getParaSize())
+		if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>0)
 		{
 			this->setFileName(QString::fromUtf8(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[0].c_str()));
 			this->setParaIndex(this->getParaSize());
-			this->setDefaltFMAP_Mode();
-			bool need_expand_ratio(false);
-			if((dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>this->getParaIndex())&&(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[this->getParaIndex()] == "circular"))
-			{
-				this->setFMAP_Mode(FMAP_CIRCULAR);
-				need_expand_ratio = true;
-				this->setParaIndex(this->getParaIndex()+1);
-			}
-			else if((dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>this->getParaIndex())&&(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[this->getParaIndex()] == "rectangular"))
-			{
-				this->setFMAP_Mode(FMAP_RECTANGULAR);
-				need_expand_ratio = true;
-				this->setParaIndex(this->getParaIndex()+1);
-			}
-			if(need_expand_ratio)
-			{
-				if((dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>this->getParaIndex())&&(dataLibrary::isOnlyDouble(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[this->getParaIndex()].c_str())))
-				{
-					double ratio;
-					std::stringstream ss(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[this->getParaIndex()]);
-					ss >> ratio;
-					this->setExpandRatio(ratio);
-					this->setParaIndex(this->getParaIndex()+1);
-				}
-				else
-				{
-					message = QString("saveclusters: The Expand Ratio (double) Is Needed For the 'circular' and 'rectangular' Options.");
-					return false;
-				}
-			}
 			return true;
 		}
 		else
@@ -121,12 +91,6 @@ bool SaveClustersWorker::is_para_satisfying(QString &message)
 
 void SaveClustersWorker::prepare()
 {
-	this->setTrimTraceEdgesMode(true);
-	if((dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>this->getParaIndex())&&(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[this->getParaIndex()] == "notrimedges"))
-	{
-		this->setTrimTraceEdgesMode(false);
-		this->setParaIndex(this->getParaIndex()+1);
-	}
 	this->setUnmute();
 	this->setWriteLog();
 	this->check_mute_nolog();
@@ -144,92 +108,14 @@ void SaveClustersWorker::doWork()
     this->timer_start();
     
 	//begin of processing
-    //compute centor point and normal
-    Eigen::Vector3f centroid_all = dataLibrary::compute3DCentroid(*dataLibrary::cloudxyz);
-    float nx_all, ny_all, nz_all;
-    Eigen::Vector4f plane_normal_param = dataLibrary::fitPlaneManually(*dataLibrary::cloudxyz);
-    nx_all = plane_normal_param(0);
-    ny_all = plane_normal_param(1);
-    nz_all = plane_normal_param(2);
-    dataLibrary::plane_normal_all << nx_all, ny_all, nz_all;
-
-	//calculate total surface roughness of outcrop
-	float total_distance=0.0;
-	for(int i=0; i<dataLibrary::cloudxyz->size(); i++)
-	{
-		Eigen::Vector3f Q;
-		Q(0)=dataLibrary::cloudxyz->at(i).x;
-		Q(1)=dataLibrary::cloudxyz->at(i).y;
-		Q(2)=dataLibrary::cloudxyz->at(i).z;
-		total_distance+=std::abs((Q-centroid_all).dot(dataLibrary::plane_normal_all)/std::sqrt((dataLibrary::plane_normal_all.dot(dataLibrary::plane_normal_all))));
-	}
-	float roughness=total_distance/dataLibrary::cloudxyz->size();
-    
-    //project all points
-    pcl::ModelCoefficients::Ptr coefficients_all (new pcl::ModelCoefficients());
-    coefficients_all->values.resize(4);
-    coefficients_all->values[0] = nx_all;
-    coefficients_all->values[1] = ny_all;
-    coefficients_all->values[2] = nz_all;
-    coefficients_all->values[3] = - (nx_all*centroid_all[0] + ny_all*centroid_all[1] + nz_all*centroid_all[2]);
-    
-    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_projected_all (new pcl::PointCloud<pcl::PointXYZ>);
-    pcl::ProjectInliers<pcl::PointXYZ> proj_all;
-    proj_all.setModelType(pcl::SACMODEL_PLANE);
-    proj_all.setInputCloud(dataLibrary::cloudxyz);
-    proj_all.setModelCoefficients(coefficients_all);
-    proj_all.filter(*cloud_projected_all);
-    
-    //compute convex hull
-    pcl::ConvexHull<pcl::PointXYZ> chull_all;
-    chull_all.setInputCloud(cloud_projected_all);
-	chull_all.setDimension(2);
-    chull_all.reconstruct(*dataLibrary::cloud_hull_all);
-
-	/*//compute concave hull
-    pcl::ConcaveHull<pcl::PointXYZ> chull_all;
-    chull_all.setInputCloud(cloud_projected_all);
-	chull_all.setAlpha(0.1);
-    chull_all.reconstruct(*dataLibrary::cloud_hull_all);*/
-    
-    //compute area
-    float area_all = 0.0f;
-    int num_points_all = dataLibrary::cloud_hull_all->size();
-    int j = 0;
-    Eigen::Vector3f va_all, vb_all, res_all;
-    res_all(0) = res_all(1) = res_all(2) = 0.0f;
-    for(int i = 0; i < num_points_all; i++)
-    {
-        j = (i+1) % num_points_all;
-        va_all = dataLibrary::cloud_hull_all->at(i).getVector3fMap();
-        vb_all = dataLibrary::cloud_hull_all->at(j).getVector3fMap();
-        res_all += va_all.cross(vb_all);
-    }
-    area_all = fabs(res_all.dot(dataLibrary::plane_normal_all) * 0.5);
-    
-    //initial total length of fracture traces
-    float total_length=0.0;
-	//initial over estimate length of fracture traces
-	float error_length=0.0;
-	//initial total displacement
-	float total_displacement=0.0;
-	//initial mean dip2plane angle
-	float total_dip2plane=0.0;
-	int inside_num=0;
-    
-    string textfilename = strfilename->substr(0, strfilename->size()-4) += "_table.txt";
     string dip_dipdir_file = strfilename->substr(0, strfilename->size()-4) += "_dip_dipdir.txt";
     string dipdir_dip_file = strfilename->substr(0, strfilename->size()-4) += "_dipdir_dip.txt";
 	string area_file = strfilename->substr(0, strfilename->size()-4) += "_area.txt";
 	string roughness_file = strfilename->substr(0, strfilename->size()-4) += "_roughness.txt";
-    string fracture_intensity = strfilename->substr(0, strfilename->size()-4) += "_fracture_intensity.txt";
-    ofstream fout(textfilename.c_str());
     ofstream dip_dipdir_out(dip_dipdir_file.c_str());
     ofstream dipdir_dip_out(dipdir_dip_file.c_str());
 	ofstream area_out(area_file.c_str());
 	ofstream roughness_out(roughness_file.c_str());
-    ofstream fracture_intensity_out(fracture_intensity.c_str());
-    fout<<"Flag"<<"\t"<<"Number"<<"\t"<<"Points"<<"\t"<<"Direc"<<"\t"<<"Dip"<<"\t"<<"Area"<<"\t"<<"Length"<<"\t"<<"Roughness"<<"\n";
     
     int num_of_clusters = dataLibrary::clusters.size();
     ofstream fbinaryout(strfilename->c_str(), std::ios::out|std::ios::binary|std::ios::app);
@@ -263,7 +149,9 @@ void SaveClustersWorker::doWork()
         Eigen::Vector3f normal;
         normal << nx, ny, nz;
 
-		Eigen::Vector3f V1 = normal.cross(dataLibrary::plane_normal_all);
+		Eigen::Vector3f any_vector;
+        any_vector << 0.0, 0.0, 1.0;
+        Eigen::Vector3f V1 = normal.cross(any_vector);
 		V1 = V1/std::sqrt(V1.dot(V1));
 		Eigen::Vector3f V2 = normal.cross(V1);
 		V2 = V2/std::sqrt(V2.dot(V2));
@@ -345,96 +233,18 @@ void SaveClustersWorker::doWork()
 		dataLibrary::areas.push_back(area);
 		dataLibrary::roughnesses.push_back(fracture_roughness);
 
-		float length;
-        bool flag;
-		if(this->getFMAP_Mode() == FMAP_LOWER_BOUND)
-			flag = dataLibrary::LowerBound(dataLibrary::plane_normal_all, centroid_all, dataLibrary::cloud_hull_all, normal, centroid, cloud_hull, cluster_index, length, this->getTrimTraceEdgesMode(), false);
-		else if(this->getFMAP_Mode() == FMAP_RECTANGULAR)
-			flag = dataLibrary::Rectangular(dataLibrary::plane_normal_all, centroid_all, dataLibrary::cloud_hull_all, normal, centroid, cloud_hull, cluster_index, length, this->getExpandRatio(), this->getTrimTraceEdgesMode(), false);
-		else if(this->getFMAP_Mode() == FMAP_CIRCULAR)
-			flag = dataLibrary::Circular(dataLibrary::plane_normal_all, centroid_all, dataLibrary::cloud_hull_all, normal, centroid, cloud_hull, cluster_index, length, this->getExpandRatio(), this->getTrimTraceEdgesMode(), false);
-        fout<<flag<<"\t"<<cluster_index+1<<"\t"<<dataLibrary::clusters[cluster_index].indices.size()<<"\t"<<dip_direction<<"\t"<<dip<<"\t"<<area<<"\t"<<length<<"\t"<<fracture_roughness<<"\n";
+        dataLibrary::out_dips.push_back(dip);
+		dataLibrary::out_dip_directions.push_back(dip_direction);
+		dataLibrary::selectedPatches.push_back(cluster_index);
 
-		//calculate displacement
-		Eigen::Vector3f line_direction = normal.cross(dataLibrary::plane_normal_all.cross(normal));
-		if((line_direction(0) == 0)&&(line_direction(1) == 0)&&(line_direction(2) == 0))
-		{
-			total_displacement+=0.0;
-		}
-		else
-		{
-			if(flag)
-			{
-				float max_value, min_value;
-				int max_index, min_index;
-				Eigen::Vector3f point;
-				point(0) = cloud_projected_3d->at(0).x;
-				point(1) = cloud_projected_3d->at(0).y;
-				point(2) = cloud_projected_3d->at(0).z;
-				float mod_line_direction = std::sqrt(line_direction.dot(line_direction));
-				max_value = min_value = line_direction.dot(point - centroid)/mod_line_direction;
-				max_index = min_index = 0;
-				for(int i=1; i<cloud_projected_3d->size(); i++)
-				{
-					Eigen::Vector3f point;
-					point(0) = cloud_projected_3d->at(i).x;
-					point(1) = cloud_projected_3d->at(i).y;
-					point(2) = cloud_projected_3d->at(i).z;
-					
-					float value = line_direction.dot(point - centroid)/mod_line_direction;
-					
-					if(max_value<value)
-					{
-						max_value = value;
-						max_index = i;
-					}
-					if(min_value>value)
-					{
-						min_value = value;
-						min_index = i;
-					}
-				}
-				float alpha = std::acos(std::abs(dataLibrary::plane_normal_all.dot(normal)/(std::sqrt(dataLibrary::plane_normal_all.dot(dataLibrary::plane_normal_all))*std::sqrt(normal.dot(normal)))));
-				total_dip2plane+=alpha*360.0/TWOPI;
-				inside_num+=1;
-				float tangent_alpha = std::tan(alpha);
-				float height_max = std::abs(dataLibrary::plane_normal_all.dot(cloud_projected_3d->at(max_index).getVector3fMap()-centroid_all)/std::sqrt(dataLibrary::plane_normal_all.dot(dataLibrary::plane_normal_all)));
-				float height_min = std::abs(dataLibrary::plane_normal_all.dot(cloud_projected_3d->at(min_index).getVector3fMap()-centroid_all)/std::sqrt(dataLibrary::plane_normal_all.dot(dataLibrary::plane_normal_all)));
-				float displacement_max = height_max/tangent_alpha;
-				float displacement_min = height_min/tangent_alpha;
-				total_displacement += (displacement_max+displacement_min)/2.0;
-			}
-		}
-        
-        if(flag)
-        {
-            total_length += length;
-            dip_dipdir_out<<dip<<"\t"<<dip_direction<<"\n";
-            dipdir_dip_out<<dip_direction<<"\t"<<dip<<"\n";
-			area_out<<area<<"\n";
-			roughness_out<<fracture_roughness<<"\n";
-
-			dataLibrary::out_dips.push_back(dip);
-			dataLibrary::out_dip_directions.push_back(dip_direction);
-
-			dataLibrary::selectedPatches.push_back(cluster_index);
-        }
-		else
-		{
-			error_length += length;
-		}
+		dip_dipdir_out<<dip<<"\t"<<dip_direction<<"\n";
+		dipdir_dip_out<<dip_direction<<"\t"<<dip<<"\n";
+		area_out<<area<<"\n";
+		roughness_out<<fracture_roughness<<"\n";
         fbinaryout.write(reinterpret_cast<const char*>(&dip), sizeof(dip));
         fbinaryout.write(reinterpret_cast<const char*>(&dip_direction), sizeof(dip_direction));
         fbinaryout.write(reinterpret_cast<const char*>(&area), sizeof(area));
     }
-	fracture_intensity_out<<"Outcrop surface roughness:"<<"\t"<<roughness<<"\n";
-	fracture_intensity_out<<"Total area:"<<"\t"<<area_all<<"\n";
-	fracture_intensity_out<<"Percentage of displacement errors:"<<"\t"<<total_displacement/total_length*100<<" \%\n";
-	fracture_intensity_out<<"Percentage of over estimated errors:"<<"\t"<<error_length/total_length*100<<" \%\n";
-	fracture_intensity_out<<"Mean dip to plane angle:"<<"\t"<<total_dip2plane/inside_num<<"\n";
-    fracture_intensity_out<<"Fracture Density:"<<"\t"<<total_length/area_all;
-    fout<<flush;
-    fout.close();
     dip_dipdir_out<<flush;
     dip_dipdir_out.close();
     dipdir_dip_out<<flush;
@@ -443,42 +253,7 @@ void SaveClustersWorker::doWork()
     area_out.close();
 	roughness_out<<flush;
     roughness_out.close();
-    fracture_intensity_out<<flush;
-    fracture_intensity_out.close();
     fbinaryout.close();
-    
-    //save outcrop convex hull and fracture traces, both 3d and 2d
-	Eigen::Vector3f V_x = dataLibrary::cloud_hull_all->at(1).getVector3fMap() - dataLibrary::cloud_hull_all->at(0).getVector3fMap();
-    Eigen::Vector3f V_y = dataLibrary::plane_normal_all.cross(V_x);
-    std::vector<Eigen::Vector2f> convex_hull_all_2d;
-    dataLibrary::projection322(V_x, V_y, dataLibrary::cloud_hull_all, convex_hull_all_2d);
-
-    string hull_traces = strfilename->substr(0, strfilename->size()-4) += "_convex_hull&fracture_traces.txt";
-    ofstream hull_traces_out(hull_traces.c_str());
-    hull_traces_out<<"hull\t"<<dataLibrary::cloud_hull_all->points.size()<<"\t"<<dataLibrary::plane_normal_all(0)<<"\t"<<dataLibrary::plane_normal_all(1)<<"\t"<<dataLibrary::plane_normal_all(2)<<"\n";
-    for(int i=0; i<dataLibrary::cloud_hull_all->points.size(); i++)
-    {
-        hull_traces_out<<dataLibrary::cloud_hull_all->points[i].x<<"\t"<<dataLibrary::cloud_hull_all->points[i].y<<"\t"<<dataLibrary::cloud_hull_all->points[i].z<<"\t"<<convex_hull_all_2d[i](0)<<"\t"<<convex_hull_all_2d[i](1)<<"\n";
-    }
-    hull_traces_out<<"traces\n";
-	Eigen::Vector3f point_in_begin, point_in_end;
-	Eigen::Vector2f point_out_begin, point_out_end;
-    for(int i=0; i<dataLibrary::Lines.size(); i++)
-    {
-		point_in_begin(0)=dataLibrary::Lines[i].begin.x;
-		point_in_begin(1)=dataLibrary::Lines[i].begin.y;
-		point_in_begin(2)=dataLibrary::Lines[i].begin.z;
-		point_in_end(0)=dataLibrary::Lines[i].end.x;
-		point_in_end(1)=dataLibrary::Lines[i].end.y;
-		point_in_end(2)=dataLibrary::Lines[i].end.z;
-
-		dataLibrary::projection322(V_x, V_y, point_in_begin, point_out_begin);
-		dataLibrary::projection322(V_x, V_y, point_in_end, point_out_end);
-		
-		hull_traces_out<<dataLibrary::Lines[i].begin.x<<"\t"<<dataLibrary::Lines[i].begin.y<<"\t"<<dataLibrary::Lines[i].begin.z<<"\t"<<dataLibrary::Lines[i].end.x<<"\t"<<dataLibrary::Lines[i].end.y<<"\t"<<dataLibrary::Lines[i].end.z<<"\t"<<point_out_begin(0)<<"\t"<<point_out_begin(1)<<"\t"<<point_out_end(0)<<"\t"<<point_out_end(1)<<"\n";
-    }
-    hull_traces_out<<flush;
-    hull_traces_out.close();
 
 	is_success = true;
 	//end of processing
@@ -492,11 +267,6 @@ void SaveClustersWorker::doWork()
         strs << this->getTimer_sec();
         log_text += (strs.str() +" seconds.");
         dataLibrary::write_text_to_log_file(log_text);
-    }
-    
-    if(!this->getMuteMode()&&is_success)
-    {
-        emit SaveClustersReady(this->getFileName());
     }
 
     dataLibrary::Status = STATUS_READY;

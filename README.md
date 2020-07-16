@@ -36,6 +36,20 @@ Citation (more to be added soon):
 	doi = {https://doi.org/10.1016/j.ijrmms.2018.12.018},
 	url = {http://www.sciencedirect.com/science/article/pii/S1365160918307652"}
 }
+@article{Wang2020,
+author = {Wang, Xin and Gao, Feng},
+title = {Quantitatively Deciphering Paleostrain From Digital Outcrops Model and its Application in the Eastern Tian Shan, China},
+journal = {Tectonics},
+volume = {39},
+number = {7},
+pages = {e2019TC005999},
+keywords = {clustering analysis, digital outcrops model, eastern Tian Shan, paleostrain, quantitative methods, strain tensor},
+doi = {10.1029/2019TC005999},
+url = {https://agupubs.onlinelibrary.wiley.com/doi/abs/10.1029/2019TC005999},
+eprint = {https://agupubs.onlinelibrary.wiley.com/doi/pdf/10.1029/2019TC005999},
+note = {e2019TC005999 10.1029/2019TC005999},
+year = {2020}
+}
 ```
 
 ![Detailed results.](https://github.com/EricAlex/structrock/blob/master/wiki/img/detailed_results.jpg)

@@ -39,6 +39,7 @@
 
 #pragma once
 
+#include "globaldef.h"
 #include "Worker.h"
 class ShearParaWorker : public Worker
 {
@@ -47,27 +48,38 @@ class ShearParaWorker : public Worker
 private:
 	QString _filename;
 	bool _save_screen_mode;
+	bool _is_custom_shear_plane;
+	Vector3f _custom_shear_plane_normal;
     
 public:
-	void shearpara()
-	{
+	void shearpara(){
         QMetaObject::invokeMethod(this, "doWork");
 	}
-	void setFileName(QString name)
-	{
+	void setFileName(QString name){
 		_filename = name;
 	}
-	QString getFileName()
-	{
+	QString getFileName(){
 		return _filename;
 	}
-	void setSaveScreenMode(bool mode)
-	{
+	void setSaveScreenMode(bool mode){
 		_save_screen_mode = mode;
 	}
-	bool getSaveScreenMode()
-	{
+	bool getSaveScreenMode(){
 		return _save_screen_mode;
+	}
+	void setCustomShearPlaneMode(bool mode) {
+		_is_custom_shear_plane = mode;
+	}
+	bool getCustomShearPlaneMode() {
+		return _is_custom_shear_plane;
+	}
+	void setCustomShearPlaneNormal(float nx, float ny, float nz) {
+		_custom_shear_plane_normal.x = nx;
+		_custom_shear_plane_normal.y = ny;
+		_custom_shear_plane_normal.z = nz;
+	}
+	Vector3f getCustomShearPlaneNormal() {
+		return _custom_shear_plane_normal;
 	}
 	virtual bool is_para_satisfying(QString &message);
 	virtual void prepare();

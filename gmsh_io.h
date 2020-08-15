@@ -7,6 +7,7 @@
 # include <ctime>
 # include <cmath>
 # include <cstring>
+# include <string>
 
 class gmsh_io
 {

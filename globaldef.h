@@ -39,6 +39,7 @@
 
 #pragma once
 #include <vector>
+#include <string>
 
 #define EXIT_CODE_REBOOT -123456789
 

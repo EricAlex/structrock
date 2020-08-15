@@ -1085,7 +1085,7 @@ Eigen::Vector4f dataLibrary::fitPlaneManually(const pcl::PointCloud<pcl::PointXY
   normal /= length;
   params(2) /= length;
 
-  return {normal(0), normal(1), normal(2), params(2)};
+  return {float(normal(0)), float(normal(1)), float(normal(2)), float(params(2))};
 }
 Eigen::Vector3f dataLibrary::compute3DCentroid(const pcl::PointCloud<pcl::PointXYZ>& cloud){
 	double cx, cy, cz;
@@ -1095,7 +1095,7 @@ Eigen::Vector3f dataLibrary::compute3DCentroid(const pcl::PointCloud<pcl::PointX
 		cy += cloud.at(i).y;
 		cz += cloud.at(i).z;
 	}
-	return { cx/cloud.size(), cy/cloud.size(), cz/cloud.size() };
+	return { float(cx/cloud.size()), float(cy/cloud.size()), float(cz/cloud.size()) };
 }
 
 Eigen::Vector4f dataLibrary::fitPlaneManually(const pcl::PointCloud<pcl::PointXYZRGB>& cloud){
@@ -1120,7 +1120,7 @@ Eigen::Vector4f dataLibrary::fitPlaneManually(const pcl::PointCloud<pcl::PointXY
   normal /= length;
   params(2) /= length;
 
-  return {normal(0), normal(1), normal(2), params(2)};
+  return { float(normal(0)), float(normal(1)), float(normal(2)), float(params(2))};
 }
 Eigen::Vector3f dataLibrary::compute3DCentroid(const pcl::PointCloud<pcl::PointXYZRGB>& cloud){
 	double cx, cy, cz;
@@ -1130,7 +1130,7 @@ Eigen::Vector3f dataLibrary::compute3DCentroid(const pcl::PointCloud<pcl::PointX
 		cy += cloud.at(i).y;
 		cz += cloud.at(i).z;
 	}
-	return { cx/cloud.size(), cy/cloud.size(), cz/cloud.size() };
+	return { float(cx/cloud.size()), float(cy/cloud.size()), float(cz/cloud.size()) };
 }
 
 bool dataLibrary::checkContents(std::vector<std::string> contents, std::string query)

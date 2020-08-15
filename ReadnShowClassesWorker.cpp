@@ -98,12 +98,14 @@ void ReadnShowClassesWorker::prepare(){
     this->setPercentOut(percentOut_default);
     float ratioThreshold_default = 0.06;
     this->setRatioThreshold(ratioThreshold_default);
+	int no_match = 0;
     for(int i=1; i<=2; i++){
         if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>this->getParaIndex()){
             std::vector<std::string> st;
             boost::split(st, dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[this->getParaIndex()], boost::is_any_of(":"));
             if((st.size()>1)&&(st[0]=="threshold")&&(dataLibrary::isOnlyDouble(st[1].c_str()))){
                 this->setRatioThreshold(std::stof(st[1]));
+				this->setParaIndex(this->getParaIndex() + 1);
             }
             else if((st.size()>1)&&(st[0]=="percent")&&(dataLibrary::isOnlyDouble(st[1].c_str()))){
                 float percent = std::stof(st[1]);
@@ -113,8 +115,17 @@ void ReadnShowClassesWorker::prepare(){
                 else{
                     emit showErrors(QString(std::string("readnshowshearfeatures: The <Percent Out> Value (" + std::to_string(percent) + ") Not In [0, 0.5), Setting It to the Default Value (" + std::to_string(percentOut_default) + ").").c_str()));
                 }
+				this->setParaIndex(this->getParaIndex() + 1);
             }
-            this->setParaIndex(this->getParaIndex()+1);
+			else {
+				if (i == 1) {
+					this->setParaIndex(this->getParaIndex() + 1);
+					no_match++;
+				}
+				if (no_match == 1) {
+					this->setParaIndex(this->getParaIndex() - 1);
+				}
+			}
         }
         else{
             break;

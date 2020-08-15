@@ -116,7 +116,7 @@ public:
 		t.Sleep(ms);
 	}
 	void check_mute_nolog();
-	virtual bool is_para_satisfying(QString &message){}
+	virtual bool is_para_satisfying(QString &message) { return true; }
 	virtual void prepare(){}
 	void setParaSize(int size)
 	{

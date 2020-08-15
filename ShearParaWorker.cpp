@@ -94,11 +94,46 @@ bool ShearParaWorker::is_para_satisfying(QString &message)
 
 void ShearParaWorker::prepare()
 {
-    this->setSaveScreenMode(false);
-    if((dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>this->getParaIndex())&&(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[this->getParaIndex()] == "savescreen"))
-	{
-		this->setSaveScreenMode(true);
-		this->setParaIndex(this->getParaIndex()+1);
+	this->setSaveScreenMode(false);
+	this->setCustomShearPlaneMode(false);
+	this->setCustomShearPlaneNormal(0, 0, 0);
+	int no_match = 0;
+	for (int i = 1; i <= 2; i++) {
+		if (dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size() > this->getParaIndex()) {
+			std::vector<std::string> st;
+			boost::split(st, dataLibrary::Workflow[dataLibrary::current_workline_index].parameters[this->getParaIndex()], boost::is_any_of(":"));
+			if ((st.size() > 0) && (st[0] == "savescreen")) {
+				this->setSaveScreenMode(true);
+				this->setParaIndex(this->getParaIndex() + 1);
+			}
+			else if ((st.size() > 1) && (st[0] == "customSPnormal")) {
+				std::vector<std::string> st_n;
+				boost::split(st_n, st[1], boost::is_any_of("_"));
+				if ((st_n.size() > 2) && (dataLibrary::isOnlyDouble(st_n[0].c_str()) && dataLibrary::isOnlyDouble(st_n[1].c_str()) && dataLibrary::isOnlyDouble(st_n[2].c_str()))) {
+					float nx = std::stof(st_n[0]);
+					float ny = std::stof(st_n[1]);
+					float nz = std::stof(st_n[2]);
+					this->setCustomShearPlaneMode(true);
+					this->setCustomShearPlaneNormal(nx, ny, nz);
+				}
+				else {
+					emit showErrors(QString(std::string("customSPnormal: The custom shear plane normal is not provided in the form of 'nx_ny_nz', or nx, ny and nz are not numbers.").c_str()));
+				}
+				this->setParaIndex(this->getParaIndex() + 1);
+			}
+			else {
+				if (i == 1) {
+					this->setParaIndex(this->getParaIndex() + 1);
+					no_match++;
+				}
+				if (no_match == 1) {
+					this->setParaIndex(this->getParaIndex() - 1);
+				}
+			}
+		}
+		else {
+			break;
+		}
 	}
 	this->setUnmute();
 	this->setWriteLog();
@@ -190,13 +225,20 @@ void ShearParaWorker::doWork()
         plane_normal(1)=ny/sqrt(nx*nx+ny*ny+nz*nz);
         plane_normal(2)=nz/sqrt(nx*nx+ny*ny+nz*nz);*/
 
+		Eigen::Vector3f plane_normal;
+
         float nx, ny, nz;
         Eigen::Vector4f plane_normal_param = dataLibrary::fitPlaneManually(*cloud_ptr);
         nx = plane_normal_param(0);
         ny = plane_normal_param(1);
         nz = plane_normal_param(2);
-        Eigen::Vector3f plane_normal;
-        plane_normal << nx, ny, nz;
+		if (this->getCustomShearPlaneMode()) {
+			Vector3f temp_normal = this->getCustomShearPlaneNormal();
+			plane_normal << temp_normal.x, temp_normal.y, temp_normal.z;
+		}
+		else {
+			plane_normal << nx, ny, nz;
+		}
 
         is_large_enough_arr[i] = cloud_ptr->points.size();
 

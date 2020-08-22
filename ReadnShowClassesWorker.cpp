@@ -98,6 +98,8 @@ void ReadnShowClassesWorker::prepare(){
     this->setPercentOut(percentOut_default);
     float ratioThreshold_default = 0.06;
     this->setRatioThreshold(ratioThreshold_default);
+	this->setPercentOutRatioThresholdErrorMode(false);
+	this->setPercentOutRatioThresholdMessage("Normal");
 	int no_match = 0;
     for(int i=1; i<=2; i++){
         if(dataLibrary::Workflow[dataLibrary::current_workline_index].parameters.size()>this->getParaIndex()){
@@ -113,7 +115,8 @@ void ReadnShowClassesWorker::prepare(){
                     this->setPercentOut(percent);
                 }
                 else{
-                    emit showErrors(QString(std::string("readnshowshearfeatures: The <Percent Out> Value (" + std::to_string(percent) + ") Not In [0, 0.5), Setting It to the Default Value (" + std::to_string(percentOut_default) + ").").c_str()));
+					this->setPercentOutRatioThresholdErrorMode(true);
+					this->setPercentOutRatioThresholdMessage("readnshowshearfeatures: The <Percent Out> Value (" + std::to_string(percent) + ") Not In [0, 0.5), Setting It to the Default Value (" + std::to_string(percentOut_default) + ").");
                 }
 				this->setParaIndex(this->getParaIndex() + 1);
             }
@@ -209,6 +212,9 @@ void ReadnShowClassesWorker::doWork(){
 		emit showErrors(QString(error_msg.c_str()));
 	}
 	else{
+		if (this->getPercentOutRatioThresholdErrorMode()) {
+			emit showErrors(QString(this->getPercentOutRatioThresholdMessage().c_str()));
+		}
 		if(this->getFeatureType() == FRACTURE_FEATURE_STRIATION){
 			int striations_size = dataLibrary::fracture_striations.size();
 			int polygonmeshs_size = dataLibrary::Fracture_Triangles.size();

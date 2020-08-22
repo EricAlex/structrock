@@ -39,6 +39,7 @@
 
 #pragma once
 
+#include <string>
 #include "globaldef.h"
 #include "Worker.h"
 class ShearParaWorker : public Worker
@@ -50,6 +51,8 @@ private:
 	bool _save_screen_mode;
 	bool _is_custom_shear_plane;
 	Vector3f _custom_shear_plane_normal;
+	bool _is_custom_shear_plane_normal_error;
+	std::string _custom_shear_plane_normal_message;
     
 public:
 	void shearpara(){
@@ -80,6 +83,18 @@ public:
 	}
 	Vector3f getCustomShearPlaneNormal() {
 		return _custom_shear_plane_normal;
+	}
+	void setCustomShearPlaneNormalErrorMode(bool mode){
+		_is_custom_shear_plane_normal_error = mode;
+	}
+	bool getCustomShearPlaneNormalErrorMode(){
+		return _is_custom_shear_plane_normal_error;
+	}
+	void setCustomShearPlaneNormalMessage(std::string message){
+		_custom_shear_plane_normal_message = message;
+	}
+	std::string getCustomShearPlaneNormalMessage(){
+		return _custom_shear_plane_normal_message;
 	}
 	virtual bool is_para_satisfying(QString &message);
 	virtual void prepare();

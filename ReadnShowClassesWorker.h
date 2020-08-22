@@ -38,6 +38,7 @@
  */
 
 #pragma once
+#include <string>
 #include "Worker.h"
 class ReadnShowClassesWorker : public Worker
 {
@@ -48,6 +49,8 @@ private:
 	int _feature_type;
 	float _percent_out;
 	float _ratio_threshold;
+	bool _is_percent_out_ratio_threshold_error;
+	std::string _percent_out_ratio_threshold_message;
 
 private:
 	bool readFeatures(const std::string &filename, std::string err_message);
@@ -79,6 +82,18 @@ public:
 	}
 	float getRatioThreshold(){
 	    return _ratio_threshold;
+	}
+	void setPercentOutRatioThresholdErrorMode(bool mode) {
+		_is_percent_out_ratio_threshold_error = mode;
+	}
+	bool getPercentOutRatioThresholdErrorMode() {
+		return _is_percent_out_ratio_threshold_error;
+	}
+	void setPercentOutRatioThresholdMessage(std::string message) {
+		_percent_out_ratio_threshold_message = message;
+	}
+	std::string getPercentOutRatioThresholdMessage() {
+		return _percent_out_ratio_threshold_message;
 	}
 	virtual bool is_para_satisfying(QString &message);
 	virtual void prepare();

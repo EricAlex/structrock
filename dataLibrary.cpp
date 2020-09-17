@@ -89,6 +89,8 @@ std::vector<WorkLine> dataLibrary::Workflow;
 int dataLibrary::current_workline_index = 0;
 bool dataLibrary::have_called_read_file = false;
 Vector3f dataLibrary::cloud_centor;
+std::vector< std::vector<int> > dataLibrary::groups_indices;
+std::vector<QString> dataLibrary::groups_names;
 
 bool dataLibrary::isOnlyDouble(const char* str)
 {

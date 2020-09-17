@@ -39,6 +39,7 @@
 
 #pragma once
 
+#include <vector>
 #include "Worker.h"
 #include "globaldef.h"
 
@@ -57,6 +58,12 @@ private:
 	int _fracture_map_mode;
 	double _expand_ratio;
     bool _is_clusters_from_files;
+	int _fracture_map_group_mode;
+	std::vector<QString> _group_files;
+
+private:
+	bool readGroupFiles(std::string &err_message);
+
 public:
 	void setTrimTraceEdgesMode(bool mode)
 	{
@@ -85,6 +92,21 @@ public:
 	double getExpandRatio()
 	{
 		return _expand_ratio;
+	}
+	void setFMAP_Group_Defalt_Mode(){
+		_fracture_map_group_mode = FMAP_ALL;
+	}
+	void setFMAP_Group_Mode(int mode){
+		_fracture_map_group_mode = mode;
+	}
+	int getFMAP_Group_Mode(){
+		return _fracture_map_group_mode;
+	}
+	void setFMAP_Group_files(std::vector<QString> group_files){
+		_group_files.assign(group_files.begin(), group_files.end());
+	}
+	std::vector<QString> getFMAP_Group_files(){
+		return _group_files;
 	}
 	void setFileName(QString name)
 	{

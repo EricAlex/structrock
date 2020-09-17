@@ -92,6 +92,10 @@
 #define FRACTURE_FEATURE_STRIATION  4001
 #define FRACTURE_FEATURE_STEP   4002
 
+#define FMAP_ALL    5001
+#define FMAP_GROUPS_IN_COLORS   5002
+#define FMAP_GROUPS_SEPARATE_FILES  5003
+
 struct RGSpara{
     double curvature;
     double smoothness;

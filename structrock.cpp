@@ -1848,6 +1848,7 @@ void structrock::Show_SaveTraceMap(QString filename)
 	plotWin.ui.plotWidget->addPlottable(newCurve);
     
     newCurve->setData(x, y);
+	newCurve->setPen(QPen(Qt::gray));
     // set axes ranges, so we see all data:
 	QVector<double>::iterator x_max_it = std::max_element(x.begin(), x.end());
     QVector<double>::iterator x_min_it = std::min_element(x.begin(), x.end());
@@ -1888,17 +1889,44 @@ void structrock::Show_SaveTraceMap(QString filename)
 	scale_x.append(*x_max_it);
 	scale_y.append(*y_max_it+(*y_max_it-*y_min_it)*0.02);
 	scale->setData(scale_x, scale_y);
-	scale->setPen(QPen(Qt::blue));
+	scale->setPen(QPen(Qt::gray));
 	plotWin.ui.plotWidget->replot();
 
 	QCPItemText *text = new QCPItemText(plotWin.ui.plotWidget);
 	plotWin.ui.plotWidget->addItem(text);
-	text->position->setCoords((*x_max_it+*x_min_it)/2, *y_max_it+(*y_max_it-*y_min_it)*0.025);
+	text->position->setCoords((*x_max_it+*x_min_it)/2, *y_max_it+(*y_max_it-*y_min_it)*0.035);
 	std::stringstream ss;
 	ss<<x_length<<" m";
 	text->setText(QString::fromUtf8(ss.str().c_str()));
 	plotWin.ui.plotWidget->replot();
 
+	std::vector<QColor> lines_color;
+	lines_color.resize(dataLibrary::Lines.size(), Qt::gray);
+	for(int i=0; i<dataLibrary::groups_indices.size(); i++){
+		int r, g, b;
+		dataLibrary::getColorBetweenBlueNRed(float(i)/(float(dataLibrary::groups_indices.size()) - 0.99), r, g, b);
+		for(int j=0; j<dataLibrary::groups_indices[i].size(); j++){
+			// lines_color[dataLibrary::groups_indices[i][j]] = QColor(r, g, b);
+			lines_color[dataLibrary::groups_indices[i][j]].setRgb(r, g, b);
+		}
+		// QCPCurve *legend = new QCPCurve(plotWin.ui.plotWidget->xAxis, plotWin.ui.plotWidget->yAxis);
+		// plotWin.ui.plotWidget->addPlottable(legend);
+		// QVector<double> legend_x, legend_y;
+		// legend_x.append(*x_min_it);
+		// legend_y.append(*y_min_it-(i+1)*(*y_max_it-*y_min_it)*0.08);
+		// legend_x.append((*x_max_it+*x_min_it)/2);
+		// legend_y.append(*y_min_it-(i+1)*(*y_max_it-*y_min_it)*0.08);
+		// legend->setData(legend_x, legend_y);
+		// legend->setPen(QPen(QColor(r, g, b)));
+		// plotWin.ui.plotWidget->replot();
+
+		QCPItemText *group_text = new QCPItemText(plotWin.ui.plotWidget);
+		plotWin.ui.plotWidget->addItem(group_text);
+		group_text->position->setCoords((*x_max_it+*x_min_it)/2, *y_min_it-(i+1)*(*y_max_it-*y_min_it)*0.08);
+		group_text->setText(dataLibrary::groups_names[i]);
+		group_text->setColor(QColor(r, g, b));
+		plotWin.ui.plotWidget->replot();
+	}
 	Eigen::Vector3f point_in_begin, point_in_end;
 	Eigen::Vector2f point_out_begin, point_out_end;
     for(int i=0; i<dataLibrary::Lines.size(); i++)
@@ -1923,7 +1951,7 @@ void structrock::Show_SaveTraceMap(QString filename)
 			y.append(point_out_begin(1));
 			y.append(point_out_end(1));
 			newCurve->setData(x, y);
-			newCurve->setPen(QPen(Qt::black));
+			newCurve->setPen(QPen(lines_color[i]));
 			plotWin.ui.plotWidget->replot();
 		}
 	}

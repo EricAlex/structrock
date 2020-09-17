@@ -99,6 +99,8 @@ public:
 	static int current_workline_index;
 	static bool have_called_read_file;
 	static Vector3f cloud_centor;
+	static std::vector< std::vector<int> > groups_indices;
+	static std::vector<QString> groups_names;
 
 public:
 	static void getColorBetweenBlueNRed(float value, int &red, int &green, int &blue);
